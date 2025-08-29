@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuarios {
+  id        String   @id @default(uuid()) @db.Uuid
+  nombre    String?  @db.VarChar(100)
+  email     String?  @unique @db.VarChar(255)
+  password  String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relaciones
+  grupos UsuarioGrupos[]
+  roles  UsuarioRoles[]
+
+  @@map("usuarios")
+}
+
+model Roles {
+  id          Int    @id @default(autoincrement())
+  nombre      String @unique @db.VarChar(50)
+  descripcion String? @db.Text
+
+  // Relaciones
+  usuarios UsuarioRoles[]
+
+  @@map("roles")
+}
+
+model Grupos {
+  id          Int    @id @default(autoincrement())
+  nombre      String @unique @db.VarChar(100)
+  descripcion String? @db.Text
+
+  // Relaciones
+  usuarios UsuarioGrupos[]
+
+  @@map("grupos")
+}
+
+model UsuarioGrupos {
+  usuarioId String @map("usuario_id") @db.Uuid
+  grupoId   Int    @map("grupo_id")
+
+  // Relaciones
+  usuario Usuarios @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  grupo   Grupos   @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+
+  @@id([usuarioId, grupoId])
+  @@map("usuario_grupos")
+}
+
+model UsuarioRoles {
+  usuarioId String @map("usuario_id") @db.Uuid
+  rolId     Int    @map("rol_id")
+
+  // Relaciones
+  usuario Usuarios @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  rol     Roles    @relation(fields: [rolId], references: [id], onDelete: Cascade)
+
+  @@id([usuarioId, rolId])
+  @@map("usuario_roles")
+}
