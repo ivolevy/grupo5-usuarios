@@ -128,7 +128,10 @@ class SupabaseClient {
       create: async (data: CreateUsuarioData): Promise<Usuario> => {
         const response = await this.request('usuarios', {
           method: 'POST',
-          body: JSON.stringify(data)
+          body: JSON.stringify(data),
+          headers: {
+            'Prefer': 'return=representation'
+          }
         });
         const result = await response.json();
         return result[0];
@@ -138,7 +141,10 @@ class SupabaseClient {
       update: async (where: { id: string }, data: UpdateUsuarioData): Promise<Usuario> => {
         const response = await this.request(`usuarios?id=eq.${where.id}`, {
           method: 'PATCH',
-          body: JSON.stringify(data)
+          body: JSON.stringify(data),
+          headers: {
+            'Prefer': 'return=representation'
+          }
         });
         const result = await response.json();
         return result[0];
@@ -148,7 +154,10 @@ class SupabaseClient {
       updateByEmail: async (email: string, data: UpdateUsuarioData): Promise<Usuario> => {
         const response = await this.request(`usuarios?email=eq.${email}`, {
           method: 'PATCH',
-          body: JSON.stringify(data)
+          body: JSON.stringify(data),
+          headers: {
+            'Prefer': 'return=representation'
+          }
         });
         const result = await response.json();
         return result[0];
