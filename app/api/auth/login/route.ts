@@ -79,6 +79,12 @@ export async function POST(request: NextRequest) {
         tokenType: 'Bearer',
         expiresIn: '24h'
       }
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }
     });
 
   } catch (error) {

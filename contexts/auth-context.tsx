@@ -45,6 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null)
 
     try {
+      console.log('Iniciando login...', { email, password: '***' })
+      
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -53,23 +55,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email, password }),
       })
 
-      const data = await response.json()
+      console.log('Response status:', response.status)
+      console.log('Response ok:', response.ok)
 
-      if (data.success && data.token) {
-        setUser(data.user)
-        setToken(data.token)
-        localStorage.setItem("user", JSON.stringify(data.user))
-        localStorage.setItem("authToken", data.token)
+      const data = await response.json()
+      console.log('Respuesta del servidor:', data)
+
+      if (data.success && data.data && data.data.token) {
+        console.log('Login exitoso, guardando datos...')
+        setUser(data.data.user)
+        setToken(data.data.token)
+        localStorage.setItem("user", JSON.stringify(data.data.user))
+        localStorage.setItem("authToken", data.data.token)
         setIsLoading(false)
+        console.log('Datos guardados correctamente')
         return true
       } else {
+        console.log('Error en login:', data.message || 'Error de autenticación')
         setError(data.message || 'Error de autenticación')
         setIsLoading(false)
         return false
       }
     } catch (err) {
-      setError('Error de conexión')
-      console.error('Login error:', err)
+      console.error('Error de conexión:', err)
+      setError('Error de conexión: ' + (err instanceof Error ? err.message : 'Error desconocido'))
       setIsLoading(false)
       return false
     }

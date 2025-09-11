@@ -39,11 +39,13 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Sidebar />
-      <div className="lg:ml-64">
+    <div className="h-screen bg-slate-50 flex px-4 py-4 gap-4">
+      <div className="flex-shrink-0 h-full">
+        <Sidebar />
+      </div>
+      <div className="flex-1 flex flex-col bg-white rounded-lg shadow-lg overflow-hidden h-full">
         <DashboardHeader />
-        <main className="p-6">{children}</main>
+        <main className="flex-1 p-6 overflow-y-auto">{children}</main>
       </div>
     </div>
   )

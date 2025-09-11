@@ -9,10 +9,10 @@ export function DashboardHeader() {
   const { user } = useAuth()
 
   return (
-    <header className="bg-white border-b border-slate-200 px-6 py-4">
+    <header className="bg-white border-b border-slate-200 px-6 py-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4 flex-1">
-          <h1 className="text-xl font-semibold text-slate-900 lg:ml-0 ml-12">UADE</h1>
+          <h1 className="text-xl font-semibold text-slate-900">UADE</h1>
         </div>
 
         <div className="flex items-center gap-4">
@@ -28,11 +28,6 @@ export function DashboardHeader() {
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </Button>
 
-          {/* User info */}
-          <div className="hidden sm:block text-right">
-            <p className="text-sm font-medium text-slate-900">{user?.name}</p>
-            <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
-          </div>
         </div>
       </div>
     </header>

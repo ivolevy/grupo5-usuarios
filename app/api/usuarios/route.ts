@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { createUsuarioSchema, validateData } from '@/lib/validations';
-import { hashPassword, validatePasswordStrength } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth';
 
 // GET /api/usuarios - Obtener todos los usuarios
 export async function GET() {
@@ -33,10 +33,12 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('Datos recibidos para registro:', body);
     
     // Validar datos de entrada
     const validation = validateData(createUsuarioSchema, body);
     if (!validation.success) {
+      console.log('Error de validación:', validation.error);
       return NextResponse.json({
         success: false,
         message: 'Datos de entrada inválidos',
@@ -46,18 +48,11 @@ export async function POST(request: NextRequest) {
 
     const { email, password, rol } = validation.data;
 
-    // Validar fortaleza de la contraseña
-    const passwordValidation = validatePasswordStrength(password);
-    if (!passwordValidation.isValid) {
+    // Validación simple de contraseña (solo longitud mínima)
+    if (password.length < 8) {
       return NextResponse.json({
         success: false,
-        message: 'La contraseña no cumple con los requisitos de seguridad',
-        error: passwordValidation.feedback.join(', '),
-        passwordStrength: {
-          score: passwordValidation.score,
-          maxScore: 5,
-          feedback: passwordValidation.feedback
-        }
+        message: 'La contraseña debe tener al menos 8 caracteres'
       }, { status: 400 });
     }
 
