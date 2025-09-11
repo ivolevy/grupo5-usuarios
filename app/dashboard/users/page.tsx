@@ -2,18 +2,32 @@
 
 import { useState } from "react"
 import { useUsers } from "@/contexts/users-context"
+import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { AddUserDialog } from "@/components/users/add-user-dialog"
 import { UserActions } from "@/components/users/user-actions"
+import { AccessDenied } from "@/components/ui/access-denied"
 import { Search, Users, UserCheck, UserX, Shield } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { hasPermission, Permission } from "@/lib/permissions"
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const { users, loading, error } = useUsers()
+  const { user } = useAuth()
+
+  // Verificar si el usuario tiene permisos de administrador
+  if (!user || !hasPermission(user.rol, Permission.ADMIN_DASHBOARD)) {
+    return (
+      <AccessDenied 
+        title="Acceso Restringido"
+        description="Solo los administradores pueden acceder a la gestión de usuarios."
+      />
+    )
+  }
 
   const filteredUsers = users.filter(
     (user) =>

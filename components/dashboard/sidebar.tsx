@@ -7,10 +7,11 @@ import { Home, Users, LogOut, Menu, X, Shield } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { hasPermission, Permission } from "@/lib/permissions"
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Usuarios", href: "/dashboard/users", icon: Users },
+  { name: "Dashboard", href: "/dashboard", icon: Home, permission: null },
+  { name: "Usuarios", href: "/dashboard/users", icon: Users, permission: Permission.ADMIN_DASHBOARD },
 ]
 
 export function Sidebar() {
@@ -66,25 +67,32 @@ export function Sidebar() {
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setIsMobileOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-blue-50 text-blue-700 border border-blue-200"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
-                  )}
-                >
-                  <item.icon className="w-4 h-4" />
-                  {item.name}
-                </Link>
-              )
-            })}
+            {navigation
+              .filter((item) => {
+                // Si no requiere permiso, mostrar siempre
+                if (!item.permission) return true
+                // Si requiere permiso, verificar que el usuario lo tenga
+                return user && hasPermission(user.rol, item.permission)
+              })
+              .map((item) => {
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setIsMobileOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-blue-50 text-blue-700 border border-blue-200"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+                    )}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    {item.name}
+                  </Link>
+                )
+              })}
           </nav>
 
           {/* User info and logout */}

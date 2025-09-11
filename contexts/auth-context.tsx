@@ -67,6 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(data.data.token)
         localStorage.setItem("user", JSON.stringify(data.data.user))
         localStorage.setItem("authToken", data.data.token)
+        
+        // También guardar en cookies para el middleware
+        document.cookie = `authToken=${data.data.token}; path=/; max-age=86400; SameSite=Lax`
+        
         setIsLoading(false)
         console.log('Datos guardados correctamente')
         return true
@@ -90,6 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null)
     localStorage.removeItem("user")
     localStorage.removeItem("authToken")
+    
+    // Limpiar cookies
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
   }
 
   return (
