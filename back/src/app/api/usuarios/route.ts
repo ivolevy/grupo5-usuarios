@@ -13,10 +13,15 @@ export async function GET() {
       }
     });
 
+    const usuariosSanitizados = usuarios.map((u: any) => {
+      const { password: _pwd, ...rest } = u || {};
+      return rest;
+    });
+
     return NextResponse.json({
       success: true,
-      data: usuarios,
-      count: usuarios.length,
+      data: usuariosSanitizados,
+      count: usuariosSanitizados.length,
       message: 'Usuarios obtenidos exitosamente'
     });
   } catch (error) {

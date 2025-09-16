@@ -59,9 +59,11 @@ export async function GET(request: NextRequest) {
       }, { status: 404 });
     }
 
+    const { password: _pwd, ...profileSinPassword } = profile as any;
+
     return NextResponse.json({
       success: true,
-      data: profile,
+      data: profileSinPassword,
       message: 'Perfil obtenido exitosamente'
     });
 
@@ -197,9 +199,11 @@ export async function PUT(request: NextRequest) {
       passwordChanged: !!newPassword
     });
 
+    const { password: _pwd2, ...usuarioActualizadoSinPassword } = updatedUser as any;
+
     return NextResponse.json({
       success: true,
-      data: updatedUser,
+      data: usuarioActualizadoSinPassword,
       message: 'Perfil actualizado exitosamente',
       warnings: emailChanged ? ['Tu email ha cambiado. Necesitarás verificar el nuevo email.'] : undefined
     });

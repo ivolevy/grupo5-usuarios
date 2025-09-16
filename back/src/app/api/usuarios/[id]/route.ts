@@ -6,9 +6,10 @@ import { hashPassword, validatePasswordStrength } from '@/lib/auth';
 // GET /api/usuarios/[id] - Obtener usuario por ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     // Validar parámetros
     const paramValidation = validateData(usuarioParamsSchema, { id: params.id });
     if (!paramValidation.success) {
@@ -30,9 +31,11 @@ export async function GET(
       }, { status: 404 });
     }
 
+    const { password: _pwd, ...usuarioSinPassword } = usuario as any;
+
     return NextResponse.json({
       success: true,
-      data: usuario,
+      data: usuarioSinPassword,
       message: 'Usuario obtenido exitosamente'
     });
 
@@ -49,9 +52,10 @@ export async function GET(
 // PUT /api/usuarios/[id] - Actualizar usuario
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     // Validar parámetros
     const paramValidation = validateData(usuarioParamsSchema, { id: params.id });
     if (!paramValidation.success) {
@@ -128,9 +132,11 @@ export async function PUT(
       updateData
     );
 
+    const { password: _pwd2, ...usuarioActualizadoSinPassword } = updatedUser as any;
+
     return NextResponse.json({
       success: true,
-      data: updatedUser,
+      data: usuarioActualizadoSinPassword,
       message: 'Usuario actualizado exitosamente'
     });
 
@@ -147,9 +153,10 @@ export async function PUT(
 // DELETE /api/usuarios/[id] - Eliminar usuario
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     // Validar parámetros
     const paramValidation = validateData(usuarioParamsSchema, { id: params.id });
     if (!paramValidation.success) {
