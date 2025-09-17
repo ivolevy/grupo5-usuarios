@@ -41,7 +41,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-xl border-0 bg-white/80 backdrop-blur-sm">
         <CardHeader className="text-center space-y-4">
           <div>
-            <CardTitle className="text-4xl font-roboto-bold text-dark-gray">UADE</CardTitle>
+            <CardTitle className="text-4xl font-roboto-bold text-dark-gray">SkyTrack</CardTitle>
             <CardDescription className="text-gray-600 mt-2 font-roboto-regular">Ingresa tus credenciales para acceder</CardDescription>
           </div>
         </CardHeader>

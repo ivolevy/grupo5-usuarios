@@ -10,9 +10,12 @@ import { Toaster } from "sonner"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "UADE",
+  title: "SkyTrack",
   description: "Sistema de gestión de usuarios",
   generator: "v0.app",
+        icons: {
+          icon: "/images/skytrack-icon.png",
+        },
 }
 
 export default function RootLayout({

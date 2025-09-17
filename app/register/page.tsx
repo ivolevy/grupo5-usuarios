@@ -106,7 +106,7 @@ export default function RegisterPage() {
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div className="flex-1">
-              <CardTitle className="text-4xl font-bold text-slate-900">UADE</CardTitle>
+              <CardTitle className="text-4xl font-bold text-slate-900">SkyTrack</CardTitle>
               <CardDescription className="text-slate-600 mt-2">Crear nueva cuenta</CardDescription>
             </div>
             <div className="w-5"></div>

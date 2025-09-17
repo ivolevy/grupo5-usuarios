@@ -55,11 +55,15 @@ export function Sidebar() {
           {/* Header */}
           <div className="p-6 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary-blue rounded-lg flex items-center justify-center">
-                <Shield className="w-4 h-4 text-white" />
-              </div>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+          <img 
+            src="/images/skytrack-icon.png" 
+            alt="SkyTrack" 
+            className="w-full h-full object-contain"
+          />
+        </div>
               <div>
-                <h2 className="font-roboto-bold text-dark-gray">UADE</h2>
+                <h2 className="font-roboto-bold text-dark-gray">SkyTrack</h2>
                 <p className="text-xs text-gray-500 font-roboto-regular">v1.0</p>
               </div>
             </div>
