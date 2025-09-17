@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { email, password, rol } = validation.data;
+    const { nombre_completo, email, password, rol } = validation.data;
 
     // Validación simple de contraseña (solo longitud mínima)
     if (password.length < 8) {
@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Crear el usuario
     const newUser = await prisma.usuarios.create({
+      nombre_completo,
       email,
       password: hashedPassword,
       rol: rol || 'usuario',

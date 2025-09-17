@@ -23,19 +23,19 @@ export function AccessDenied({
           <div className="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
             <Shield className="w-8 h-8 text-red-600" />
           </div>
-          <CardTitle className="text-xl text-slate-900">{title}</CardTitle>
-          <CardDescription className="text-slate-600">
+          <CardTitle className="text-xl font-roboto-bold text-dark-gray">{title}</CardTitle>
+          <CardDescription className="text-gray-600 font-roboto-regular">
             {description}
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
-          <div className="flex items-center justify-center gap-2 text-sm text-slate-500 mb-6">
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-6 font-roboto-regular">
             <AlertTriangle className="w-4 h-4" />
             <span>Contacta a un administrador si necesitas acceso</span>
           </div>
           {showBackButton && (
             <Link href="/dashboard">
-              <Button className="w-full">
+              <Button className="w-full font-roboto-medium">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Volver al Dashboard
               </Button>

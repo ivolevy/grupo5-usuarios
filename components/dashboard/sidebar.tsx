@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
-import { Home, Users, LogOut, Menu, X, Shield } from "lucide-react"
+import { Home, Users, LogOut, Menu, X, Shield, Settings } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -53,14 +53,14 @@ export function Sidebar() {
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-6 border-b border-slate-200 flex-shrink-0">
+          <div className="p-6 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary-blue rounded-lg flex items-center justify-center">
                 <Shield className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h2 className="font-semibold text-slate-900">UADE</h2>
-                <p className="text-xs text-slate-500">v1.0</p>
+                <h2 className="font-roboto-bold text-dark-gray">UADE</h2>
+                <p className="text-xs text-gray-500 font-roboto-regular">v1.0</p>
               </div>
             </div>
           </div>
@@ -81,12 +81,12 @@ export function Sidebar() {
                     key={item.name}
                     href={item.href}
                     onClick={() => setIsMobileOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
-                    )}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-roboto-medium transition-colors",
+                    isActive
+                      ? "bg-blue-50 text-primary-blue border border-primary-blue"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-dark-gray",
+                  )}
                   >
                     <item.icon className="w-4 h-4" />
                     {item.name}
@@ -96,27 +96,40 @@ export function Sidebar() {
           </nav>
 
           {/* User info and logout */}
-          <div className="p-4 border-t border-slate-200 flex-shrink-0">
+          <div className="p-4 border-t border-gray-200 flex-shrink-0">
             <div className="mb-3">
-              <p className="text-sm font-medium text-slate-900">{user?.email}</p>
-              <span
-                className={cn(
-                  "inline-block px-2 py-1 text-xs rounded-full mt-1",
-                  user?.rol === "admin"
-                    ? "bg-red-100 text-red-700"
-                    : user?.rol === "moderador"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-green-100 text-green-700",
-                )}
-              >
-                {user?.rol}
-              </span>
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-roboto-medium text-dark-gray">
+                    {user?.nombre_completo || user?.email}
+                  </p>
+                  <span
+                    className={cn(
+                      "inline-block px-2 py-1 text-xs rounded-full mt-1 font-roboto-regular",
+                      user?.rol === "admin"
+                        ? "bg-red-100 text-red-700"
+                        : user?.rol === "moderador"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-green-100 text-green-700",
+                    )}
+                  >
+                    {user?.rol}
+                  </span>
+                </div>
+                <Link
+                  href="/dashboard/profile"
+                  className="ml-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                  title="Configurar perfil"
+                >
+                  <Settings className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                </Link>
+              </div>
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={handleLogout}
-              className="w-full justify-start text-slate-600 hover:text-red-600 hover:border-red-200 bg-transparent"
+              className="w-full justify-start text-gray-600 hover:text-red-600 hover:border-red-200 bg-transparent font-roboto-regular"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Cerrar Sesión

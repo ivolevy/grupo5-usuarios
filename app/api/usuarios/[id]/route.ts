@@ -6,11 +6,12 @@ import { hashPassword, validatePasswordStrength } from '@/lib/auth';
 // GET /api/usuarios/[id] - Obtener usuario por ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Validar parámetros
-    const paramValidation = validateData(usuarioParamsSchema, { id: params.id });
+    const { id } = await params;
+    const paramValidation = validateData(usuarioParamsSchema, { id });
     if (!paramValidation.success) {
       return NextResponse.json({
         success: false,
@@ -18,8 +19,6 @@ export async function GET(
         error: paramValidation.error
       }, { status: 400 });
     }
-
-    const { id } = paramValidation.data;
 
     const usuario = await prisma.usuarios.findUnique({ id });
 
@@ -49,11 +48,12 @@ export async function GET(
 // PUT /api/usuarios/[id] - Actualizar usuario
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Validar parámetros
-    const paramValidation = validateData(usuarioParamsSchema, { id: params.id });
+    const { id } = await params;
+    const paramValidation = validateData(usuarioParamsSchema, { id });
     if (!paramValidation.success) {
       return NextResponse.json({
         success: false,
@@ -61,8 +61,6 @@ export async function PUT(
         error: paramValidation.error
       }, { status: 400 });
     }
-
-    const { id } = paramValidation.data;
     const body = await request.json();
 
     // Validar datos de entrada
@@ -75,7 +73,7 @@ export async function PUT(
       }, { status: 400 });
     }
 
-    const { email, password, rol } = validation.data;
+    const { nombre_completo, email, password, rol } = validation.data;
 
     // Si se proporciona una nueva contraseña, validar su fortaleza
     if (password) {
@@ -118,6 +116,7 @@ export async function PUT(
 
     // Preparar datos para actualizar
     const updateData: any = {};
+    if (nombre_completo !== undefined) updateData.nombre_completo = nombre_completo;
     if (email) updateData.email = email;
     if (password) updateData.password = await hashPassword(password);
     if (rol) updateData.rol = rol;
@@ -147,11 +146,12 @@ export async function PUT(
 // DELETE /api/usuarios/[id] - Eliminar usuario
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Validar parámetros
-    const paramValidation = validateData(usuarioParamsSchema, { id: params.id });
+    const { id } = await params;
+    const paramValidation = validateData(usuarioParamsSchema, { id });
     if (!paramValidation.success) {
       return NextResponse.json({
         success: false,
@@ -159,8 +159,6 @@ export async function DELETE(
         error: paramValidation.error
       }, { status: 400 });
     }
-
-    const { id } = paramValidation.data;
 
     // Verificar si el usuario existe
     const existingUser = await prisma.usuarios.findUnique({ id });

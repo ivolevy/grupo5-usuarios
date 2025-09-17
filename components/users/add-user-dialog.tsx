@@ -24,6 +24,7 @@ export function AddUserDialog() {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
+    nombre_completo: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -35,7 +36,7 @@ export function AddUserDialog() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.email || !formData.password) {
+    if (!formData.nombre_completo || !formData.email || !formData.password) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -56,12 +57,13 @@ export function AddUserDialog() {
     setIsSubmitting(true)
     try {
       await addUser({
+        nombre_completo: formData.nombre_completo,
         email: formData.email,
         password: formData.password,
         rol: formData.rol,
       })
       
-      setFormData({ email: "", password: "", confirmPassword: "", rol: "usuario" })
+      setFormData({ nombre_completo: "", email: "", password: "", confirmPassword: "", rol: "usuario" })
       setOpen(false)
       
       toast({
@@ -93,6 +95,18 @@ export function AddUserDialog() {
           <DialogDescription>Completa la información para crear un nuevo usuario en el sistema.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="nombre_completo">Nombre Completo</Label>
+            <Input
+              id="nombre_completo"
+              type="text"
+              value={formData.nombre_completo}
+              onChange={(e) => setFormData({ ...formData, nombre_completo: e.target.value })}
+              placeholder="Nombre completo del usuario"
+              required
+              disabled={isSubmitting}
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input

@@ -2,6 +2,11 @@ import { z } from 'zod';
 
 // Validaciones para usuarios
 export const createUsuarioSchema = z.object({
+  nombre_completo: z
+    .string()
+    .min(1, 'El nombre completo es requerido')
+    .max(200, 'El nombre completo es demasiado largo')
+    .optional(),
   email: z
     .string()
     .email('Debe ser un email válido')
@@ -18,6 +23,11 @@ export const createUsuarioSchema = z.object({
 });
 
 export const updateUsuarioSchema = z.object({
+  nombre_completo: z
+    .string()
+    .min(1, 'El nombre completo es requerido')
+    .max(200, 'El nombre completo es demasiado largo')
+    .optional(),
   email: z
     .string()
     .email('Debe ser un email válido')

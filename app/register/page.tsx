@@ -13,6 +13,7 @@ import Link from "next/link"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
+    nombre_completo: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -32,7 +33,7 @@ export default function RegisterPage() {
   }
 
   const validateForm = () => {
-    if (!formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.nombre_completo || !formData.email || !formData.password || !formData.confirmPassword) {
       setError("Todos los campos son obligatorios")
       return false
     }
@@ -71,6 +72,7 @@ export default function RegisterPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          nombre_completo: formData.nombre_completo,
           email: formData.email,
           password: formData.password,
           rol: formData.rol
@@ -112,6 +114,21 @@ export default function RegisterPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="nombre_completo" className="text-sm font-medium text-slate-700">
+                Nombre Completo
+              </Label>
+              <Input
+                id="nombre_completo"
+                type="text"
+                value={formData.nombre_completo}
+                onChange={(e) => handleInputChange("nombre_completo", e.target.value)}
+                placeholder="Tu nombre completo"
+                required
+                className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-slate-700">
                 Email
@@ -226,11 +243,13 @@ export default function RegisterPage() {
           </div>
 
           <div className="mt-4 p-4 bg-slate-50 rounded-lg">
-            <p className="text-xs text-slate-600 mb-2">Requisitos de contraseña:</p>
+            <p className="text-xs text-slate-600 mb-2">Requisitos de registro:</p>
             <ul className="text-xs text-slate-700 space-y-1">
-              <li>• Mínimo 8 caracteres</li>
+              <li>• Nombre completo es obligatorio</li>
+              <li>• Email válido requerido</li>
+              <li>• Contraseña mínimo 8 caracteres</li>
+              <li>• Se creará como usuario estándar</li>
             </ul>
-            <p className="text-xs text-slate-600 mt-2">• Se creará como usuario estándar</p>
           </div>
         </CardContent>
       </Card>

@@ -9,6 +9,8 @@ interface User {
   email_verified: boolean
   created_at: string
   last_login_at?: string
+  nombre_completo?: string
+  telefono?: string
 }
 
 interface AuthContextType {
@@ -16,6 +18,7 @@ interface AuthContextType {
   token: string | null
   login: (email: string, password: string) => Promise<boolean>
   logout: () => void
+  refreshUser: () => Promise<void>
   isLoading: boolean
   error: string | null
 }
@@ -88,6 +91,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const refreshUser = async () => {
+    if (!token) return
+
+    try {
+      const response = await fetch('/api/usuarios/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setUser(data.data)
+          localStorage.setItem("user", JSON.stringify(data.data))
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error)
+    }
+  }
+
   const logout = () => {
     setUser(null)
     setToken(null)
@@ -100,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading, error }}>
+    <AuthContext.Provider value={{ user, token, login, logout, refreshUser, isLoading, error }}>
       {children}
     </AuthContext.Provider>
   )

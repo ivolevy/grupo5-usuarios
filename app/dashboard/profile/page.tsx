@@ -1,0 +1,331 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useAuth } from "@/contexts/auth-context"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Save, User, Mail, Shield, Calendar, Clock } from "lucide-react"
+import { toast } from "sonner"
+
+interface UserProfile {
+  id: string
+  email: string
+  rol: "admin" | "usuario" | "moderador"
+  email_verified: boolean
+  created_at: string
+  last_login_at?: string
+  nombre_completo?: string
+  telefono?: string
+}
+
+export default function ProfilePage() {
+  const { user, token, refreshUser } = useAuth()
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [formData, setFormData] = useState({
+    nombre_completo: "",
+    email: "",
+  })
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (user) {
+        console.log('Usuario actual:', user) // Debug para ver qué datos tiene
+        
+        // Si el usuario no tiene nombre_completo, refrescar desde el servidor
+        if (!user.nombre_completo) {
+          console.log('Usuario sin nombre_completo, refrescando desde servidor...')
+          await refreshUser()
+        }
+        
+        setProfile(user)
+        setFormData({
+          nombre_completo: user.nombre_completo || "",
+          email: user.email || "",
+        })
+        setIsLoading(false)
+      }
+    }
+    
+    loadUserData()
+  }, [user, refreshUser])
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleSave = async () => {
+    if (!token) {
+      toast.error("No se encontró el token de autenticación")
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const response = await fetch('/api/usuarios/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success("Perfil actualizado correctamente")
+        // Actualizar el perfil local
+        setProfile(prev => prev ? { ...prev, ...formData } : null)
+        setIsEditing(false) // Salir del modo edición
+      } else {
+        toast.error(data.message || "Error al actualizar el perfil")
+      }
+    } catch (error) {
+      console.error('Error al actualizar perfil:', error)
+      toast.error("Error de conexión al actualizar el perfil")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleCancel = () => {
+    // Restaurar los datos originales
+    if (profile) {
+      setFormData({
+        nombre_completo: profile.nombre_completo || "",
+        email: profile.email || "",
+      })
+    }
+    setIsEditing(false)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando perfil...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-600">No se pudo cargar el perfil del usuario</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+          <User className="w-5 h-5 text-blue-600" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Mi Perfil</h1>
+          <p className="text-gray-600">Gestiona tu información personal y configuración</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Información del perfil */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Información personal */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Información Personal
+                  </CardTitle>
+                  <CardDescription>
+                    {isEditing ? "Edita tu información personal" : "Tu información personal"}
+                  </CardDescription>
+                </div>
+                {!isEditing && (
+                  <Button 
+                    onClick={() => setIsEditing(true)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Editar Perfil
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isEditing ? (
+                <>
+                  <div>
+                    <Label htmlFor="nombre_completo">Nombre Completo</Label>
+                    <Input
+                      id="nombre_completo"
+                      name="nombre_completo"
+                      value={formData.nombre_completo}
+                      onChange={handleInputChange}
+                      placeholder="Tu nombre completo"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="tu@email.com"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleSave} 
+                      disabled={isSaving}
+                      className="flex-1"
+                    >
+                      {isSaving ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 mr-2" />
+                          Guardar Cambios
+                        </>
+                      )}
+                    </Button>
+                    <Button 
+                      onClick={handleCancel}
+                      variant="outline"
+                      disabled={isSaving}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-500">Nombre Completo</Label>
+                      <p className="text-lg font-medium text-gray-900 mt-1">
+                        {profile.nombre_completo || (
+                          <span className="text-gray-400 italic">No especificado - Haz clic en "Editar Perfil" para agregarlo</span>
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-500">Email</Label>
+                      <p className="text-lg font-medium text-gray-900 mt-1">
+                        {profile.email}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Información de la cuenta */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Información de la Cuenta
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {profile.nombre_completo && (
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-gray-500" />
+                  <div>
+                    <p className="text-sm font-medium">Nombre completo</p>
+                    <p className="text-sm text-gray-600">{profile.nombre_completo}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-gray-500" />
+                <div>
+                  <p className="text-sm font-medium">Email verificado</p>
+                  <Badge variant={profile.email_verified ? "default" : "destructive"}>
+                    {profile.email_verified ? "Verificado" : "No verificado"}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-gray-500" />
+                <div>
+                  <p className="text-sm font-medium">Rol</p>
+                  <Badge 
+                    variant={
+                      profile.rol === "admin" ? "destructive" :
+                      profile.rol === "moderador" ? "secondary" : "default"
+                    }
+                  >
+                    {profile.rol}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-gray-500" />
+                <div>
+                  <p className="text-sm font-medium">Miembro desde</p>
+                  <p className="text-sm text-gray-600">
+                    {new Date(profile.created_at).toLocaleDateString('es-ES', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              {profile.last_login_at && (
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-gray-500" />
+                  <div>
+                    <p className="text-sm font-medium">Último acceso</p>
+                    <p className="text-sm text-gray-600">
+                      {new Date(profile.last_login_at).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}

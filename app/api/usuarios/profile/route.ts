@@ -14,6 +14,11 @@ const updateProfileSchema = z.object({
     .email('Debe ser un email válido')
     .max(255, 'El email es demasiado largo')
     .optional(),
+  nombre_completo: z
+    .string()
+    .min(1, 'El nombre completo es requerido')
+    .max(200, 'El nombre completo es demasiado largo')
+    .optional(),
   currentPassword: z
     .string()
     .min(1, 'La contraseña actual es requerida para cambios de seguridad')
@@ -107,7 +112,7 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { email, currentPassword, newPassword } = validation.data;
+    const { email, nombre_completo, currentPassword, newPassword } = validation.data;
 
     // Obtener usuario actual
     const currentUser = await prisma.usuarios.findUnique({ id: user.userId });
@@ -121,6 +126,9 @@ export async function PUT(request: NextRequest) {
 
     const updateData: any = {};
     let emailChanged = false;
+
+    // Actualizar campos básicos
+    if (nombre_completo !== undefined) updateData.nombre_completo = nombre_completo;
 
     // Cambio de email
     if (email && email !== currentUser.email) {

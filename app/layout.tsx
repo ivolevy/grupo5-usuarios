@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/contexts/auth-context"
 import { UsersProvider } from "@/contexts/users-context"
 import { Suspense } from "react"
+import { Toaster } from "sonner"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default function RootLayout({
             <UsersProvider>{children}</UsersProvider>
           </AuthProvider>
         </Suspense>
+        <Toaster position="top-right" richColors />
         <Analytics />
       </body>
     </html>

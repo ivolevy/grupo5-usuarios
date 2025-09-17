@@ -32,7 +32,8 @@ export default function UsersPage() {
   const filteredUsers = users.filter(
     (user) =>
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.rol.toLowerCase().includes(searchTerm.toLowerCase()),
+      user.rol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.nombre_completo && user.nombre_completo.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
   const stats = {
@@ -62,8 +63,8 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Gestión de Usuarios</h2>
-          <p className="text-slate-600">Administra los usuarios del sistema</p>
+          <h2 className="text-2xl font-roboto-bold text-dark-gray">Gestión de Usuarios</h2>
+          <p className="text-gray-600 font-roboto-regular">Administra los usuarios del sistema</p>
         </div>
         <AddUserDialog />
       </div>
@@ -77,8 +78,8 @@ export default function UsersPage() {
                 <Users className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-600">Total</p>
-                <p className="text-xl font-bold text-slate-900">{stats.total}</p>
+                <p className="text-sm font-roboto-medium text-gray-600">Total</p>
+                <p className="text-xl font-roboto-bold text-dark-gray">{stats.total}</p>
               </div>
             </div>
           </CardContent>
@@ -90,8 +91,8 @@ export default function UsersPage() {
                 <UserCheck className="w-4 h-4 text-green-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-600">Verificados</p>
-                <p className="text-xl font-bold text-slate-900">{stats.verified}</p>
+                <p className="text-sm font-roboto-medium text-gray-600">Verificados</p>
+                <p className="text-xl font-roboto-bold text-dark-gray">{stats.verified}</p>
               </div>
             </div>
           </CardContent>
@@ -103,8 +104,8 @@ export default function UsersPage() {
                 <UserX className="w-4 h-4 text-gray-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-600">Sin verificar</p>
-                <p className="text-xl font-bold text-slate-900">{stats.unverified}</p>
+                <p className="text-sm font-roboto-medium text-gray-600">Sin verificar</p>
+                <p className="text-xl font-roboto-bold text-dark-gray">{stats.unverified}</p>
               </div>
             </div>
           </CardContent>
@@ -116,8 +117,8 @@ export default function UsersPage() {
                 <Shield className="w-4 h-4 text-red-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-600">Admins</p>
-                <p className="text-xl font-bold text-slate-900">{stats.admins}</p>
+                <p className="text-sm font-roboto-medium text-gray-600">Admins</p>
+                <p className="text-xl font-roboto-bold text-dark-gray">{stats.admins}</p>
               </div>
             </div>
           </CardContent>
@@ -129,18 +130,18 @@ export default function UsersPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Lista de Usuarios</CardTitle>
-              <CardDescription>
+              <CardTitle className="font-roboto-bold">Lista de Usuarios</CardTitle>
+              <CardDescription className="font-roboto-regular">
                 {filteredUsers.length} de {users.length} usuarios
               </CardDescription>
             </div>
             <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 placeholder="Buscar usuarios..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 font-roboto-regular"
               />
             </div>
           </div>
@@ -149,6 +150,7 @@ export default function UsersPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Nombre Completo</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Rol</TableHead>
                 <TableHead>Estado</TableHead>
@@ -160,26 +162,29 @@ export default function UsersPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     Cargando usuarios...
                   </TableCell>
                 </TableRow>
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-red-600">
+                  <TableCell colSpan={7} className="text-center py-8 text-red-600">
                     Error: {error}
                   </TableCell>
                 </TableRow>
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     No se encontraron usuarios
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredUsers.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.email}</TableCell>
+                    <TableCell className="font-roboto-medium">
+                      {user.nombre_completo || "Sin nombre"}
+                    </TableCell>
+                    <TableCell className="font-roboto-medium">{user.email}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={cn("capitalize", getRoleBadge(user.rol))}>
                         {user.rol}
@@ -190,10 +195,10 @@ export default function UsersPage() {
                         {user.email_verified ? "Verificado" : "Sin verificar"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-slate-600">
+                    <TableCell className="text-gray-600 font-roboto-regular">
                       {new Date(user.created_at).toLocaleDateString('es-ES')}
                     </TableCell>
-                    <TableCell className="text-slate-600">
+                    <TableCell className="text-gray-600 font-roboto-regular">
                       {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString('es-ES') : "Nunca"}
                     </TableCell>
                     <TableCell className="text-right">

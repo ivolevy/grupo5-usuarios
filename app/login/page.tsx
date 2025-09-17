@@ -41,14 +41,14 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-xl border-0 bg-white/80 backdrop-blur-sm">
         <CardHeader className="text-center space-y-4">
           <div>
-            <CardTitle className="text-4xl font-bold text-slate-900">UADE</CardTitle>
-            <CardDescription className="text-slate-600 mt-2">Ingresa tus credenciales para acceder</CardDescription>
+            <CardTitle className="text-4xl font-roboto-bold text-dark-gray">UADE</CardTitle>
+            <CardDescription className="text-gray-600 mt-2 font-roboto-regular">Ingresa tus credenciales para acceder</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+              <Label htmlFor="email" className="text-sm font-roboto-medium text-dark-gray">
                 Email
               </Label>
               <Input
@@ -58,11 +58,11 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@example.com"
                 required
-                className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                className="h-11 border-gray-200 focus:border-primary-blue focus:ring-primary-blue font-roboto-regular"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-slate-700">
+              <Label htmlFor="password" className="text-sm font-roboto-medium text-dark-gray">
                 Contraseña
               </Label>
               <div className="relative">
@@ -73,12 +73,12 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                  className="h-11 border-gray-200 focus:border-primary-blue focus:ring-primary-blue pr-10 font-roboto-regular"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                 >
                   {showPassword ? (
@@ -98,7 +98,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              className="w-full h-11 bg-primary-blue hover:bg-blue-700 text-white font-roboto-medium"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -113,18 +113,18 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-gray-600 font-roboto-regular">
               ¿No tienes una cuenta?{" "}
-              <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+              <Link href="/register" className="text-primary-blue hover:text-blue-700 font-roboto-medium">
                 Regístrate aquí
               </Link>
             </p>
           </div>
 
-          <div className="mt-4 p-4 bg-slate-50 rounded-lg">
-            <p className="text-xs text-slate-600 mb-2">Usuarios de prueba:</p>
-            <p className="text-xs text-slate-700">• admin@example.com (Admin)</p>
-            <p className="text-xs text-slate-700">• user@example.com (Usuario)</p>
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <p className="text-xs text-gray-600 mb-2 font-roboto-medium">Usuarios de prueba:</p>
+            <p className="text-xs text-gray-700 font-roboto-regular">• admin@example.com (Admin)</p>
+            <p className="text-xs text-gray-700 font-roboto-regular">• user@example.com (Usuario)</p>
           </div>
         </CardContent>
       </Card>
