@@ -25,21 +25,26 @@ export const createUsuarioSchema = z.object({
 export const updateUsuarioSchema = z.object({
   nombre_completo: z
     .string()
-    .min(1, 'El nombre completo es requerido')
     .max(200, 'El nombre completo es demasiado largo')
-    .optional(),
+    .optional()
+    .transform(val => val === '' ? undefined : val),
   email: z
     .string()
     .email('Debe ser un email válido')
     .max(255, 'El email es demasiado largo')
-    .optional(),
+    .optional()
+    .transform(val => val === '' ? undefined : val),
   password: z
     .string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
     .max(128, 'La contraseña es demasiado larga')
-    .optional(),
+    .optional()
+    .transform(val => val === '' ? undefined : val),
   rol: z
     .enum(['admin', 'usuario', 'moderador'])
+    .optional(),
+  email_verified: z
+    .boolean()
     .optional(),
 });
 

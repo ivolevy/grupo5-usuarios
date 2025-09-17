@@ -29,9 +29,12 @@ export async function GET(
       }, { status: 404 });
     }
 
+    // Remover la contraseña de la respuesta
+    const { password: _, ...usuarioWithoutPassword } = usuario;
+
     return NextResponse.json({
       success: true,
-      data: usuario,
+      data: usuarioWithoutPassword,
       message: 'Usuario obtenido exitosamente'
     });
 
@@ -73,7 +76,7 @@ export async function PUT(
       }, { status: 400 });
     }
 
-    const { nombre_completo, email, password, rol } = validation.data;
+    const { nombre_completo, email, password, rol, email_verified } = validation.data;
 
     // Si se proporciona una nueva contraseña, validar su fortaleza
     if (password) {
@@ -120,6 +123,7 @@ export async function PUT(
     if (email) updateData.email = email;
     if (password) updateData.password = await hashPassword(password);
     if (rol) updateData.rol = rol;
+    if (email_verified !== undefined) updateData.email_verified = email_verified;
 
     // Actualizar el usuario
     const updatedUser = await prisma.usuarios.update(
@@ -127,9 +131,12 @@ export async function PUT(
       updateData
     );
 
+    // Remover la contraseña de la respuesta
+    const { password: _, ...userWithoutPassword } = updatedUser;
+
     return NextResponse.json({
       success: true,
-      data: updatedUser,
+      data: userWithoutPassword,
       message: 'Usuario actualizado exitosamente'
     });
 
