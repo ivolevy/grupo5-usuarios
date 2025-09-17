@@ -24,6 +24,9 @@ interface UsersContextType {
   deleteUser: (id: string) => Promise<void>
   getUserById: (id: string) => User | undefined
   refreshUsers: () => Promise<void>
+  getUsersByRole: (role: string) => User[]
+  getAdminModeratorUsers: () => User[]
+  getNormalUsers: () => User[]
 }
 
 const UsersContext = createContext<UsersContextType | undefined>(undefined)
@@ -144,6 +147,18 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     return users.find((user) => user.id === id)
   }
 
+  const getUsersByRole = (role: string) => {
+    return users.filter(user => user.rol === role)
+  }
+
+  const getAdminModeratorUsers = () => {
+    return users.filter(user => user.rol !== "usuario")
+  }
+
+  const getNormalUsers = () => {
+    return users.filter(user => user.rol === "usuario")
+  }
+
   return (
     <UsersContext.Provider
       value={{
@@ -155,6 +170,9 @@ export function UsersProvider({ children }: { children: ReactNode }) {
         deleteUser,
         getUserById,
         refreshUsers,
+        getUsersByRole,
+        getAdminModeratorUsers,
+        getNormalUsers,
       }}
     >
       {children}
