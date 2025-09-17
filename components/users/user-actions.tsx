@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useUsers, type User } from "@/contexts/users-context"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +14,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Trash2, UserCheck, UserX } from "lucide-react"
+import { EditUserDialog } from "@/components/users/edit-user-dialog"
+import { MoreHorizontal, Trash2, UserCheck, UserX, Edit } from "lucide-react"
 
 interface UserActionsProps {
   user: User
@@ -23,15 +23,11 @@ interface UserActionsProps {
 
 export function UserActions({ user }: UserActionsProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
   const { updateUser, deleteUser } = useUsers()
 
-  const handleRoleChange = (newRole: User["role"]) => {
-    updateUser(user.id, { role: newRole })
-  }
-
-  const handleStatusToggle = () => {
-    const newStatus = user.status === "active" ? "inactive" : "active"
-    updateUser(user.id, { status: newStatus })
+  const handleVerificationToggle = () => {
+    updateUser(user.id, { email_verified: !user.email_verified })
   }
 
   const handleDelete = () => {
@@ -41,18 +37,6 @@ export function UserActions({ user }: UserActionsProps) {
 
   return (
     <div className="flex items-center gap-2">
-      {/* Role selector */}
-      <Select value={user.role} onValueChange={handleRoleChange}>
-        <SelectTrigger className="w-32 h-8 text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="user">Usuario</SelectItem>
-          <SelectItem value="moderator">Moderador</SelectItem>
-          <SelectItem value="admin">Admin</SelectItem>
-        </SelectContent>
-      </Select>
-
       {/* Actions dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -61,16 +45,20 @@ export function UserActions({ user }: UserActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handleStatusToggle}>
-            {user.status === "active" ? (
+          <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Editar Usuario
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleVerificationToggle}>
+            {user.email_verified ? (
               <>
                 <UserX className="mr-2 h-4 w-4" />
-                Desactivar
+                Marcar como no verificado
               </>
             ) : (
               <>
                 <UserCheck className="mr-2 h-4 w-4" />
-                Activar
+                Marcar como verificado
               </>
             )}
           </DropdownMenuItem>
@@ -87,7 +75,7 @@ export function UserActions({ user }: UserActionsProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el usuario <strong>{user.name}</strong> del
+              Esta acción no se puede deshacer. Se eliminará permanentemente el usuario <strong>{user.nombre_completo || user.email}</strong> del
               sistema.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -99,6 +87,13 @@ export function UserActions({ user }: UserActionsProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit user dialog */}
+      <EditUserDialog
+        user={user}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+      />
     </div>
   )
 }
