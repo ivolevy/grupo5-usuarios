@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Save, User, Mail, Shield, Calendar, Clock } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Save, User, Mail, Shield, Calendar, Clock, Key, Eye, EyeOff, Lock } from "lucide-react"
 import { toast } from "sonner"
 
 interface UserProfile {
@@ -27,10 +28,23 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [isSavingPassword, setIsSavingPassword] = useState(false)
   const [formData, setFormData] = useState({
     nombre_completo: "",
     email: "",
   })
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  })
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  })
+  const [passwordError, setPasswordError] = useState("")
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -107,6 +121,133 @@ export default function ProfilePage() {
       })
     }
     setIsEditing(false)
+  }
+
+  const handlePasswordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+    // Limpiar error cuando el usuario empiece a escribir
+    if (passwordError) {
+      setPasswordError("")
+    }
+  }
+
+  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }))
+  }
+
+  const validatePassword = (password: string): { isValid: boolean; message: string } => {
+    if (password.length < 8) {
+      return { isValid: false, message: "La contraseña debe tener al menos 8 caracteres" }
+    }
+    if (!/(?=.*[a-z])/.test(password)) {
+      return { isValid: false, message: "La contraseña debe contener al menos una letra minúscula" }
+    }
+    if (!/(?=.*[A-Z])/.test(password)) {
+      return { isValid: false, message: "La contraseña debe contener al menos una letra mayúscula" }
+    }
+    if (!/(?=.*\d)/.test(password)) {
+      return { isValid: false, message: "La contraseña debe contener al menos un número" }
+    }
+    if (!/(?=.*[!@#$%^&*(),.?":{}|<>])/.test(password)) {
+      return { isValid: false, message: "La contraseña debe contener al menos un carácter especial" }
+    }
+    return { isValid: true, message: "" }
+  }
+
+  const handlePasswordChange = async () => {
+    setPasswordError("")
+
+    // Validar campos requeridos
+    if (!passwordData.currentPassword.trim()) {
+      setPasswordError("La contraseña actual es requerida")
+      return
+    }
+
+    if (!passwordData.newPassword.trim()) {
+      setPasswordError("La nueva contraseña es requerida")
+      return
+    }
+
+    if (!passwordData.confirmPassword.trim()) {
+      setPasswordError("La confirmación de contraseña es requerida")
+      return
+    }
+
+    // Validar que la nueva contraseña sea diferente a la actual
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      setPasswordError("La nueva contraseña debe ser diferente a la actual")
+      return
+    }
+
+    // Validar nueva contraseña
+    const passwordValidation = validatePassword(passwordData.newPassword)
+    if (!passwordValidation.isValid) {
+      setPasswordError(passwordValidation.message)
+      return
+    }
+
+    // Validar confirmación
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError("Las contraseñas no coinciden")
+      return
+    }
+
+    setIsSavingPassword(true)
+
+    try {
+      // Simular verificación de contraseña actual y cambio
+      // En una implementación real, aquí harías la llamada a la API
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Simular respuesta de la API
+      const isCurrentPasswordValid = Math.random() > 0.2 // 80% de probabilidad de éxito para demo
+      const isChangeSuccessful = Math.random() > 0.1 // 90% de probabilidad de éxito para demo
+      
+      if (!isCurrentPasswordValid) {
+        setPasswordError("La contraseña actual es incorrecta")
+        toast.error("Contraseña actual incorrecta")
+        return
+      }
+      
+      if (!isChangeSuccessful) {
+        setPasswordError("Error al cambiar la contraseña. Intenta nuevamente.")
+        toast.error("Error al cambiar la contraseña")
+        return
+      }
+      
+      toast.success("Contraseña cambiada exitosamente")
+      
+      // Limpiar formulario y cerrar sección
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      })
+      setIsChangingPassword(false)
+      
+    } catch (error) {
+      console.error('Error changing password:', error)
+      toast.error("Error al cambiar la contraseña. Intenta nuevamente.")
+    } finally {
+      setIsSavingPassword(false)
+    }
+  }
+
+  const handleCancelPasswordChange = () => {
+    setPasswordData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    })
+    setPasswordError("")
+    setIsChangingPassword(false)
   }
 
   if (isLoading) {
@@ -193,6 +334,142 @@ export default function ProfilePage() {
                       onChange={handleInputChange}
                       placeholder="tu@email.com"
                     />
+                  </div>
+
+                  {/* Sección de cambio de contraseña */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                          <Lock className="w-5 h-5" />
+                          Cambiar Contraseña
+                        </h3>
+                        <p className="text-sm text-gray-600">Actualiza tu contraseña para mantener tu cuenta segura</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsChangingPassword(!isChangingPassword)}
+                      >
+                        <Key className="w-4 h-4 mr-2" />
+                        {isChangingPassword ? "Cancelar" : "Cambiar"}
+                      </Button>
+                    </div>
+
+                    {isChangingPassword && (
+                      <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                        <div>
+                          <Label htmlFor="currentPassword">Contraseña Actual</Label>
+                          <div className="relative">
+                            <Input
+                              id="currentPassword"
+                              name="currentPassword"
+                              type={showPasswords.current ? "text" : "password"}
+                              value={passwordData.currentPassword}
+                              onChange={handlePasswordInputChange}
+                              placeholder="••••••••"
+                              className="pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => togglePasswordVisibility('current')}
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                              {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="newPassword">Nueva Contraseña</Label>
+                          <div className="relative">
+                            <Input
+                              id="newPassword"
+                              name="newPassword"
+                              type={showPasswords.new ? "text" : "password"}
+                              value={passwordData.newPassword}
+                              onChange={handlePasswordInputChange}
+                              placeholder="••••••••"
+                              className="pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => togglePasswordVisibility('new')}
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                              {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="confirmPassword">Confirmar Nueva Contraseña</Label>
+                          <div className="relative">
+                            <Input
+                              id="confirmPassword"
+                              name="confirmPassword"
+                              type={showPasswords.confirm ? "text" : "password"}
+                              value={passwordData.confirmPassword}
+                              onChange={handlePasswordInputChange}
+                              placeholder="••••••••"
+                              className="pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => togglePasswordVisibility('confirm')}
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                              {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        {passwordError && (
+                          <Alert className="border-red-200 bg-red-50">
+                            <AlertDescription className="text-red-700 text-sm">{passwordError}</AlertDescription>
+                          </Alert>
+                        )}
+
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            onClick={handlePasswordChange}
+                            disabled={isSavingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+                            className="flex-1"
+                          >
+                            {isSavingPassword ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                Cambiando...
+                              </>
+                            ) : (
+                              <>
+                                <Key className="w-4 h-4 mr-2" />
+                                Cambiar Contraseña
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={handleCancelPasswordChange}
+                            variant="outline"
+                            disabled={isSavingPassword}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+
+                        <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded">
+                          <p className="font-medium mb-1">Requisitos de contraseña:</p>
+                          <ul className="space-y-1">
+                            <li>• Mínimo 8 caracteres</li>
+                            <li>• Al menos una letra mayúscula y una minúscula</li>
+                            <li>• Al menos un número y un carácter especial</li>
+                          </ul>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-2">
