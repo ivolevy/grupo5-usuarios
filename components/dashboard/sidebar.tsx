@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils"
 import { hasPermission, Permission } from "@/lib/permissions"
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Home, permission: null },
+  { name: "Inicio", href: "/", icon: Home, permission: null },
+  { name: "Dashboard", href: "/dashboard", icon: Shield, permission: Permission.ADMIN_DASHBOARD },
   { name: "Usuarios", href: "/dashboard/users", icon: Users, permission: Permission.ADMIN_DASHBOARD },
 ]
 
@@ -64,7 +65,7 @@ export function Sidebar() {
         </div>
               <div>
                 <h2 className="font-roboto-bold text-dark-gray">SkyTrack</h2>
-                <p className="text-xs text-gray-500 font-roboto-regular">v1.0</p>
+                <p className="text-xs text-gray-500 font-roboto-regular">Vuelos</p>
               </div>
             </div>
           </div>

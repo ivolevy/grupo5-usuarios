@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const { login, isLoading } = useAuth()
+  const { login, isLoading, user } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,7 +30,16 @@ export default function LoginPage() {
     console.log('Resultado del login:', success)
     
     if (success) {
-      router.push("/dashboard")
+      // Redirigir según el rol del usuario
+      // Esperar un poco para que el contexto se actualice
+      setTimeout(() => {
+        const userData = JSON.parse(localStorage.getItem("user") || "{}")
+        if (userData.rol === 'admin') {
+          router.push("/dashboard")
+        } else {
+          router.push("/") // Usuarios normales van al inicio
+        }
+      }, 100)
     } else {
       setError("Credenciales inválidas. Intenta con admin@example.com o user@example.com")
     }

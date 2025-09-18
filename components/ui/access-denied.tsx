@@ -34,10 +34,10 @@ export function AccessDenied({
             <span>Contacta a un administrador si necesitas acceso</span>
           </div>
           {showBackButton && (
-            <Link href="/dashboard">
+            <Link href="/">
               <Button className="w-full font-roboto-medium">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver al Dashboard
+                Volver al Inicio
               </Button>
             </Link>
           )}

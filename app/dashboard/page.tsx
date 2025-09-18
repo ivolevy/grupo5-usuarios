@@ -5,10 +5,14 @@ import { useUsers } from "@/contexts/users-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Shield, Activity, TrendingUp, UserCheck, UserX, Clock } from "lucide-react"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts"
+import { AccessDenied } from "@/components/ui/access-denied"
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
   const { users, loading } = useUsers()
+  const router = useRouter()
   const [stats, setStats] = useState({
     totalUsers: 0,
     verifiedUsers: 0,
@@ -64,6 +68,29 @@ export default function DashboardPage() {
     ? Math.round(((stats.newUsersThisMonth - stats.newUsersLastMonth) / stats.newUsersLastMonth) * 100)
     : stats.newUsersThisMonth > 0 ? 100 : 0
 
+  // Datos para los charts - Paleta azul
+  const roleData = [
+    { name: 'Administradores', value: stats.adminUsers, color: '#1e40af' }, // Azul oscuro
+    { name: 'Moderadores', value: stats.moderatorUsers, color: '#3b82f6' }, // Azul medio
+    { name: 'Usuarios', value: stats.normalUsers, color: '#60a5fa' } // Azul claro
+  ]
+
+  const statusData = [
+    { name: 'Verificados', value: stats.verifiedUsers, color: '#1d4ed8' }, // Azul fuerte
+    { name: 'No Verificados', value: stats.unverifiedUsers, color: '#93c5fd' } // Azul muy claro
+  ]
+
+  const activityData = [
+    { name: 'Activos', value: stats.activeUsers, color: '#2563eb' }, // Azul vibrante
+    { name: 'Inactivos', value: stats.inactiveUsers, color: '#94a3b8' } // Azul gris
+  ]
+
+  // Datos para gráfico de crecimiento mensual
+  const growthData = [
+    { name: 'Mes Anterior', usuarios: stats.newUsersLastMonth },
+    { name: 'Este Mes', usuarios: stats.newUsersThisMonth }
+  ]
+
   const statsCards = [
     {
       title: "Total Usuarios",
@@ -115,6 +142,33 @@ export default function DashboardPage() {
     },
   ]
 
+  // Verificar si el usuario está cargando
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600">Cargando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Verificar si el usuario no está autenticado
+  if (!user) {
+    router.push('/login')
+    return null
+  }
+
+  // Verificar si el usuario no es administrador
+  if (user.rol !== 'admin') {
+    return <AccessDenied 
+      title="Acceso Denegado - Dashboard Administrativo"
+      description="Solo los administradores pueden acceder al dashboard. Tu rol actual no tiene permisos suficientes."
+      showBackButton={false}
+    />
+  }
+
   return (
     <div className="space-y-6">
       {/* Welcome message */}
@@ -162,29 +216,108 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Quick actions */}
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Distribución por Roles */}
         <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-slate-900">Acciones Rápidas</CardTitle>
-            <CardDescription>Tareas comunes que puedes realizar</CardDescription>
+            <CardTitle className="text-lg font-semibold text-slate-900">Distribución por Roles</CardTitle>
+            <CardDescription>Usuarios categorizados por su rol en el sistema</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-              <span className="text-sm font-medium text-slate-700">Gestionar Usuarios</span>
-              <span className="text-xs text-slate-500">→</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-              <span className="text-sm font-medium text-slate-700">Ver Reportes</span>
-              <span className="text-xs text-slate-500">→</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-              <span className="text-sm font-medium text-slate-700">Configuración</span>
-              <span className="text-xs text-slate-500">→</span>
-            </div>
+          <CardContent>
+            {loading ? (
+              <div className="h-64 flex items-center justify-center">
+                <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={roleData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {roleData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value, name) => [value, name]} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
+        {/* Estado de Verificación y Actividad */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-slate-900">Estado de Usuarios</CardTitle>
+            <CardDescription>Verificación y actividad de los usuarios</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-64 flex items-center justify-center">
+                <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={[...statusData, ...activityData]} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#8884d8">
+                    {[...statusData, ...activityData].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Crecimiento Mensual */}
+      <div className="grid grid-cols-1 gap-6">
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-slate-900">Crecimiento Mensual</CardTitle>
+            <CardDescription>Comparación de nuevos usuarios registrados</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-64 flex items-center justify-center">
+                <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={growthData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line 
+                    type="monotone" 
+                    dataKey="usuarios" 
+                    stroke="#1d4ed8" 
+                    strokeWidth={3}
+                    dot={{ fill: '#1d4ed8', strokeWidth: 2, r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Actividad Reciente */}
+      <div className="grid grid-cols-1 gap-6">
         <Card className="border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-slate-900">Actividad Reciente</CardTitle>
@@ -245,6 +378,7 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
+
       </div>
     </div>
   )
