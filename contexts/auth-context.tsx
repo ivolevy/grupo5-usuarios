@@ -171,6 +171,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Limpiar cookies
     document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    
+    // Redirigir a la página principal
+    if (typeof window !== 'undefined') {
+      window.location.href = '/'
+    }
   }
 
   return (
