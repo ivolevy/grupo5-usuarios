@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
 
 interface User {
   id: string
@@ -30,17 +31,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
-    // Check if user is logged in on mount
-    const savedToken = localStorage.getItem("authToken")
-    const savedUser = localStorage.getItem("user")
-    
-    if (savedToken && savedUser) {
-      setToken(savedToken)
-      setUser(JSON.parse(savedUser))
+    // Check if user is logged in on mount and validate token
+    const initializeAuth = async () => {
+      const savedToken = localStorage.getItem("authToken")
+      const savedUser = localStorage.getItem("user")
+      
+      if (savedToken && savedUser) {
+        try {
+          // Verificar si el token es válido haciendo una petición al servidor
+          const response = await fetch('/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${savedToken}`
+            }
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (data.success) {
+              // Token válido, mantener la sesión
+              setToken(savedToken)
+              setUser(JSON.parse(savedUser))
+            } else {
+              // Token inválido, limpiar datos y redirigir
+              localStorage.removeItem("authToken")
+              localStorage.removeItem("user")
+              document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+              // Solo redirigir si no estamos ya en login o register
+              if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+                router.push('/login')
+              }
+            }
+          } else {
+            // Token inválido, limpiar datos y redirigir
+            localStorage.removeItem("authToken")
+            localStorage.removeItem("user")
+            document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+            // Solo redirigir si no estamos ya en login o register
+            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+              router.push('/login')
+            }
+          }
+        } catch (error) {
+          console.error('Error validating token:', error)
+          // En caso de error de red, limpiar datos por seguridad
+          localStorage.removeItem("authToken")
+          localStorage.removeItem("user")
+          document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+          // Solo redirigir si no estamos ya en login o register
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+            router.push('/login')
+          }
+        }
+      }
+      setIsLoading(false)
     }
-    setIsLoading(false)
+    
+    initializeAuth()
   }, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {
