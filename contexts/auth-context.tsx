@@ -20,8 +20,10 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>
   logout: () => void
   refreshUser: () => Promise<void>
+  refreshToken: () => Promise<boolean>
   isLoading: boolean
   error: string | null
+  clearError: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -156,10 +158,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(data.data)
           localStorage.setItem("user", JSON.stringify(data.data))
         }
+      } else if (response.status === 401) {
+        // Token expirado, intentar refrescar
+        const refreshed = await refreshToken()
+        if (refreshed) {
+          // Reintentar la petición con el nuevo token
+          return refreshUser()
+        } else {
+          // No se pudo refrescar, hacer logout
+          logout()
+        }
       }
     } catch (error) {
       console.error('Error refreshing user:', error)
     }
+  }
+
+  const refreshToken = async (): Promise<boolean> => {
+    if (!token) return false
+
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.data.token) {
+          setToken(data.data.token)
+          setUser(data.data.user)
+          localStorage.setItem("authToken", data.data.token)
+          localStorage.setItem("user", JSON.stringify(data.data.user))
+          
+          // Actualizar cookie
+          document.cookie = `authToken=${data.data.token}; path=/; max-age=86400; SameSite=Lax`
+          
+          return true
+        }
+      }
+      
+      return false
+    } catch (error) {
+      console.error('Error refreshing token:', error)
+      return false
+    }
+  }
+
+  const clearError = () => {
+    setError(null)
   }
 
   const logout = () => {
@@ -179,7 +228,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, refreshUser, isLoading, error }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      login, 
+      logout, 
+      refreshUser, 
+      refreshToken,
+      isLoading, 
+      error,
+      clearError
+    }}>
       {children}
     </AuthContext.Provider>
   )

@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,30 +20,40 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
-  const { login, isLoading, user } = useAuth()
+  const { login, isLoading, user, error: authError, clearError } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Obtener la URL de redirección desde los parámetros de búsqueda
+  const redirectTo = searchParams.get('redirect') || '/dashboard'
+
+  // Limpiar errores cuando el componente se monta
+  useEffect(() => {
+    clearError()
+  }, [clearError])
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (user && !isLoading) {
+      router.push(redirectTo)
+    }
+  }, [user, isLoading, router, redirectTo])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    clearError()
 
     console.log('Intentando login con:', { email, password: '***' })
     const success = await login(email, password)
     console.log('Resultado del login:', success)
     
     if (success) {
-      // Redirigir según el rol del usuario
-      // Esperar un poco para que el contexto se actualice
-      setTimeout(() => {
-        const userData = JSON.parse(localStorage.getItem("user") || "{}")
-        if (userData.rol === 'admin') {
-          router.push("/dashboard")
-        } else {
-          router.push("/") // Usuarios normales van al inicio
-        }
-      }, 100)
+      // Redirigir a la URL especificada o al dashboard por defecto
+      router.push(redirectTo)
     } else {
-      setError("Credenciales inválidas. Verifica tu email y contraseña.")
+      // Mostrar error del contexto de autenticación o un mensaje genérico
+      setError(authError || "Credenciales inválidas. Verifica tu email y contraseña.")
     }
   }
 

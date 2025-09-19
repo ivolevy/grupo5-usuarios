@@ -8,23 +8,32 @@ export function middleware(request: NextRequest) {
   const protectedRoutes = ['/dashboard']
   
   // Rutas que requieren rol de administrador (se verificará en el componente)
-  const adminRoutes = ['/dashboard', '/dashboard/users']
+  const adminRoutes = ['/dashboard/users', '/dashboard/admin']
+
+  // Rutas públicas que no requieren autenticación
+  const publicRoutes = ['/login', '/register', '/', '/swagger']
+
+  // Verificar si es una ruta pública
+  if (publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
+    return NextResponse.next()
+  }
 
   // Verificar si la ruta actual requiere autenticación
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
-  const isAdminRoute = adminRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))
 
   if (isProtectedRoute) {
-    // Solo verificar que existe un token, no validarlo aquí
+    // Verificar que existe un token en cookies o localStorage
     const token = request.cookies.get('authToken')?.value
 
     if (!token) {
       // Redirigir al login si no hay token
-      return NextResponse.redirect(new URL('/login', request.url))
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(loginUrl)
     }
 
     // Para rutas de admin, permitir acceso pero la validación del rol se hará en el componente
-    // Esto permite que el componente maneje el mensaje de acceso denegado
+    // Esto permite que el componente maneje el mensaje de acceso denegado de forma más elegante
     return NextResponse.next()
   }
 

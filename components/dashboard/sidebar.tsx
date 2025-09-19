@@ -7,7 +7,7 @@ import { Home, Users, LogOut, Menu, X, Shield, Settings } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { hasPermission, Permission } from "@/lib/permissions"
+import { usePermissions, Permission } from "@/hooks/use-permissions"
 
 const navigation = [
   { name: "Inicio", href: "/", icon: Home, permission: null },
@@ -18,6 +18,7 @@ const navigation = [
 export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const { user, logout } = useAuth()
+  const { hasPermission } = usePermissions()
   const pathname = usePathname()
 
   const handleLogout = () => {
@@ -77,7 +78,7 @@ export function Sidebar() {
                 // Si no requiere permiso, mostrar siempre
                 if (!item.permission) return true
                 // Si requiere permiso, verificar que el usuario lo tenga
-                return user && hasPermission(user.rol, item.permission)
+                return hasPermission(item.permission)
               })
               .map((item) => {
                 const isActive = pathname === item.href
