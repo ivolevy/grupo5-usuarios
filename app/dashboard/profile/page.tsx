@@ -58,16 +58,20 @@ export default function ProfilePage() {
         }
         
         setProfile(user)
-        setFormData({
-          nombre_completo: user.nombre_completo || "",
-          email: user.email || "",
-        })
+        
+        // Solo actualizar formData si no está en modo edición
+        if (!isEditing) {
+          setFormData({
+            nombre_completo: user.nombre_completo || "",
+            email: user.email || "",
+          })
+        }
         setIsLoading(false)
       }
     }
     
     loadUserData()
-  }, [user, refreshUser])
+  }, [user, refreshUser, isEditing])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
