@@ -86,7 +86,7 @@ La clave `MAIL_PASSWORD` que generé es una clave de ejemplo. **DEBES CAMBIARLA*
 ### **1. Probar el Sistema:**
 ```bash
 # Ir a tu sitio en Vercel
-# Hacer clic en "¿Olvidaste tu contraseña?"
+# Hacer clic en "¿Olvidaste tu contraseña? TUTE"
 # Probar el flujo completo
 ```
 
