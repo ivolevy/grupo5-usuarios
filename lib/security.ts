@@ -74,33 +74,7 @@ export function validatePasswordStrength(password: string): {
     score += 1;
   }
   
-  // Contiene minúsculas
-  if (/[a-z]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Debe contener al menos una letra minúscula');
-  }
-  
-  // Contiene mayúsculas
-  if (/[A-Z]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Debe contener al menos una letra mayúscula');
-  }
-  
-  // Contiene números
-  if (/\d/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Debe contener al menos un número');
-  }
-  
-  // Contiene caracteres especiales
-  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Debe contener al menos un carácter especial');
-  }
+  // Eliminadas las validaciones de minúsculas, mayúsculas, números y caracteres especiales
   
   // No contiene patrones comunes
   const commonPatterns = [
@@ -130,7 +104,7 @@ export function validatePasswordStrength(password: string): {
     strength = 'very_strong';
   }
   
-  const isValid = score >= 4; // Requiere al menos 4 de 7 criterios
+  const isValid = score >= 1; // Solo requiere longitud mínima
   
   return {
     isValid,

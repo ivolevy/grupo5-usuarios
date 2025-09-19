@@ -10,8 +10,7 @@ export const createUsuarioSchema = z.object({
   password: z
     .string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
-    .max(128, 'La contraseña es demasiado larga')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'La contraseña debe contener al menos una minúscula, una mayúscula y un número'),
+    .max(128, 'La contraseña es demasiado larga'),
   rol: z
     .enum(['admin', 'usuario', 'moderador'])
     .default('usuario')
@@ -28,7 +27,6 @@ export const updateUsuarioSchema = z.object({
     .string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
     .max(128, 'La contraseña es demasiado larga')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'La contraseña debe contener al menos una minúscula, una mayúscula y un número')
     .optional(),
   rol: z
     .enum(['admin', 'usuario', 'moderador'])

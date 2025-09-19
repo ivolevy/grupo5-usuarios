@@ -45,10 +45,13 @@ export function UserActions({ user }: UserActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
-            <Edit className="mr-2 h-4 w-4" />
-            Editar Usuario
-          </DropdownMenuItem>
+          {/* Solo mostrar editar para usuarios admin/moderador */}
+          {user.rol !== 'usuario' && (
+            <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Editar Usuario
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={handleVerificationToggle}>
             {user.email_verified ? (
               <>

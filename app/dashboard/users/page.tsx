@@ -142,7 +142,7 @@ export default function UsersPage() {
           <TableHead>Estado</TableHead>
           <TableHead>Fecha Creación</TableHead>
           <TableHead>Último Login</TableHead>
-          {showActions && <TableHead className="text-right">Acciones</TableHead>}
+          {showActions && <TableHead className="text-center">Acciones</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -188,7 +188,7 @@ export default function UsersPage() {
                 {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString('es-ES') : "Nunca"}
               </TableCell>
               {showActions && (
-                <TableCell className="text-right">
+                <TableCell className="text-center">
                   <UserActions user={user} />
                 </TableCell>
               )}
@@ -365,7 +365,7 @@ export default function UsersPage() {
                 <div>
                   <CardTitle className="font-roboto-bold">Usuarios Normales</CardTitle>
                   <CardDescription className="font-roboto-regular">
-                    {filteredUsers.length} de {usuariosNormales.length} usuarios del sistema (solo visualización)
+                    {filteredUsers.length} de {usuariosNormales.length} usuarios del sistema
                     {Object.values(filters).some(value => 
                       typeof value === 'string' ? value !== '' && value !== 'all' : 
                       typeof value === 'object' && value !== null ? 
@@ -378,7 +378,7 @@ export default function UsersPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {renderUserTable(false)}
+              {renderUserTable(true)}
             </CardContent>
           </Card>
         </TabsContent>

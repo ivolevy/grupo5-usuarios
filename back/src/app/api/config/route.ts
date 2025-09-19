@@ -14,9 +14,9 @@ export async function GET() {
         tokenExpiry: '24h',
         passwordRequirements: {
           minLength: 8,
-          requireUppercase: true,
-          requireLowercase: true,
-          requireNumbers: true,
+          requireUppercase: false,
+          requireLowercase: false,
+          requireNumbers: false,
           requireSpecialChars: false
         }
       },

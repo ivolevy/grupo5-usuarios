@@ -155,10 +155,7 @@ function validatePasswordStrength(password) {
   
   if (password.length >= 8) score += 1; else feedback.push('Debe tener al menos 8 caracteres');
   if (password.length >= 12) score += 1;
-  if (/[a-z]/.test(password)) score += 1; else feedback.push('Debe contener minúsculas');
-  if (/[A-Z]/.test(password)) score += 1; else feedback.push('Debe contener mayúsculas');
-  if (/\d/.test(password)) score += 1; else feedback.push('Debe contener números');
-  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1; else feedback.push('Debe contener caracteres especiales');
+  // Eliminadas las validaciones de minúsculas, mayúsculas, números y caracteres especiales
   
   const commonPatterns = [/123456/, /password/i, /qwerty/i, /abc123/i];
   if (!commonPatterns.some(pattern => pattern.test(password))) {

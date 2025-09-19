@@ -41,7 +41,7 @@ export default function LoginPage() {
         }
       }, 100)
     } else {
-      setError("Credenciales inválidas. Intenta con admin@example.com o user@example.com")
+      setError("Credenciales inválidas. Verifica tu email y contraseña.")
     }
   }
 
@@ -65,7 +65,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@example.com"
+                placeholder="tu@email.com"
                 required
                 className="h-11 border-gray-200 focus:border-primary-blue focus:ring-primary-blue font-roboto-regular"
               />
@@ -130,11 +130,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-600 mb-2 font-roboto-medium">Usuarios de prueba:</p>
-            <p className="text-xs text-gray-700 font-roboto-regular">• admin@example.com (Admin)</p>
-            <p className="text-xs text-gray-700 font-roboto-regular">• user@example.com (Usuario)</p>
-          </div>
         </CardContent>
       </Card>
     </div>

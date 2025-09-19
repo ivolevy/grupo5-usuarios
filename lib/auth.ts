@@ -68,35 +68,8 @@ export function validatePasswordStrength(password: string): {
     feedback.push('Debe tener al menos 8 caracteres');
   }
 
-  // Contiene minúsculas
-  if (/[a-z]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Debe contener al menos una letra minúscula');
-  }
-
-  // Contiene mayúsculas
-  if (/[A-Z]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Debe contener al menos una letra mayúscula');
-  }
-
-  // Contiene números
-  if (/\d/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Debe contener al menos un número');
-  }
-
-  // Contiene caracteres especiales
-  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Debe contener al menos un carácter especial');
-  }
-
-  const isValid = score >= 3; // Requiere al menos 3 de 5 criterios
+  // Solo requiere longitud mínima
+  const isValid = score >= 1; // Solo requiere longitud mínima
 
   return {
     isValid,

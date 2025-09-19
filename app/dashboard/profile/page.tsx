@@ -150,18 +150,7 @@ export default function ProfilePage() {
     if (password.length < 8) {
       return { isValid: false, message: "La contraseña debe tener al menos 8 caracteres" }
     }
-    if (!/(?=.*[a-z])/.test(password)) {
-      return { isValid: false, message: "La contraseña debe contener al menos una letra minúscula" }
-    }
-    if (!/(?=.*[A-Z])/.test(password)) {
-      return { isValid: false, message: "La contraseña debe contener al menos una letra mayúscula" }
-    }
-    if (!/(?=.*\d)/.test(password)) {
-      return { isValid: false, message: "La contraseña debe contener al menos un número" }
-    }
-    if (!/(?=.*[!@#$%^&*(),.?":{}|<>])/.test(password)) {
-      return { isValid: false, message: "La contraseña debe contener al menos un carácter especial" }
-    }
+    // Eliminadas las validaciones de letras y caracteres especiales
     return { isValid: true, message: "" }
   }
 
@@ -206,23 +195,24 @@ export default function ProfilePage() {
     setIsSavingPassword(true)
 
     try {
-      // Simular verificación de contraseña actual y cambio
-      // En una implementación real, aquí harías la llamada a la API
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Simular respuesta de la API
-      const isCurrentPasswordValid = Math.random() > 0.2 // 80% de probabilidad de éxito para demo
-      const isChangeSuccessful = Math.random() > 0.1 // 90% de probabilidad de éxito para demo
-      
-      if (!isCurrentPasswordValid) {
-        setPasswordError("La contraseña actual es incorrecta")
-        toast.error("Contraseña actual incorrecta")
-        return
-      }
-      
-      if (!isChangeSuccessful) {
-        setPasswordError("Error al cambiar la contraseña. Intenta nuevamente.")
-        toast.error("Error al cambiar la contraseña")
+      // Llamada real a la API para cambiar contraseña
+      const response = await fetch('/api/usuarios/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setPasswordError(data.message || "Error al cambiar la contraseña")
+        toast.error(data.message || "Error al cambiar la contraseña")
         return
       }
       
@@ -238,7 +228,8 @@ export default function ProfilePage() {
       
     } catch (error) {
       console.error('Error changing password:', error)
-      toast.error("Error al cambiar la contraseña. Intenta nuevamente.")
+      setPasswordError("Error de conexión. Intenta nuevamente.")
+      toast.error("Error de conexión. Intenta nuevamente.")
     } finally {
       setIsSavingPassword(false)
     }
@@ -468,8 +459,6 @@ export default function ProfilePage() {
                           <p className="font-medium mb-1">Requisitos de contraseña:</p>
                           <ul className="space-y-1">
                             <li>• Mínimo 8 caracteres</li>
-                            <li>• Al menos una letra mayúscula y una minúscula</li>
-                            <li>• Al menos un número y un carácter especial</li>
                           </ul>
                         </div>
                       </div>
