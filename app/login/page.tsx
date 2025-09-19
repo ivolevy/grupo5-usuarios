@@ -12,12 +12,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
+import ForgotPasswordModal from "@/components/auth/forgot-password-modal"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
   const { login, isLoading, user } = useAuth()
   const router = useRouter()
 
@@ -121,7 +123,17 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(true)}
+              className="text-sm text-primary-blue hover:text-blue-700 font-roboto-medium underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+
+          <div className="mt-4 text-center">
             <p className="text-sm text-gray-600 font-roboto-regular">
               ¿No tienes una cuenta?{" "}
               <Link href="/register" className="text-primary-blue hover:text-blue-700 font-roboto-medium">
@@ -132,6 +144,11 @@ export default function LoginPage() {
 
         </CardContent>
       </Card>
+
+      <ForgotPasswordModal
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+      />
     </div>
   )
 }

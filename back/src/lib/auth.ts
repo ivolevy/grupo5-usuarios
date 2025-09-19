@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS ?? 12);
 
 // Configuración JWT
-const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta_muy_segura_cambiala_en_produccion';
+const JWT_SECRET = process.env.JWT_SECRET || '45c3e205e1a3d92ad1b8622cfac971cd2f28250cfbd02b8f1d907fa716054cc0745332bd6773c282155c8b6dcf3538fce89d021fd48b35f2759428675064c216';
 const JWT_EXPIRES_IN = '24h'; // Token expira en 24 horas
 
 // Tipos para JWT

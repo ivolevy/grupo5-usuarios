@@ -39,10 +39,43 @@ export const usuarioParamsSchema = z.object({
     .uuid('Debe ser un UUID válido'),
 });
 
+// Validaciones para recupero de contraseña
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .email('Debe ser un email válido')
+    .min(1, 'El email es requerido'),
+});
+
+export const verifyCodeSchema = z.object({
+  email: z
+    .string()
+    .email('Debe ser un email válido')
+    .min(1, 'El email es requerido'),
+  code: z
+    .string()
+    .length(6, 'El código debe tener 6 dígitos')
+    .regex(/^\d{6}$/, 'El código debe contener solo números'),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z
+    .string()
+    .min(1, 'El token es requerido'),
+  password: z
+    .string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .max(128, 'La contraseña es demasiado larga')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'La contraseña debe contener al menos una minúscula, una mayúscula y un número'),
+});
+
 // Tipos TypeScript derivados de los schemas
 export type CreateUsuarioInput = z.infer<typeof createUsuarioSchema>;
 export type UpdateUsuarioInput = z.infer<typeof updateUsuarioSchema>;
 export type UsuarioParams = z.infer<typeof usuarioParamsSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type VerifyCodeInput = z.infer<typeof verifyCodeSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 // Función helper para validar datos
 export function validateData<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {
