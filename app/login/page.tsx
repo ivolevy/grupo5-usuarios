@@ -124,13 +124,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setShowForgotPassword(true)}
-              className="text-sm text-primary-blue hover:text-blue-700 font-roboto-medium underline"
-            >
-              ¿Olvidaste tu contraseña?
-            </button>
+
           </div>
 
           <div className="mt-4 text-center">
