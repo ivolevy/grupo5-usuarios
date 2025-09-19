@@ -1,3 +1,19 @@
+/**
+ * @openapi
+ * /api/auth/refresh:
+ *   post:
+ *     tags: [auth]
+ *     summary: Refresh JWT token
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token refreshed
+ *       401:
+ *         description: Invalid token
+ *       404:
+ *         description: User not found
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateJWT } from '@/lib/auth';

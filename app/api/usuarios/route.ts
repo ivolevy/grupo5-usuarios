@@ -1,3 +1,41 @@
+/**
+ * @openapi
+ * /api/usuarios:
+ *   get:
+ *     tags: [usuarios]
+ *     summary: List users
+ *     responses:
+ *       200:
+ *         description: Users list
+ *   post:
+ *     tags: [usuarios]
+ *     summary: Create user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [nombre_completo, email, password]
+ *             properties:
+ *               nombre_completo:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *               rol:
+ *                 type: string
+ *                 enum: [admin, moderador, usuario]
+ *     responses:
+ *       201:
+ *         description: User created
+ *       400:
+ *         description: Validation error
+ *       409:
+ *         description: Email already in use
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { createUsuarioSchema, validateData } from '@/lib/validations';

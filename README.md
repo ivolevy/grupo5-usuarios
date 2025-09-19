@@ -27,3 +27,28 @@
 - **JWT (jsonwebtoken)** - Autenticación basada en tokens
 - **bcryptjs** - Hashing de contraseñas
 - **Zod** - Validación de esquemas
+
+## Documentación OpenAPI/Swagger
+
+- JSON de OpenAPI: `GET /api/openapi`
+- UI de Swagger: visitar `/swagger`
+
+La especificación se genera con `next-swagger-doc` desde `lib/openapi.ts` escaneando `app/api`.
+Anota tus rutas con comentarios JSDoc `@openapi` para incluirlas en el spec.
+
+Ejemplo para un handler de salud:
+
+```ts
+/**
+ * @openapi
+ * /api/health:
+ *   get:
+ *     tags: [health]
+ *     summary: Health check
+ *     responses:
+ *       200:
+ *         description: OK
+ */
+```
+
+Configura `NEXT_PUBLIC_BASE_URL` si tu entorno requiere un host distinto.

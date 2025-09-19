@@ -1,3 +1,30 @@
+/**
+ * @openapi
+ * /api/auth/login:
+ *   post:
+ *     tags: [auth]
+ *     summary: User login with email and password
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Invalid credentials
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyPassword, generateJWT } from '@/lib/auth';

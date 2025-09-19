@@ -1,3 +1,19 @@
+/**
+ * @openapi
+ * /api/admin/metrics:
+ *   get:
+ *     tags: [admin]
+ *     summary: Get admin metrics
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Metrics data
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyJWTMiddleware } from '@/lib/middleware';

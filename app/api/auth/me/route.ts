@@ -1,3 +1,19 @@
+/**
+ * @openapi
+ * /api/auth/me:
+ *   get:
+ *     tags: [auth]
+ *     summary: Get authenticated user info
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User info
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyJWTMiddleware } from '@/lib/middleware';

@@ -1,3 +1,15 @@
+/**
+ * @openapi
+ * /api/test:
+ *   get:
+ *     tags: [test]
+ *     summary: Test DB connectivity and Supabase API
+ *     responses:
+ *       200:
+ *         description: All tests passed
+ *       500:
+ *         description: Some tests failed
+ */
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { supabaseRequest, supabaseConfig } from '@/lib/supabase';

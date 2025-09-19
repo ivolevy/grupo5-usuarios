@@ -1,3 +1,48 @@
+/**
+ * @openapi
+ * /api/usuarios/profile:
+ *   get:
+ *     tags: [usuarios]
+ *     summary: Get current user profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile data
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ *   put:
+ *     tags: [usuarios]
+ *     summary: Update current user profile
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               nombre_completo:
+ *                 type: string
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyJWTMiddleware } from '@/lib/middleware';

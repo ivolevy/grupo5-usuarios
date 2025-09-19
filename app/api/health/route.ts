@@ -1,3 +1,18 @@
+/**
+ * @openapi
+ * /api/health:
+ *   get:
+ *     tags: [health]
+ *     summary: Health check
+ *     description: Returns overall service health and checks for dependencies.
+ *     responses:
+ *       200:
+ *         description: Service healthy
+ *       207:
+ *         description: Service degraded
+ *       503:
+ *         description: Service unhealthy
+ */
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 

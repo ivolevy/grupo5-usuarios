@@ -1,3 +1,70 @@
+/**
+ * @openapi
+ * /api/usuarios/{id}:
+ *   get:
+ *     tags: [usuarios]
+ *     summary: Get user by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User found
+ *       400:
+ *         description: Invalid ID
+ *       404:
+ *         description: User not found
+ *   put:
+ *     tags: [usuarios]
+ *     summary: Update user by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nombre_completo:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               rol:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User updated
+ *       400:
+ *         description: Validation error or invalid ID
+ *       404:
+ *         description: User not found
+ *   delete:
+ *     tags: [usuarios]
+ *     summary: Delete user by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User deleted
+ *       400:
+ *         description: Invalid ID
+ *       404:
+ *         description: User not found
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { updateUsuarioSchema, usuarioParamsSchema, validateData } from '@/lib/validations';

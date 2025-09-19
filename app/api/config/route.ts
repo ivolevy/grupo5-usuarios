@@ -1,3 +1,13 @@
+/**
+ * @openapi
+ * /api/config:
+ *   get:
+ *     tags: [config]
+ *     summary: Get public configuration
+ *     responses:
+ *       200:
+ *         description: Configuration payload
+ */
 import { NextResponse } from 'next/server';
 
 // GET /api/config - Configuración pública del sistema
