@@ -12,6 +12,7 @@ interface User {
   last_login_at?: string
   nombre_completo?: string
   telefono?: string
+  nacionalidad?: string
 }
 
 interface AuthContextType {

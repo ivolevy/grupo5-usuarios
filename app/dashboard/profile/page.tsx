@@ -5,11 +5,13 @@ import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Save, User, Mail, Shield, Calendar, Clock, Key, Eye, EyeOff, Lock } from "lucide-react"
+import { Save, User, Mail, Shield, Calendar, Clock, Key, Eye, EyeOff, Lock, Globe } from "lucide-react"
 import { toast } from "sonner"
+import { countries } from "@/lib/countries"
 
 interface UserProfile {
   id: string
@@ -20,6 +22,7 @@ interface UserProfile {
   last_login_at?: string
   nombre_completo?: string
   telefono?: string
+  nacionalidad?: string
 }
 
 export default function ProfilePage() {
@@ -33,6 +36,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     nombre_completo: "",
     email: "",
+    nacionalidad: "",
   })
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -50,6 +54,7 @@ export default function ProfilePage() {
     const loadUserData = async () => {
       if (user) {
         console.log('Usuario actual:', user) // Debug para ver qué datos tiene
+        console.log('Nacionalidad del usuario:', user.nacionalidad) // Debug específico para nacionalidad
         
         // Si el usuario no tiene nombre_completo, refrescar desde el servidor
         if (!user.nombre_completo) {
@@ -64,6 +69,12 @@ export default function ProfilePage() {
           setFormData({
             nombre_completo: user.nombre_completo || "",
             email: user.email || "",
+            nacionalidad: user.nacionalidad || "",
+          })
+          console.log('FormData inicializado:', {
+            nombre_completo: user.nombre_completo || "",
+            email: user.email || "",
+            nacionalidad: user.nacionalidad || "",
           })
         }
         setIsLoading(false)
@@ -81,12 +92,20 @@ export default function ProfilePage() {
     }))
   }
 
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
   const handleSave = async () => {
     if (!token) {
       toast.error("No se encontró el token de autenticación")
       return
     }
 
+    console.log('Datos a enviar:', formData) // Debug
     setIsSaving(true)
     try {
       const response = await fetch('/api/usuarios/profile', {
@@ -99,11 +118,14 @@ export default function ProfilePage() {
       })
 
       const data = await response.json()
+      console.log('Respuesta del servidor:', data) // Debug
 
       if (data.success) {
         toast.success("Perfil actualizado correctamente")
         // Actualizar el perfil local
         setProfile(prev => prev ? { ...prev, ...formData } : null)
+        // Actualizar el contexto de autenticación
+        await refreshUser()
         setIsEditing(false) // Salir del modo edición
       } else {
         toast.error(data.message || "Error al actualizar el perfil")
@@ -122,6 +144,7 @@ export default function ProfilePage() {
       setFormData({
         nombre_completo: profile.nombre_completo || "",
         email: profile.email || "",
+        nacionalidad: profile.nacionalidad || "",
       })
     }
     setIsEditing(false)
@@ -331,6 +354,25 @@ export default function ProfilePage() {
                     />
                   </div>
 
+                  <div>
+                    <Label htmlFor="nacionalidad">Nacionalidad</Label>
+                    <Select
+                      value={formData.nacionalidad}
+                      onValueChange={(value) => handleSelectChange("nacionalidad", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona tu nacionalidad" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {countries.map((country) => (
+                          <SelectItem key={country.code} value={country.name}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   {/* Sección de cambio de contraseña */}
                   <div className="border-t pt-4">
                     <div className="flex items-center justify-between mb-4">
@@ -509,6 +551,14 @@ export default function ProfilePage() {
                         {profile.email}
                       </p>
                     </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-500">Nacionalidad</Label>
+                      <p className="text-lg font-medium text-gray-900 mt-1">
+                        {profile.nacionalidad || (
+                          <span className="text-gray-400 italic">No especificada - Haz clic en "Editar Perfil" para agregarla</span>
+                        )}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -532,6 +582,16 @@ export default function ProfilePage() {
                   <div>
                     <p className="text-sm font-medium">Nombre completo</p>
                     <p className="text-sm text-gray-600">{profile.nombre_completo}</p>
+                  </div>
+                </div>
+              )}
+
+              {profile.nacionalidad && (
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-gray-500" />
+                  <div>
+                    <p className="text-sm font-medium">Nacionalidad</p>
+                    <p className="text-sm text-gray-600">{profile.nacionalidad}</p>
                   </div>
                 </div>
               )}

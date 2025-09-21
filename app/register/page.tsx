@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { countries } from "@/lib/countries"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -17,7 +19,8 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    rol: "usuario"
+    rol: "usuario",
+    nacionalidad: ""
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -33,7 +36,7 @@ export default function RegisterPage() {
   }
 
   const validateForm = () => {
-    if (!formData.nombre_completo || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.nombre_completo || !formData.email || !formData.password || !formData.confirmPassword || !formData.nacionalidad) {
       setError("Todos los campos son obligatorios")
       return false
     }
@@ -75,7 +78,8 @@ export default function RegisterPage() {
           nombre_completo: formData.nombre_completo,
           email: formData.email,
           password: formData.password,
-          rol: formData.rol
+          rol: formData.rol,
+          nacionalidad: formData.nacionalidad
         })
       })
 
@@ -142,6 +146,27 @@ export default function RegisterPage() {
                 required
                 className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="nacionalidad" className="text-sm font-medium text-slate-700">
+                Nacionalidad
+              </Label>
+              <Select
+                value={formData.nacionalidad}
+                onValueChange={(value) => handleInputChange("nacionalidad", value)}
+              >
+                <SelectTrigger className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectValue placeholder="Selecciona tu nacionalidad" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {countries.map((country) => (
+                    <SelectItem key={country.code} value={country.name}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -247,6 +272,7 @@ export default function RegisterPage() {
             <ul className="text-xs text-slate-700 space-y-1">
               <li>• Nombre completo es obligatorio</li>
               <li>• Email válido requerido</li>
+              <li>• Nacionalidad debe ser seleccionada</li>
               <li>• Contraseña mínimo 8 caracteres</li>
               <li>• Se creará como usuario estándar</li>
             </ul>

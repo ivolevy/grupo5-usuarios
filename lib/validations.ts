@@ -20,6 +20,10 @@ export const createUsuarioSchema = z.object({
     .enum(['admin', 'usuario', 'moderador'])
     .default('usuario')
     .optional(),
+  nacionalidad: z
+    .string()
+    .min(1, 'La nacionalidad es requerida')
+    .max(100, 'La nacionalidad es demasiado larga'),
 });
 
 export const updateUsuarioSchema = z.object({
@@ -46,6 +50,11 @@ export const updateUsuarioSchema = z.object({
   email_verified: z
     .boolean()
     .optional(),
+  nacionalidad: z
+    .string()
+    .max(100, 'La nacionalidad es demasiado larga')
+    .optional()
+    .transform(val => val === '' ? undefined : val),
 });
 
 export const usuarioParamsSchema = z.object({

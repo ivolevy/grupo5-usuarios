@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { Edit, Save, X } from "lucide-react"
+import { countries } from "@/lib/countries"
 
 interface EditUserDialogProps {
   user: User
@@ -29,6 +30,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
     nombre_completo: user.nombre_completo || "",
     email: user.email,
     rol: user.rol,
+    nacionalidad: user.nacionalidad || "",
     email_verified: user.email_verified,
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -41,6 +43,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
       nombre_completo: user.nombre_completo || "",
       email: user.email,
       rol: user.rol,
+      nacionalidad: user.nacionalidad || "",
       email_verified: user.email_verified,
     })
   }, [user])
@@ -122,6 +125,25 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
                 <SelectItem value="admin">Administrador</SelectItem>
                 <SelectItem value="moderador">Moderador</SelectItem>
                 <SelectItem value="usuario">Usuario</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="nacionalidad">Nacionalidad</Label>
+            <Select
+              value={formData.nacionalidad}
+              onValueChange={(value) => handleInputChange("nacionalidad", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona una nacionalidad" />
+              </SelectTrigger>
+              <SelectContent>
+                {countries.map((country) => (
+                  <SelectItem key={country.code} value={country.name}>
+                    {country.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

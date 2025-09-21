@@ -24,6 +24,7 @@ export default function UsersPage() {
     role: "all",
     verificationStatus: "all",
     activityStatus: "all",
+    nationality: "all",
     dateRange: { from: undefined, to: undefined },
     lastLoginRange: { from: undefined, to: undefined },
     searchTerm: ""
@@ -55,7 +56,8 @@ export default function UsersPage() {
       const matchesSearch = searchTerm === "" || 
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.rol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (user.nombre_completo && user.nombre_completo.toLowerCase().includes(searchTerm.toLowerCase()))
+        (user.nombre_completo && user.nombre_completo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (user.nacionalidad && user.nacionalidad.toLowerCase().includes(searchTerm.toLowerCase()))
 
       // Filtro por rol - Solo aplicar si estamos en la pestaña de admin-moderator
       const matchesRole = activeTab === "normal-users" || filters.role === "all" || user.rol === filters.role
@@ -83,7 +85,12 @@ export default function UsersPage() {
       const matchesLastLoginRange = (!filters.lastLoginRange.from || (userLastLogin && userLastLogin >= filters.lastLoginRange.from)) &&
         (!filters.lastLoginRange.to || (userLastLogin && userLastLogin <= filters.lastLoginRange.to))
 
-      return matchesSearch && matchesRole && matchesVerification && matchesActivity && matchesDateRange && matchesLastLoginRange
+      // Filtro por nacionalidad
+      const matchesNationality = filters.nationality === "all" ||
+        (filters.nationality === "Sin especificar" && (!user.nacionalidad || user.nacionalidad === "")) ||
+        (user.nacionalidad && user.nacionalidad === filters.nationality)
+
+      return matchesSearch && matchesRole && matchesVerification && matchesActivity && matchesDateRange && matchesLastLoginRange && matchesNationality
     })
   }
   
@@ -125,6 +132,7 @@ export default function UsersPage() {
       role: "all",
       verificationStatus: "all",
       activityStatus: "all",
+      nationality: "all",
       dateRange: { from: undefined, to: undefined },
       lastLoginRange: { from: undefined, to: undefined },
       searchTerm: ""
@@ -140,6 +148,7 @@ export default function UsersPage() {
           <TableHead>Email</TableHead>
           <TableHead>Rol</TableHead>
           <TableHead>Estado</TableHead>
+          <TableHead>Nacionalidad</TableHead>
           <TableHead>Fecha Creación</TableHead>
           <TableHead>Último Login</TableHead>
           {showActions && <TableHead className="text-center">Acciones</TableHead>}
@@ -148,19 +157,19 @@ export default function UsersPage() {
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 7 : 6} className="text-center py-8">
+            <TableCell colSpan={showActions ? 8 : 7} className="text-center py-8">
               Cargando usuarios...
             </TableCell>
           </TableRow>
         ) : error ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 7 : 6} className="text-center py-8 text-red-600">
+            <TableCell colSpan={showActions ? 8 : 7} className="text-center py-8 text-red-600">
               Error: {error}
             </TableCell>
           </TableRow>
         ) : filteredUsers.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 7 : 6} className="text-center py-8">
+            <TableCell colSpan={showActions ? 8 : 7} className="text-center py-8">
               No se encontraron usuarios
             </TableCell>
           </TableRow>
@@ -180,6 +189,9 @@ export default function UsersPage() {
                 <Badge variant="outline" className={cn("capitalize", getVerifiedBadge(user.email_verified))}>
                   {user.email_verified ? "Verificado" : "Sin verificar"}
                 </Badge>
+              </TableCell>
+              <TableCell className="text-gray-600 font-roboto-regular">
+                {user.nacionalidad || "No especificada"}
               </TableCell>
               <TableCell className="text-gray-600 font-roboto-regular">
                 {new Date(user.created_at).toLocaleDateString('es-ES')}

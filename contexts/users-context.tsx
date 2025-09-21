@@ -8,6 +8,7 @@ export interface User {
   name?: string
   nombre_completo?: string
   telefono?: string
+  nacionalidad?: string
   rol: "admin" | "usuario" | "moderador"
   created_at: string
   last_login_at?: string
@@ -19,7 +20,7 @@ interface UsersContextType {
   users: User[]
   loading: boolean
   error: string | null
-  addUser: (user: { nombre_completo?: string; email: string; password: string; rol?: string }) => Promise<void>
+  addUser: (user: { nombre_completo?: string; email: string; password: string; rol?: string; nacionalidad?: string }) => Promise<void>
   updateUser: (id: string, updates: Partial<User>) => Promise<void>
   deleteUser: (id: string) => Promise<void>
   getUserById: (id: string) => User | undefined
@@ -60,7 +61,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     refreshUsers()
   }, [])
 
-  const addUser = async (userData: { nombre_completo?: string; email: string; password: string; rol?: string }) => {
+  const addUser = async (userData: { nombre_completo?: string; email: string; password: string; rol?: string; nacionalidad?: string }) => {
     setLoading(true)
     setError(null)
     try {

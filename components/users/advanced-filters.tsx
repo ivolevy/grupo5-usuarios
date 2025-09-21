@@ -18,6 +18,7 @@ export interface FilterOptions {
   role: string
   verificationStatus: string
   activityStatus: string
+  nationality: string
   dateRange: {
     from: Date | undefined
     to: Date | undefined
@@ -87,6 +88,7 @@ export function AdvancedFilters({
       role: "all",
       verificationStatus: "all",
       activityStatus: "all",
+      nationality: "all",
       dateRange: { from: undefined, to: undefined },
       lastLoginRange: { from: undefined, to: undefined },
       searchTerm: ""
@@ -100,6 +102,7 @@ export function AdvancedFilters({
     if (filters.role && filters.role !== "all") count++
     if (filters.verificationStatus && filters.verificationStatus !== "all") count++
     if (filters.activityStatus && filters.activityStatus !== "all") count++
+    if (filters.nationality && filters.nationality !== "all") count++
     if (filters.dateRange.from || filters.dateRange.to) count++
     if (filters.lastLoginRange.from || filters.lastLoginRange.to) count++
     return count
@@ -184,6 +187,210 @@ export function AdvancedFilters({
                   <SelectItem value="all">Todos los estados</SelectItem>
                   <SelectItem value="verified">Verificado</SelectItem>
                   <SelectItem value="unverified">Sin verificar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Filtro por nacionalidad */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Nacionalidad</Label>
+              <Select
+                value={localFilters.nationality}
+                onValueChange={(value) => handleFilterChange('nationality', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas las nacionalidades" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las nacionalidades</SelectItem>
+                  <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+                  <SelectItem value="Afganistán">Afganistán</SelectItem>
+                  <SelectItem value="Albania">Albania</SelectItem>
+                  <SelectItem value="Alemania">Alemania</SelectItem>
+                  <SelectItem value="Andorra">Andorra</SelectItem>
+                  <SelectItem value="Angola">Angola</SelectItem>
+                  <SelectItem value="Arabia Saudita">Arabia Saudita</SelectItem>
+                  <SelectItem value="Argelia">Argelia</SelectItem>
+                  <SelectItem value="Argentina">Argentina</SelectItem>
+                  <SelectItem value="Armenia">Armenia</SelectItem>
+                  <SelectItem value="Australia">Australia</SelectItem>
+                  <SelectItem value="Austria">Austria</SelectItem>
+                  <SelectItem value="Azerbaiyán">Azerbaiyán</SelectItem>
+                  <SelectItem value="Bahamas">Bahamas</SelectItem>
+                  <SelectItem value="Bangladés">Bangladés</SelectItem>
+                  <SelectItem value="Barbados">Barbados</SelectItem>
+                  <SelectItem value="Bélgica">Bélgica</SelectItem>
+                  <SelectItem value="Belice">Belice</SelectItem>
+                  <SelectItem value="Benín">Benín</SelectItem>
+                  <SelectItem value="Bielorrusia">Bielorrusia</SelectItem>
+                  <SelectItem value="Bolivia">Bolivia</SelectItem>
+                  <SelectItem value="Bosnia y Herzegovina">Bosnia y Herzegovina</SelectItem>
+                  <SelectItem value="Botsuana">Botsuana</SelectItem>
+                  <SelectItem value="Brasil">Brasil</SelectItem>
+                  <SelectItem value="Brunéi">Brunéi</SelectItem>
+                  <SelectItem value="Bulgaria">Bulgaria</SelectItem>
+                  <SelectItem value="Burkina Faso">Burkina Faso</SelectItem>
+                  <SelectItem value="Burundi">Burundi</SelectItem>
+                  <SelectItem value="Cabo Verde">Cabo Verde</SelectItem>
+                  <SelectItem value="Camboya">Camboya</SelectItem>
+                  <SelectItem value="Camerún">Camerún</SelectItem>
+                  <SelectItem value="Canadá">Canadá</SelectItem>
+                  <SelectItem value="Catar">Catar</SelectItem>
+                  <SelectItem value="Chad">Chad</SelectItem>
+                  <SelectItem value="Chile">Chile</SelectItem>
+                  <SelectItem value="China">China</SelectItem>
+                  <SelectItem value="Chipre">Chipre</SelectItem>
+                  <SelectItem value="Colombia">Colombia</SelectItem>
+                  <SelectItem value="Comoras">Comoras</SelectItem>
+                  <SelectItem value="Congo">Congo</SelectItem>
+                  <SelectItem value="Corea del Norte">Corea del Norte</SelectItem>
+                  <SelectItem value="Corea del Sur">Corea del Sur</SelectItem>
+                  <SelectItem value="Costa Rica">Costa Rica</SelectItem>
+                  <SelectItem value="Croacia">Croacia</SelectItem>
+                  <SelectItem value="Cuba">Cuba</SelectItem>
+                  <SelectItem value="Dinamarca">Dinamarca</SelectItem>
+                  <SelectItem value="Dominica">Dominica</SelectItem>
+                  <SelectItem value="Ecuador">Ecuador</SelectItem>
+                  <SelectItem value="Egipto">Egipto</SelectItem>
+                  <SelectItem value="El Salvador">El Salvador</SelectItem>
+                  <SelectItem value="Emiratos Árabes Unidos">Emiratos Árabes Unidos</SelectItem>
+                  <SelectItem value="Eritrea">Eritrea</SelectItem>
+                  <SelectItem value="Eslovaquia">Eslovaquia</SelectItem>
+                  <SelectItem value="Eslovenia">Eslovenia</SelectItem>
+                  <SelectItem value="España">España</SelectItem>
+                  <SelectItem value="Estados Unidos">Estados Unidos</SelectItem>
+                  <SelectItem value="Estonia">Estonia</SelectItem>
+                  <SelectItem value="Etiopía">Etiopía</SelectItem>
+                  <SelectItem value="Filipinas">Filipinas</SelectItem>
+                  <SelectItem value="Finlandia">Finlandia</SelectItem>
+                  <SelectItem value="Fiyi">Fiyi</SelectItem>
+                  <SelectItem value="Francia">Francia</SelectItem>
+                  <SelectItem value="Gabón">Gabón</SelectItem>
+                  <SelectItem value="Gambia">Gambia</SelectItem>
+                  <SelectItem value="Georgia">Georgia</SelectItem>
+                  <SelectItem value="Ghana">Ghana</SelectItem>
+                  <SelectItem value="Granada">Granada</SelectItem>
+                  <SelectItem value="Grecia">Grecia</SelectItem>
+                  <SelectItem value="Guatemala">Guatemala</SelectItem>
+                  <SelectItem value="Guinea">Guinea</SelectItem>
+                  <SelectItem value="Guinea-Bisáu">Guinea-Bisáu</SelectItem>
+                  <SelectItem value="Guyana">Guyana</SelectItem>
+                  <SelectItem value="Haití">Haití</SelectItem>
+                  <SelectItem value="Honduras">Honduras</SelectItem>
+                  <SelectItem value="Hungría">Hungría</SelectItem>
+                  <SelectItem value="India">India</SelectItem>
+                  <SelectItem value="Indonesia">Indonesia</SelectItem>
+                  <SelectItem value="Irak">Irak</SelectItem>
+                  <SelectItem value="Irán">Irán</SelectItem>
+                  <SelectItem value="Irlanda">Irlanda</SelectItem>
+                  <SelectItem value="Islandia">Islandia</SelectItem>
+                  <SelectItem value="Israel">Israel</SelectItem>
+                  <SelectItem value="Italia">Italia</SelectItem>
+                  <SelectItem value="Jamaica">Jamaica</SelectItem>
+                  <SelectItem value="Japón">Japón</SelectItem>
+                  <SelectItem value="Jordania">Jordania</SelectItem>
+                  <SelectItem value="Kazajistán">Kazajistán</SelectItem>
+                  <SelectItem value="Kenia">Kenia</SelectItem>
+                  <SelectItem value="Kirguistán">Kirguistán</SelectItem>
+                  <SelectItem value="Kiribati">Kiribati</SelectItem>
+                  <SelectItem value="Kuwait">Kuwait</SelectItem>
+                  <SelectItem value="Laos">Laos</SelectItem>
+                  <SelectItem value="Lesoto">Lesoto</SelectItem>
+                  <SelectItem value="Letonia">Letonia</SelectItem>
+                  <SelectItem value="Líbano">Líbano</SelectItem>
+                  <SelectItem value="Liberia">Liberia</SelectItem>
+                  <SelectItem value="Libia">Libia</SelectItem>
+                  <SelectItem value="Liechtenstein">Liechtenstein</SelectItem>
+                  <SelectItem value="Lituania">Lituania</SelectItem>
+                  <SelectItem value="Luxemburgo">Luxemburgo</SelectItem>
+                  <SelectItem value="Madagascar">Madagascar</SelectItem>
+                  <SelectItem value="Malasia">Malasia</SelectItem>
+                  <SelectItem value="Malaui">Malaui</SelectItem>
+                  <SelectItem value="Maldivas">Maldivas</SelectItem>
+                  <SelectItem value="Malí">Malí</SelectItem>
+                  <SelectItem value="Malta">Malta</SelectItem>
+                  <SelectItem value="Marruecos">Marruecos</SelectItem>
+                  <SelectItem value="Mauricio">Mauricio</SelectItem>
+                  <SelectItem value="Mauritania">Mauritania</SelectItem>
+                  <SelectItem value="México">México</SelectItem>
+                  <SelectItem value="Micronesia">Micronesia</SelectItem>
+                  <SelectItem value="Moldavia">Moldavia</SelectItem>
+                  <SelectItem value="Mónaco">Mónaco</SelectItem>
+                  <SelectItem value="Mongolia">Mongolia</SelectItem>
+                  <SelectItem value="Montenegro">Montenegro</SelectItem>
+                  <SelectItem value="Mozambique">Mozambique</SelectItem>
+                  <SelectItem value="Myanmar">Myanmar</SelectItem>
+                  <SelectItem value="Namibia">Namibia</SelectItem>
+                  <SelectItem value="Nauru">Nauru</SelectItem>
+                  <SelectItem value="Nepal">Nepal</SelectItem>
+                  <SelectItem value="Nicaragua">Nicaragua</SelectItem>
+                  <SelectItem value="Níger">Níger</SelectItem>
+                  <SelectItem value="Nigeria">Nigeria</SelectItem>
+                  <SelectItem value="Noruega">Noruega</SelectItem>
+                  <SelectItem value="Nueva Zelanda">Nueva Zelanda</SelectItem>
+                  <SelectItem value="Omán">Omán</SelectItem>
+                  <SelectItem value="Países Bajos">Países Bajos</SelectItem>
+                  <SelectItem value="Pakistán">Pakistán</SelectItem>
+                  <SelectItem value="Palaos">Palaos</SelectItem>
+                  <SelectItem value="Panamá">Panamá</SelectItem>
+                  <SelectItem value="Papúa Nueva Guinea">Papúa Nueva Guinea</SelectItem>
+                  <SelectItem value="Paraguay">Paraguay</SelectItem>
+                  <SelectItem value="Perú">Perú</SelectItem>
+                  <SelectItem value="Polonia">Polonia</SelectItem>
+                  <SelectItem value="Portugal">Portugal</SelectItem>
+                  <SelectItem value="Reino Unido">Reino Unido</SelectItem>
+                  <SelectItem value="República Centroafricana">República Centroafricana</SelectItem>
+                  <SelectItem value="República Checa">República Checa</SelectItem>
+                  <SelectItem value="República del Congo">República del Congo</SelectItem>
+                  <SelectItem value="República Democrática del Congo">República Democrática del Congo</SelectItem>
+                  <SelectItem value="República Dominicana">República Dominicana</SelectItem>
+                  <SelectItem value="Ruanda">Ruanda</SelectItem>
+                  <SelectItem value="Rumania">Rumania</SelectItem>
+                  <SelectItem value="Rusia">Rusia</SelectItem>
+                  <SelectItem value="Samoa">Samoa</SelectItem>
+                  <SelectItem value="San Cristóbal y Nieves">San Cristóbal y Nieves</SelectItem>
+                  <SelectItem value="San Marino">San Marino</SelectItem>
+                  <SelectItem value="San Vicente y las Granadinas">San Vicente y las Granadinas</SelectItem>
+                  <SelectItem value="Santa Lucía">Santa Lucía</SelectItem>
+                  <SelectItem value="Santo Tomé y Príncipe">Santo Tomé y Príncipe</SelectItem>
+                  <SelectItem value="Senegal">Senegal</SelectItem>
+                  <SelectItem value="Serbia">Serbia</SelectItem>
+                  <SelectItem value="Seychelles">Seychelles</SelectItem>
+                  <SelectItem value="Sierra Leona">Sierra Leona</SelectItem>
+                  <SelectItem value="Singapur">Singapur</SelectItem>
+                  <SelectItem value="Siria">Siria</SelectItem>
+                  <SelectItem value="Somalia">Somalia</SelectItem>
+                  <SelectItem value="Sri Lanka">Sri Lanka</SelectItem>
+                  <SelectItem value="Suazilandia">Suazilandia</SelectItem>
+                  <SelectItem value="Sudáfrica">Sudáfrica</SelectItem>
+                  <SelectItem value="Sudán">Sudán</SelectItem>
+                  <SelectItem value="Sudán del Sur">Sudán del Sur</SelectItem>
+                  <SelectItem value="Suecia">Suecia</SelectItem>
+                  <SelectItem value="Suiza">Suiza</SelectItem>
+                  <SelectItem value="Surinam">Surinam</SelectItem>
+                  <SelectItem value="Tailandia">Tailandia</SelectItem>
+                  <SelectItem value="Tanzania">Tanzania</SelectItem>
+                  <SelectItem value="Tayikistán">Tayikistán</SelectItem>
+                  <SelectItem value="Timor Oriental">Timor Oriental</SelectItem>
+                  <SelectItem value="Togo">Togo</SelectItem>
+                  <SelectItem value="Tonga">Tonga</SelectItem>
+                  <SelectItem value="Trinidad y Tobago">Trinidad y Tobago</SelectItem>
+                  <SelectItem value="Túnez">Túnez</SelectItem>
+                  <SelectItem value="Turkmenistán">Turkmenistán</SelectItem>
+                  <SelectItem value="Turquía">Turquía</SelectItem>
+                  <SelectItem value="Tuvalu">Tuvalu</SelectItem>
+                  <SelectItem value="Ucrania">Ucrania</SelectItem>
+                  <SelectItem value="Uganda">Uganda</SelectItem>
+                  <SelectItem value="Uruguay">Uruguay</SelectItem>
+                  <SelectItem value="Uzbekistán">Uzbekistán</SelectItem>
+                  <SelectItem value="Vanuatu">Vanuatu</SelectItem>
+                  <SelectItem value="Vaticano">Vaticano</SelectItem>
+                  <SelectItem value="Venezuela">Venezuela</SelectItem>
+                  <SelectItem value="Vietnam">Vietnam</SelectItem>
+                  <SelectItem value="Yemen">Yemen</SelectItem>
+                  <SelectItem value="Yibuti">Yibuti</SelectItem>
+                  <SelectItem value="Zambia">Zambia</SelectItem>
+                  <SelectItem value="Zimbabue">Zimbabue</SelectItem>
                 </SelectContent>
               </Select>
             </div>

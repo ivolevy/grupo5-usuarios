@@ -16,7 +16,7 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required: [nombre_completo, email, password]
+ *             required: [nombre_completo, email, password, nacionalidad]
  *             properties:
  *               nombre_completo:
  *                 type: string
@@ -28,6 +28,8 @@
  *               rol:
  *                 type: string
  *                 enum: [admin, moderador, usuario]
+ *               nacionalidad:
+ *                 type: string
  *     responses:
  *       201:
  *         description: User created
@@ -84,7 +86,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { nombre_completo, email, password, rol } = validation.data;
+    const { nombre_completo, email, password, rol, nacionalidad } = validation.data;
 
     // Validación simple de contraseña (solo longitud mínima)
     if (password.length < 8) {
@@ -113,7 +115,8 @@ export async function POST(request: NextRequest) {
       email,
       password: hashedPassword,
       rol: rol || 'usuario',
-      email_verified: true // Sin verificación por email
+      email_verified: true, // Sin verificación por email
+      nacionalidad
     });
 
     // Remover password de la respuesta

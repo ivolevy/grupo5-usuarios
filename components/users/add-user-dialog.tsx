@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { Plus, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { countries } from "@/lib/countries"
 
 export function AddUserDialog() {
   const [open, setOpen] = useState(false)
@@ -29,6 +30,7 @@ export function AddUserDialog() {
     password: "",
     confirmPassword: "",
     rol: "usuario" as User["rol"],
+    nacionalidad: "",
   })
   const { addUser } = useUsers()
   const { toast } = useToast()
@@ -36,7 +38,7 @@ export function AddUserDialog() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.nombre_completo || !formData.email || !formData.password) {
+    if (!formData.nombre_completo || !formData.email || !formData.password || !formData.nacionalidad) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -61,9 +63,10 @@ export function AddUserDialog() {
         email: formData.email,
         password: formData.password,
         rol: formData.rol,
+        nacionalidad: formData.nacionalidad,
       })
       
-      setFormData({ nombre_completo: "", email: "", password: "", confirmPassword: "", rol: "usuario" })
+      setFormData({ nombre_completo: "", email: "", password: "", confirmPassword: "", rol: "usuario", nacionalidad: "" })
       setOpen(false)
       
       toast({
@@ -159,6 +162,26 @@ export function AddUserDialog() {
                 <SelectItem value="usuario">Usuario</SelectItem>
                 <SelectItem value="moderador">Moderador</SelectItem>
                 <SelectItem value="admin">Administrador</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="nacionalidad">Nacionalidad</Label>
+            <Select
+              value={formData.nacionalidad}
+              onValueChange={(value) => setFormData({ ...formData, nacionalidad: value })}
+              disabled={isSubmitting}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar nacionalidad" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {countries.map((country) => (
+                  <SelectItem key={country.code} value={country.name}>
+                    {country.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
