@@ -38,7 +38,7 @@ export function isCodeExpired(expiresAt: Date): boolean {
 /**
  * Almacena un código de verificación para un email
  */
-export async function storeVerificationCode(email: string): Promise<string> {
+export async function storeVerificationCode(email: string): Promise<string | false> {
   try {
     const code = generateVerificationCode();
     const expiresAt = getCodeExpiration();
@@ -63,7 +63,8 @@ export async function storeVerificationCode(email: string): Promise<string> {
         action: 'verification_code_attempt',
         data: { email }
       });
-      throw new Error('Email no registrado en el sistema');
+      // No lanzamos error, solo retornamos false para indicar que no se procesó
+      return false;
     }
 
     logger.info(`Código de verificación almacenado para ${email}`, {

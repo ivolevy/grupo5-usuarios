@@ -8,10 +8,26 @@ import { UserEntity } from '../../domain/entities/user.entity';
 import { CreateUserDto, UpdateUserDto, UserRole } from '../../types/common.types';
 import { prisma } from '../database/prisma.client';
 
+// Tipo local para actualización de usuarios
+type UpdateUsuarioData = {
+  email?: string;
+  password?: string;
+  rol?: string;
+  email_verified?: boolean;
+  email_verification_token?: string;
+  password_reset_token?: string;
+  password_reset_expires?: string;
+  last_login_at?: string;
+  nombre_completo?: string;
+  nacionalidad?: string;
+  telefono?: string;
+  updated_at?: string;
+};
+
 export class UserRepositoryImpl implements UserRepository {
   async findById(id: string): Promise<UserEntity | null> {
     try {
-      const user = await prisma.usuarios.findUnique({ where: { id } });
+      const user = await prisma.usuarios.findUnique({ id });
       return user ? UserEntity.fromPlainObject(user) : null;
     } catch (error) {
       console.error('Error finding user by ID:', error);
@@ -21,7 +37,7 @@ export class UserRepositoryImpl implements UserRepository {
 
   async findByEmail(email: string): Promise<UserEntity | null> {
     try {
-      const user = await prisma.usuarios.findFirst({ where: { email } });
+      const user = await prisma.usuarios.findFirst({ email });
       return user ? UserEntity.fromPlainObject(user) : null;
     } catch (error) {
       console.error('Error finding user by email:', error);
@@ -32,7 +48,7 @@ export class UserRepositoryImpl implements UserRepository {
   async findByRole(rol: UserRole): Promise<UserEntity[]> {
     try {
       const users = await prisma.usuarios.findMany({ where: { rol } });
-      return users.map(user => UserEntity.fromPlainObject(user));
+      return users.map((user: any) => UserEntity.fromPlainObject(user));
     } catch (error) {
       console.error('Error finding users by role:', error);
       throw new Error('Error al buscar usuarios por rol');
@@ -85,7 +101,7 @@ export class UserRepositoryImpl implements UserRepository {
       ]);
 
       return {
-        users: users.map(user => UserEntity.fromPlainObject(user)),
+        users: users.map((user: any) => UserEntity.fromPlainObject(user)),
         total,
         page,
         limit
@@ -99,14 +115,12 @@ export class UserRepositoryImpl implements UserRepository {
   async create(userData: CreateUserDto): Promise<UserEntity> {
     try {
       const user = await prisma.usuarios.create({
-        data: {
-          nombre_completo: userData.nombre_completo,
-          email: userData.email,
-          password: userData.password, // Debe estar hasheada antes de llegar aquí
-          rol: userData.rol || 'usuario',
-          email_verified: true, // Por defecto, sin verificación por email
-          telefono: userData.telefono
-        }
+        nombre_completo: userData.nombre_completo,
+        email: userData.email,
+        password: userData.password, // Debe estar hasheada antes de llegar aquí
+        rol: userData.rol || 'usuario',
+        email_verified: true, // Por defecto, sin verificación por email
+        telefono: userData.telefono
       });
 
       return UserEntity.fromPlainObject(user);
@@ -116,11 +130,11 @@ export class UserRepositoryImpl implements UserRepository {
     }
   }
 
-  async update(id: string, userData: UpdateUserDto): Promise<UserEntity | null> {
+  async update(id: string, userData: UpdateUsuarioData): Promise<UserEntity | null> {
     try {
-      const user = await prisma.usuarios.update({
-        where: { id },
-        data: {
+      const user = await prisma.usuarios.update(
+        { id },
+        {
           ...(userData.nombre_completo && { nombre_completo: userData.nombre_completo }),
           ...(userData.email && { email: userData.email }),
           ...(userData.password && { password: userData.password }), // Debe estar hasheada
@@ -128,8 +142,8 @@ export class UserRepositoryImpl implements UserRepository {
           ...(userData.email_verified !== undefined && { email_verified: userData.email_verified }),
           ...(userData.telefono && { telefono: userData.telefono }),
           updated_at: new Date().toISOString()
-        }
-      });
+        } as UpdateUsuarioData
+      );
 
       return UserEntity.fromPlainObject(user);
     } catch (error) {
@@ -140,7 +154,7 @@ export class UserRepositoryImpl implements UserRepository {
 
   async delete(id: string): Promise<boolean> {
     try {
-      await prisma.usuarios.delete({ where: { id } });
+      await prisma.usuarios.delete({ id });
       return true;
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -188,7 +202,7 @@ export class UserRepositoryImpl implements UserRepository {
         orderBy: { created_at: 'desc' }
       });
 
-      return users.map(user => UserEntity.fromPlainObject(user));
+      return users.map((user: any) => UserEntity.fromPlainObject(user));
     } catch (error) {
       console.error('Error finding users by date range:', error);
       throw new Error('Error al buscar usuarios por rango de fechas');
@@ -197,12 +211,12 @@ export class UserRepositoryImpl implements UserRepository {
 
   async updateLastLogin(id: string): Promise<UserEntity | null> {
     try {
-      const user = await prisma.usuarios.update({
-        where: { id },
-        data: {
+      const user = await prisma.usuarios.update(
+        { id },
+        {
           last_login_at: new Date().toISOString()
         }
-      });
+      );
 
       return UserEntity.fromPlainObject(user);
     } catch (error) {

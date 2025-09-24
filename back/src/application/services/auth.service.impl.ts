@@ -22,7 +22,8 @@ export class AuthServiceImpl implements AuthService {
       }
 
       // Verificar contraseña (asumiendo que el password está hasheado en la BD)
-      const isPasswordValid = await this.verifyPassword(loginData.password, user.toPlainObject().password);
+      const userPlain = user.toPlainObject();
+      const isPasswordValid = await this.verifyPassword(loginData.password, (userPlain as any).password);
       
       if (!isPasswordValid) {
         throw new Error('Credenciales inválidas');

@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
 
       if (data.success) {
         console.log('✅ [FRONTEND] Solicitud exitosa - Email enviado')
-        setSuccess("Si el email existe en nuestro sistema, recibirás un código de verificación en unos minutos.")
+        setSuccess("Código de verificación enviado a tu email.")
         // Redirigir a la página de código después de 2 segundos
         setTimeout(() => {
           console.log('🔄 [FRONTEND] Redirigiendo a verify-code...')
@@ -70,7 +70,11 @@ export default function ForgotPasswordPage() {
         }, 2000)
       } else {
         console.log('❌ [FRONTEND] Error en la respuesta:', data.message)
-        setError(data.message || "Error al enviar código de verificación")
+        if (data.data?.emailExists === false) {
+          setError("El email no está registrado en nuestro sistema.")
+        } else {
+          setError(data.message || "Error al enviar código de verificación")
+        }
       }
     } catch (error) {
       console.error('💥 [FRONTEND] Error de conexión:', error)

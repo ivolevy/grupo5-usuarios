@@ -54,8 +54,10 @@ export async function POST(request: NextRequest) {
           action: 'email_send_error',
           ip: clientIp,
           userId: user.id,
-          email,
-          error: emailError instanceof Error ? emailError.message : 'Unknown error'
+          data: {
+            email,
+            error: emailError instanceof Error ? emailError.message : 'Unknown error'
+          }
         });
         
         // Aún así devolver éxito para no revelar el error

@@ -40,7 +40,7 @@ export class AuthController {
         }, { status: 400 });
       }
 
-      const loginData: LoginDto = validation.data;
+      const loginData: LoginDto = validation.data!;
 
       // Autenticar usuario
       const authResponse = await this.authService.authenticate(loginData);

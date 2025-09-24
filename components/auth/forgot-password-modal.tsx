@@ -36,6 +36,11 @@ export default function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordM
     resendCooldown: 0
   })
 
+  // Estados para el paso 3 (reset de contraseña)
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+
   // Resetear estado cuando se abre el modal
   useEffect(() => {
     if (isOpen) {
@@ -61,6 +66,15 @@ export default function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordM
       return () => clearTimeout(timer)
     }
   }, [state.resendCooldown])
+
+  // Resetear estados del paso 3 cuando se cambie de paso
+  useEffect(() => {
+    if (state.step !== 3) {
+      setPassword('')
+      setConfirmPassword('')
+      setShowPassword(false)
+    }
+  }, [state.step])
 
   const handleForgotPassword = async (email: string) => {
     setState(prev => ({ ...prev, isSubmitting: true, errorMsg: '', successMsg: '' }))
@@ -156,7 +170,12 @@ export default function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordM
   }
 
   const goBack = () => {
-    setState(prev => ({ ...prev, step: prev.step - 1, errorMsg: '', successMsg: '' }))
+    setState(prev => ({ 
+      ...prev, 
+      step: Math.max(1, prev.step - 1) as 1 | 2 | 3, 
+      errorMsg: '', 
+      successMsg: '' 
+    }))
   }
 
   const renderStep1 = () => (
@@ -264,9 +283,6 @@ export default function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordM
   )
 
   const renderStep3 = () => {
-    const [password, setPassword] = useState('')
-    const [confirmPassword, setConfirmPassword] = useState('')
-    const [showPassword, setShowPassword] = useState(false)
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()

@@ -38,9 +38,7 @@ export async function GET_PROTECTED_ROUTE(request: NextRequest) {
 async function getUserProfileHandler(request: NextRequest) {
   const user = (request as any).user; // Usuario ya verificado por withAuth
   
-  const profile = await prisma.usuarios.findUnique({
-    where: { id: user.userId }
-  });
+  const profile = await prisma.usuarios.findUnique({ id: user.userId });
 
   return NextResponse.json({
     success: true,
@@ -97,10 +95,10 @@ async function updateUserHandler(request: NextRequest, context: { params: { id: 
   const body = await request.json();
   
   // Actualizar usuario
-  const updatedUser = await prisma.usuarios.update({
-    where: { id: userId },
-    data: body
-  });
+  const updatedUser = await prisma.usuarios.update(
+    { id: userId },
+    body
+  );
 
   return NextResponse.json({
     success: true,
@@ -141,7 +139,7 @@ async function manageUsersHandler(request: NextRequest) {
 // Aplicar middleware con permisos OR
 export const GET_USERS = withAuth(manageUsersHandler, {
   requireAuth: true,
-  requireAnyPermission: [Permission.USER_READ_ALL, Permission.ADMIN_DASHBOARD]
+  requireAnyPermissionList: [Permission.USER_READ_ALL, Permission.ADMIN_DASHBOARD]
 });
 
 // ========================================
@@ -189,9 +187,7 @@ async function advancedUserManagementHandler(request: NextRequest) {
   // Lógica para eliminar usuario
   const { userId } = await request.json();
   
-  await prisma.usuarios.delete({
-    where: { id: userId }
-  });
+  await prisma.usuarios.delete({ id: userId });
 
   return NextResponse.json({
     success: true,
@@ -242,13 +238,13 @@ export const POST_LOGGED_ACTION = withAuth(loggedActionHandler, {
 3. Para rutas que requieren cualquiera de varios permisos:
    export const GET = withAuth(handler, {
      requireAuth: true,
-     requireAnyPermission: [Permission.USER_READ, Permission.ADMIN_DASHBOARD]
+     requireAnyPermissionList: [Permission.USER_READ, Permission.ADMIN_DASHBOARD]
    });
 
 4. Para rutas que requieren todos los permisos:
    export const GET = withAuth(handler, {
      requireAuth: true,
-     requireAllPermissions: [Permission.USER_READ, Permission.USER_UPDATE]
+     requireAllPermissionsList: [Permission.USER_READ, Permission.USER_UPDATE]
    });
 
 5. Para rutas que permiten acceso a recursos propios:

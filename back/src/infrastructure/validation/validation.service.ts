@@ -24,7 +24,7 @@ export function validateData<T>(schema: z.ZodSchema<T>, data: any): {
     } else {
       return {
         success: false,
-        error: result.error.errors.map(err => ({
+        error: result.error.issues.map((err: any) => ({
           field: err.path.join('.'),
           message: err.message,
           code: err.code

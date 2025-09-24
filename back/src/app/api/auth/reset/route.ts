@@ -25,9 +25,7 @@ export async function POST(request: NextRequest) {
     const { token, password } = validation.data;
 
     // Buscar usuario por token de reset
-    const user = await prisma.usuarios.findFirst({ 
-      where: { password_reset_token: token }
-    });
+    const user = await prisma.usuarios.findByResetToken(token);
 
     if (!user) {
       return NextResponse.json({
@@ -52,9 +50,9 @@ export async function POST(request: NextRequest) {
       await prisma.usuarios.update(
         { id: user.id },
         {
-          password_reset_token: null,
-          password_reset_expires: null
-        }
+          password_reset_token: undefined,
+          password_reset_expires: undefined
+        } as any
       );
 
       return NextResponse.json({
@@ -86,10 +84,10 @@ export async function POST(request: NextRequest) {
       { id: user.id },
       {
         password: hashedPassword,
-        password_reset_token: null,
-        password_reset_expires: null,
+        password_reset_token: undefined,
+        password_reset_expires: undefined,
         updated_at: new Date().toISOString()
-      }
+      } as any
     );
 
     // Enviar email de confirmación
@@ -104,14 +102,18 @@ export async function POST(request: NextRequest) {
         action: 'email_confirmation_error',
         ip: clientIp,
         userId: user.id,
-        email: user.email,
-        error: emailError instanceof Error ? emailError.message : 'Unknown error'
+        data: {
+          email: user.email,
+          error: emailError instanceof Error ? emailError.message : 'Unknown error'
+        }
       });
     }
 
     logger.userAction('password_reset_completed', user.id, clientIp, {
-      email: user.email,
-      passwordChanged: true
+      data: {
+        email: user.email,
+        passwordChanged: true
+      }
     });
 
     return NextResponse.json({

@@ -91,7 +91,7 @@ export class UserController {
         }, { status: 400 });
       }
 
-      const userData: CreateUserDto = validation.data;
+      const userData: CreateUserDto = validation.data!;
 
       // Crear usuario
       const newUser = await this.userService.createUser(userData);
@@ -127,7 +127,7 @@ export class UserController {
         }, { status: 400 });
       }
 
-      const { id } = paramValidation.data;
+      const { id } = paramValidation.data!;
 
       // Obtener usuario
       const user = await this.userService.getUserById(id);
@@ -170,7 +170,7 @@ export class UserController {
         }, { status: 400 });
       }
 
-      const { id } = paramValidation.data;
+      const { id } = paramValidation.data!;
       const body = await request.json();
 
       // Validar datos de entrada
@@ -183,7 +183,7 @@ export class UserController {
         }, { status: 400 });
       }
 
-      const userData: UpdateUserDto = validation.data;
+      const userData: UpdateUserDto = validation.data!;
 
       // Actualizar usuario
       const updatedUser = await this.userService.updateUser(id, userData);
@@ -226,7 +226,7 @@ export class UserController {
         }, { status: 400 });
       }
 
-      const { id } = paramValidation.data;
+      const { id } = paramValidation.data!;
 
       // Eliminar usuario
       const deleted = await this.userService.deleteUser(id);
@@ -321,7 +321,7 @@ export class UserController {
         }, { status: 400 });
       }
 
-      const profileData = validation.data;
+      const profileData = validation.data!;
 
       // Actualizar perfil
       const updatedProfile = await this.userService.updateUserProfile(userId, profileData);

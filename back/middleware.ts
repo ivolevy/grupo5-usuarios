@@ -45,11 +45,13 @@ export function middleware(request: NextRequest) {
 
   // Log de la request
   logger.info('Request received', {
-    method: request.method,
-    path: pathname,
+    action: 'request_received',
     ip: clientIp,
     userAgent,
-    timestamp: new Date().toISOString()
+    data: {
+      method: request.method,
+      path: pathname
+    }
   });
 
   // Verificar si es una ruta de API
@@ -68,10 +70,13 @@ export function middleware(request: NextRequest) {
     
     if (!authResult.success) {
       logger.warn('Unauthorized access attempt', {
-        path: pathname,
+        action: 'unauthorized_access',
         ip: clientIp,
         userAgent,
-        error: authResult.error
+        data: {
+          path: pathname,
+          error: authResult.error
+        }
       });
 
       return NextResponse.json(
@@ -88,10 +93,13 @@ export function middleware(request: NextRequest) {
     if (isAdminRoute(pathname)) {
       if (!isAdmin(authResult.user!)) {
         logger.warn('Admin access denied', {
-          path: pathname,
+          action: 'admin_access_denied',
           ip: clientIp,
           userId: authResult.user?.userId,
-          userRole: authResult.user?.rol
+          data: {
+            path: pathname,
+            userRole: authResult.user?.rol
+          }
         });
 
         return NextResponse.json(
@@ -166,8 +174,11 @@ function verifyAuthentication(request: NextRequest): {
 
   } catch (error) {
     logger.error('Authentication error', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      ip: getClientIp(request)
+      action: 'authentication_error',
+      ip: getClientIp(request),
+      data: {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
     });
 
     return {

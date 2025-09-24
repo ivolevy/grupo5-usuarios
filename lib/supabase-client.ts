@@ -44,6 +44,7 @@ export interface UpdateUsuarioData {
   nombre_completo?: string;
   nacionalidad?: string;
   telefono?: string;
+  updated_at?: string;
 }
 
 class SupabaseClient {

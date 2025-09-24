@@ -7,7 +7,7 @@ import { rateLimiter } from '@/lib/rate-limiter';
 export async function POST(request: NextRequest) {
   try {
     // Logging de la petición entrante
-    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     logger.info('Petición de recupero de contraseña recibida', {
       action: 'forgot_password_request',
       ip: clientIP,
@@ -96,6 +96,24 @@ export async function POST(request: NextRequest) {
     // Generar y almacenar código de verificación
     const code = await storeVerificationCode(email);
     
+    // Si no se pudo generar el código (email no existe), retornar mensaje específico
+    if (!code) {
+      logger.info(`Solicitud de recupero para email no registrado: ${email}`, {
+        action: 'forgot_password_email_not_found',
+        ip: clientIP,
+        data: { email }
+      });
+
+      return NextResponse.json({
+        success: false,
+        message: 'El email no está registrado en nuestro sistema.',
+        data: {
+          email,
+          emailExists: false
+        }
+      });
+    }
+    
     // Enviar email con el código
     const emailSent = await sendVerificationCode(email, code);
 
@@ -108,9 +126,10 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: 'Si el email existe en nuestro sistema, recibirás un código de verificación en unos minutos.',
+        message: 'Código de verificación enviado a tu email.',
         data: {
           email,
+          emailExists: true,
           codeExpiresIn: 5 // minutos
         }
       });
@@ -128,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     
     logger.error('Error interno en recupero de contraseña', {
       action: 'forgot_password_internal_error',
