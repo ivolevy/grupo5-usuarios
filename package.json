@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "postbuild": "node -e \"const fs=require('fs');const p='.next/export-detail.json';if(!fs.existsSync('.next'))fs.mkdirSync('.next');if(!fs.existsSync(p))fs.writeFileSync(p, JSON.stringify({}), 'utf8');\"",
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",

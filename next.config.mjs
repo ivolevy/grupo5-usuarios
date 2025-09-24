@@ -10,9 +10,6 @@ const nextConfig = {
     unoptimized: true,
   },
   output: 'standalone',
-  experimental: {
-    outputFileTracingRoot: undefined,
-  },
   trailingSlash: false,
 }
 
