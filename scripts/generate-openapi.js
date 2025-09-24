@@ -1,6 +1,15 @@
-import { createSwaggerSpec } from 'next-swagger-doc';
+/*
+  Generate a static OpenAPI JSON at build time to avoid bundling a heavy
+  serverless function for /api/openapi.
+*/
 
-export function generateOpenApiSpec() {
+const fs = require('fs');
+const path = require('path');
+
+async function main() {
+  // Defer import to avoid issues if package isn't needed in other contexts
+  const { createSwaggerSpec } = require('next-swagger-doc');
+
   const spec = createSwaggerSpec({
     apiFolder: 'app/api',
     title: 'Grupo5 Usuarios API',
@@ -35,8 +44,16 @@ export function generateOpenApiSpec() {
     },
   });
 
-  return spec;
+  const publicDir = path.join(process.cwd(), 'public');
+  const outPath = path.join(publicDir, 'openapi.json');
+  if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
+  fs.writeFileSync(outPath, JSON.stringify(spec, null, 2), 'utf8');
+  console.log(`Wrote OpenAPI spec to ${outPath}`);
 }
 
+main().catch((err) => {
+  console.error('Failed to generate OpenAPI spec:', err);
+  process.exit(1);
+});
 
 
