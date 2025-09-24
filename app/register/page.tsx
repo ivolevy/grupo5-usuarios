@@ -20,19 +20,33 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     rol: "usuario",
-    nacionalidad: ""
+    nacionalidad: "",
+    telefono: ""
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [passwordError, setPasswordError] = useState("")
   const router = useRouter()
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     setError("")
     setSuccess("")
+    
+    // Validar contraseñas en tiempo real
+    if (field === "password" || field === "confirmPassword") {
+      const password = field === "password" ? value : formData.password
+      const confirmPassword = field === "confirmPassword" ? value : formData.confirmPassword
+      
+      if (confirmPassword && password !== confirmPassword) {
+        setPasswordError("Las contraseñas no coinciden")
+      } else {
+        setPasswordError("")
+      }
+    }
   }
 
   const validateForm = () => {
@@ -53,6 +67,12 @@ export default function RegisterPage() {
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       setError("Por favor ingresa un email válido")
+      return false
+    }
+
+    // Validar teléfono si se proporciona
+    if (formData.telefono && !/^[\+]?[0-9\s\-\(\)]*$/.test(formData.telefono)) {
+      setError("El teléfono debe contener solo números, espacios, guiones y paréntesis")
       return false
     }
 
@@ -79,7 +99,8 @@ export default function RegisterPage() {
           email: formData.email,
           password: formData.password,
           rol: formData.rol,
-          nacionalidad: formData.nacionalidad
+          nacionalidad: formData.nacionalidad,
+          telefono: formData.telefono || undefined
         })
       })
 
@@ -170,6 +191,20 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="telefono" className="text-sm font-medium text-slate-700">
+                Teléfono <span className="text-slate-400 text-xs">(Opcional)</span>
+              </Label>
+              <Input
+                id="telefono"
+                type="tel"
+                value={formData.telefono}
+                onChange={(e) => handleInputChange("telefono", e.target.value)}
+                placeholder="+1 (555) 123-4567"
+                className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium text-slate-700">
                 Contraseña
               </Label>
@@ -225,6 +260,9 @@ export default function RegisterPage() {
                   )}
                 </button>
               </div>
+              {passwordError && (
+                <p className="text-sm text-red-600 mt-1">{passwordError}</p>
+              )}
             </div>
 
             {/* Rol fijo como usuario - no se muestra en el formulario */}
@@ -273,6 +311,7 @@ export default function RegisterPage() {
               <li>• Nombre completo es obligatorio</li>
               <li>• Email válido requerido</li>
               <li>• Nacionalidad debe ser seleccionada</li>
+              <li>• Teléfono es opcional</li>
               <li>• Contraseña mínimo 8 caracteres</li>
               <li>• Se creará como usuario estándar</li>
             </ul>

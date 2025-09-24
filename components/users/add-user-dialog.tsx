@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useUsers, type User } from "@/contexts/users-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,6 +24,7 @@ import { countries } from "@/lib/countries"
 export function AddUserDialog() {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [passwordError, setPasswordError] = useState("")
   const [formData, setFormData] = useState({
     nombre_completo: "",
     email: "",
@@ -31,9 +32,33 @@ export function AddUserDialog() {
     confirmPassword: "",
     rol: "usuario" as User["rol"],
     nacionalidad: "",
+    telefono: "",
   })
   const { addUser } = useUsers()
   const { toast } = useToast()
+
+  // Limpiar errores cuando se abra el diálogo
+  useEffect(() => {
+    if (open) {
+      setPasswordError("")
+    }
+  }, [open])
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    
+    // Validar contraseñas en tiempo real
+    if (field === "password" || field === "confirmPassword") {
+      const password = field === "password" ? value : formData.password
+      const confirmPassword = field === "confirmPassword" ? value : formData.confirmPassword
+      
+      if (confirmPassword && password !== confirmPassword) {
+        setPasswordError("Las contraseñas no coinciden")
+      } else {
+        setPasswordError("")
+      }
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,6 +73,7 @@ export function AddUserDialog() {
     }
 
     if (formData.password !== formData.confirmPassword) {
+      setPasswordError("Las contraseñas no coinciden")
       toast({
         variant: "destructive",
         title: "Error",
@@ -64,9 +90,11 @@ export function AddUserDialog() {
         password: formData.password,
         rol: formData.rol,
         nacionalidad: formData.nacionalidad,
+        telefono: formData.telefono || undefined,
       })
       
-      setFormData({ nombre_completo: "", email: "", password: "", confirmPassword: "", rol: "usuario", nacionalidad: "" })
+      setFormData({ nombre_completo: "", email: "", password: "", confirmPassword: "", rol: "usuario", nacionalidad: "", telefono: "" })
+      setPasswordError("")
       setOpen(false)
       
       toast({
@@ -128,7 +156,7 @@ export function AddUserDialog() {
               id="password"
               type="password"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) => handleInputChange("password", e.target.value)}
               placeholder="Contraseña segura"
               required
               disabled={isSubmitting}
@@ -141,12 +169,15 @@ export function AddUserDialog() {
               id="confirmPassword"
               type="password"
               value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
               placeholder="Repetir contraseña"
               required
               disabled={isSubmitting}
               minLength={8}
             />
+            {passwordError && (
+              <p className="text-sm text-red-600 mt-1">{passwordError}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="rol">Rol</Label>
@@ -184,6 +215,18 @@ export function AddUserDialog() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="telefono">Teléfono <span className="text-gray-400 text-sm">(Opcional)</span></Label>
+            <Input
+              id="telefono"
+              type="tel"
+              value={formData.telefono}
+              onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+              placeholder="+1 (555) 123-4567"
+              disabled={isSubmitting}
+            />
           </div>
           <DialogFooter>
             <Button 

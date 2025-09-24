@@ -149,6 +149,7 @@ export default function UsersPage() {
           <TableHead>Rol</TableHead>
           <TableHead>Estado</TableHead>
           <TableHead>Nacionalidad</TableHead>
+          <TableHead>Teléfono</TableHead>
           <TableHead>Fecha Creación</TableHead>
           <TableHead>Último Login</TableHead>
           {showActions && <TableHead className="text-center">Acciones</TableHead>}
@@ -157,19 +158,19 @@ export default function UsersPage() {
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 8 : 7} className="text-center py-8">
+            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8">
               Cargando usuarios...
             </TableCell>
           </TableRow>
         ) : error ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 8 : 7} className="text-center py-8 text-red-600">
+            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8 text-red-600">
               Error: {error}
             </TableCell>
           </TableRow>
         ) : filteredUsers.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 8 : 7} className="text-center py-8">
+            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8">
               No se encontraron usuarios
             </TableCell>
           </TableRow>
@@ -192,6 +193,9 @@ export default function UsersPage() {
               </TableCell>
               <TableCell className="text-gray-600 font-roboto-regular">
                 {user.nacionalidad || "No especificada"}
+              </TableCell>
+              <TableCell className="text-gray-600 font-roboto-regular">
+                {user.telefono || "No especificado"}
               </TableCell>
               <TableCell className="text-gray-600 font-roboto-regular">
                 {new Date(user.created_at).toLocaleDateString('es-ES')}

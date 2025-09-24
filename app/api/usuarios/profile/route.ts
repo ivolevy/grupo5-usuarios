@@ -162,7 +162,7 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { email, nombre_completo, nacionalidad, currentPassword, newPassword } = validation.data;
+    const { email, nombre_completo, nacionalidad, telefono, currentPassword, newPassword } = validation.data;
 
     // Obtener usuario actual
     const currentUser = await prisma.usuarios.findUnique({ id: user.userId });
@@ -180,6 +180,7 @@ export async function PUT(request: NextRequest) {
     // Actualizar campos básicos
     if (nombre_completo !== undefined) updateData.nombre_completo = nombre_completo;
     if (nacionalidad !== undefined) updateData.nacionalidad = nacionalidad;
+    if (telefono !== undefined) updateData.telefono = telefono;
 
     // Cambio de email
     if (email && email !== currentUser.email) {

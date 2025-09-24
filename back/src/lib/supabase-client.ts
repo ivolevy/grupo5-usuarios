@@ -13,6 +13,9 @@ export interface Usuario {
   last_login_at?: string;
   created_at: string;
   updated_at: string;
+  nombre_completo?: string;
+  nacionalidad?: string;
+  telefono?: string;
 }
 
 export interface CreateUsuarioData {
@@ -24,6 +27,9 @@ export interface CreateUsuarioData {
   password_reset_token?: string;
   password_reset_expires?: string;
   last_login_at?: string;
+  nombre_completo?: string;
+  nacionalidad?: string;
+  telefono?: string;
 }
 
 export interface UpdateUsuarioData {
@@ -35,6 +41,9 @@ export interface UpdateUsuarioData {
   password_reset_token?: string;
   password_reset_expires?: string;
   last_login_at?: string;
+  nombre_completo?: string;
+  nacionalidad?: string;
+  telefono?: string;
 }
 
 class SupabaseClient {

@@ -24,6 +24,12 @@ export const createUsuarioSchema = z.object({
     .string()
     .min(1, 'La nacionalidad es requerida')
     .max(100, 'La nacionalidad es demasiado larga'),
+  telefono: z
+    .string()
+    .max(20, 'El teléfono es demasiado largo')
+    .regex(/^[\+]?[0-9\s\-\(\)]*$/, 'El teléfono debe contener solo números, espacios, guiones y paréntesis')
+    .optional()
+    .transform(val => val === '' ? undefined : val),
 });
 
 export const updateUsuarioSchema = z.object({
@@ -55,6 +61,45 @@ export const updateUsuarioSchema = z.object({
     .max(100, 'La nacionalidad es demasiado larga')
     .optional()
     .transform(val => val === '' ? undefined : val),
+  telefono: z
+    .string()
+    .max(20, 'El teléfono es demasiado largo')
+    .regex(/^[\+]?[0-9\s\-\(\)]*$/, 'El teléfono debe contener solo números, espacios, guiones y paréntesis')
+    .optional()
+    .transform(val => val === '' ? undefined : val),
+});
+
+export const updateProfileSchema = z.object({
+  nombre_completo: z
+    .string()
+    .max(200, 'El nombre completo es demasiado largo')
+    .optional()
+    .transform(val => val === '' ? undefined : val),
+  email: z
+    .string()
+    .email('Debe ser un email válido')
+    .max(255, 'El email es demasiado largo')
+    .optional()
+    .transform(val => val === '' ? undefined : val),
+  nacionalidad: z
+    .string()
+    .max(100, 'La nacionalidad es demasiado larga')
+    .optional()
+    .transform(val => val === '' ? undefined : val),
+  telefono: z
+    .string()
+    .max(20, 'El teléfono es demasiado largo')
+    .regex(/^[\+]?[0-9\s\-\(\)]*$/, 'El teléfono debe contener solo números, espacios, guiones y paréntesis')
+    .optional()
+    .transform(val => val === '' ? undefined : val),
+  currentPassword: z
+    .string()
+    .optional(),
+  newPassword: z
+    .string()
+    .min(8, 'La nueva contraseña debe tener al menos 8 caracteres')
+    .max(128, 'La nueva contraseña es demasiado larga')
+    .optional(),
 });
 
 export const usuarioParamsSchema = z.object({
@@ -66,6 +111,7 @@ export const usuarioParamsSchema = z.object({
 // Tipos TypeScript derivados de los schemas
 export type CreateUsuarioInput = z.infer<typeof createUsuarioSchema>;
 export type UpdateUsuarioInput = z.infer<typeof updateUsuarioSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type UsuarioParams = z.infer<typeof usuarioParamsSchema>;
 
 // Función helper para validar datos

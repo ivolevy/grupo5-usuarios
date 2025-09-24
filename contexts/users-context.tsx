@@ -61,7 +61,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     refreshUsers()
   }, [])
 
-  const addUser = async (userData: { nombre_completo?: string; email: string; password: string; rol?: string; nacionalidad?: string }) => {
+  const addUser = async (userData: { nombre_completo?: string; email: string; password: string; rol?: string; nacionalidad?: string; telefono?: string }) => {
     setLoading(true)
     setError(null)
     try {

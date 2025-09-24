@@ -30,6 +30,8 @@
  *                 enum: [admin, moderador, usuario]
  *               nacionalidad:
  *                 type: string
+ *               telefono:
+ *                 type: string
  *     responses:
  *       201:
  *         description: User created
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { nombre_completo, email, password, rol, nacionalidad } = validation.data;
+    const { nombre_completo, email, password, rol, nacionalidad, telefono } = validation.data;
 
     // Validación simple de contraseña (solo longitud mínima)
     if (password.length < 8) {
@@ -116,7 +118,8 @@ export async function POST(request: NextRequest) {
       password: hashedPassword,
       rol: rol || 'usuario',
       email_verified: true, // Sin verificación por email
-      nacionalidad
+      nacionalidad,
+      telefono
     });
 
     // Remover password de la respuesta

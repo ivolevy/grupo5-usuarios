@@ -37,6 +37,7 @@ export default function ProfilePage() {
     nombre_completo: "",
     email: "",
     nacionalidad: "",
+    telefono: "",
   })
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -70,11 +71,13 @@ export default function ProfilePage() {
             nombre_completo: user.nombre_completo || "",
             email: user.email || "",
             nacionalidad: user.nacionalidad || "",
+            telefono: user.telefono || "",
           })
           console.log('FormData inicializado:', {
             nombre_completo: user.nombre_completo || "",
             email: user.email || "",
             nacionalidad: user.nacionalidad || "",
+            telefono: user.telefono || "",
           })
         }
         setIsLoading(false)
@@ -145,6 +148,7 @@ export default function ProfilePage() {
         nombre_completo: profile.nombre_completo || "",
         email: profile.email || "",
         nacionalidad: profile.nacionalidad || "",
+        telefono: profile.telefono || "",
       })
     }
     setIsEditing(false)
@@ -373,6 +377,18 @@ export default function ProfilePage() {
                     </Select>
                   </div>
 
+                  <div>
+                    <Label htmlFor="telefono">Teléfono <span className="text-gray-400 text-sm">(Opcional)</span></Label>
+                    <Input
+                      id="telefono"
+                      name="telefono"
+                      type="tel"
+                      value={formData.telefono}
+                      onChange={handleInputChange}
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
+
                   {/* Sección de cambio de contraseña */}
                   <div className="border-t pt-4">
                     <div className="flex items-center justify-between mb-4">
@@ -556,6 +572,14 @@ export default function ProfilePage() {
                       <p className="text-lg font-medium text-gray-900 mt-1">
                         {profile.nacionalidad || (
                           <span className="text-gray-400 italic">No especificada - Haz clic en "Editar Perfil" para agregarla</span>
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-500">Teléfono</Label>
+                      <p className="text-lg font-medium text-gray-900 mt-1">
+                        {profile.telefono || (
+                          <span className="text-gray-400 italic">No especificado - Haz clic en "Editar Perfil" para agregarlo</span>
                         )}
                       </p>
                     </div>

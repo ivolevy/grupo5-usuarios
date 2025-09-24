@@ -31,6 +31,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
     email: user.email,
     rol: user.rol,
     nacionalidad: user.nacionalidad || "",
+    telefono: user.telefono || "",
     email_verified: user.email_verified,
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -44,6 +45,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
       email: user.email,
       rol: user.rol,
       nacionalidad: user.nacionalidad || "",
+      telefono: user.telefono || "",
       email_verified: user.email_verified,
     })
   }, [user])
@@ -146,6 +148,17 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="telefono">Teléfono <span className="text-gray-400 text-sm">(Opcional)</span></Label>
+            <Input
+              id="telefono"
+              type="tel"
+              value={formData.telefono}
+              onChange={(e) => handleInputChange("telefono", e.target.value)}
+              placeholder="+1 (555) 123-4567"
+            />
           </div>
 
           <div className="flex items-center justify-between space-x-2">
