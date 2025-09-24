@@ -48,3 +48,38 @@ export function getClientIp(request: NextRequest): string {
          request.headers.get('x-real-ip') ||
          'unknown';
 }
+
+// Rate limiter con diferentes límites para diferentes acciones
+export const rateLimiter = {
+  async checkLimit(identifier: string, action: string): Promise<{
+    allowed: boolean;
+    attempts: number;
+    resetTime: number;
+  }> {
+    // Configurar límites específicos por acción
+    let maxRequests: number;
+    let windowMs: number;
+
+    switch (action) {
+      case 'forgot_password':
+        maxRequests = 5; // 5 intentos
+        windowMs = 15 * 60 * 1000; // 15 minutos
+        break;
+      case 'verify_code':
+        maxRequests = 10; // 10 intentos
+        windowMs = 5 * 60 * 1000; // 5 minutos
+        break;
+      default:
+        maxRequests = 10; // 10 intentos por defecto
+        windowMs = 15 * 60 * 1000; // 15 minutos
+    }
+
+    const result = rateLimit(identifier, maxRequests, windowMs);
+    
+    return {
+      allowed: result.success,
+      attempts: maxRequests - result.remaining,
+      resetTime: Math.ceil((result.resetTime - Date.now()) / 1000)
+    };
+  }
+};

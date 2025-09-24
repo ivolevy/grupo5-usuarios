@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { hashPassword, validatePasswordStrength } from '@/lib/auth';
-import { emailService } from '@/lib/email-service';
+import { emailServiceResend } from '@/lib/email-service-resend';
 import { validateData, resetPasswordSchema } from '@/lib/validations';
 import { logger } from '@/lib/logger';
 import { getClientIp } from '@/lib/rate-limiter';
@@ -94,8 +94,11 @@ export async function POST(request: NextRequest) {
 
     // Enviar email de confirmación
     try {
-      await emailService.enviarConfirmacionRecupero(user.email);
+      console.log(`📧 [PASSWORD RESET] Enviando confirmación a ${user.email}...`);
+      await emailServiceResend.enviarConfirmacionRecupero(user.email);
+      console.log(`✅ [PASSWORD RESET] Email de confirmación enviado exitosamente a ${user.email}`);
     } catch (emailError) {
+      console.error(`❌ [PASSWORD RESET] Error enviando confirmación a ${user.email}:`, emailError);
       // No fallar el proceso si el email no se puede enviar
       logger.error('Error sending password reset confirmation email', {
         action: 'email_confirmation_error',
