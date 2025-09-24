@@ -1,4 +1,4 @@
-# Arquitectura en Capas - Grupo5 Usuariosaaaa
+# Arquitectura en Capas - Grupo5 Usuariosa
 
 ## 📋 Descripción
 

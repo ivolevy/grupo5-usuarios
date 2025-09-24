@@ -18,7 +18,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const { login, isLoading, user, error: authError, clearError } = useAuth()
@@ -27,15 +26,11 @@ export default function LoginPage() {
 
   // Obtener la URL de redirección desde los parámetros de búsqueda
   const redirectTo = searchParams.get('redirect') || '/dashboard'
-  const message = searchParams.get('message')
 
   // Limpiar errores cuando el componente se monta
   useEffect(() => {
     clearError()
-    if (message === 'password-reset') {
-      setSuccess("Contraseña restablecida correctamente. Ya puedes iniciar sesión con tu nueva contraseña.")
-    }
-  }, [clearError, message])
+  }, [clearError])
 
   // Redirigir si ya está autenticado
   useEffect(() => {
@@ -122,12 +117,6 @@ export default function LoginPage() {
               </Alert>
             )}
 
-            {success && (
-              <Alert className="border-green-200 bg-green-50">
-                <AlertDescription className="text-green-700 text-sm">{success}</AlertDescription>
-              </Alert>
-            )}
-
             <Button
               type="submit"
               className="w-full h-11 bg-primary-blue hover:bg-blue-700 text-white font-roboto-medium"
@@ -145,12 +134,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-4 text-center">
-            <Link 
-              href="/forgot-password" 
-              className="text-sm text-primary-blue hover:text-blue-700 font-roboto-medium"
-            >
-              ¿Olvidaste tu contraseña?
-            </Link>
+
           </div>
 
           <div className="mt-4 text-center">

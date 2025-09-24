@@ -1,0 +1,30 @@
+# Archivos de desarrollo
+node_modules
+.next
+.git
+.DS_Store
+
+# Archivos de test
+test-*.js
+quick-test.js
+test-auth-*.js
+test-frontend.js
+
+# Archivos de documentación de desarrollo
+TEST_RESULTS.md
+FRONTEND_AUTH_GUIDE.md
+IMPLEMENTATION_SUMMARY.md
+VERCEL_ENV_VARS.md
+
+# Archivos de configuración local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de cache
+tsconfig.tsbuildinfo
+*.log
+
+# Archivos de test HTML
+test-styles.html
