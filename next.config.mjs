@@ -9,6 +9,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Ensure Vercel treats this as a server build (not static export)
+  output: 'standalone',
 }
 
 export default nextConfig
