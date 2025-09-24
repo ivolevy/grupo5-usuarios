@@ -51,8 +51,8 @@ class SupabaseClient {
   private anonKey: string;
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || supabaseConfig.url;
-    this.anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || supabaseConfig.anonKey;
+    this.baseUrl = supabaseConfig.url;
+    this.anonKey = supabaseConfig.anonKey;
   }
 
   private async request(endpoint: string, options: RequestInit = {}) {
@@ -114,7 +114,9 @@ class SupabaseClient {
 
       // Buscar por email
       findFirst: async (where: { email: string }): Promise<Usuario | null> => {
-        const response = await this.request(`usuarios?email=eq.${where.email}&select=*`);
+        const encodedEmail = encodeURIComponent(where.email);
+        const url = `usuarios?email=eq.${encodedEmail}&select=*`;
+        const response = await this.request(url);
         const data = await response.json();
         return data.length > 0 ? data[0] : null;
       },
