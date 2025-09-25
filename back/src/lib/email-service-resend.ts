@@ -1,21 +1,12 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-export class EmailService {
-  private transporter: nodemailer.Transporter;
+export class EmailServiceResend {
+  private resend: Resend;
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.MAIL_PORT || '587'),
-      secure: false, // true for 465, false for other ports
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
+    // Resend no requiere credenciales de aplicación para el plan gratuito
+    // Solo necesitas registrarte en resend.com y obtener una API key
+    this.resend = new Resend(process.env.RESEND_API_KEY || 're_123456789'); // Fallback para desarrollo
   }
 
   private logEmailAttempt(type: string, email: string, status: 'success' | 'error', details?: any) {
@@ -41,25 +32,25 @@ export class EmailService {
     try {
       console.log(`📧 [EMAIL ATTEMPT] Enviando ${emailType} a ${to}...`);
       
-      const fromEmail = process.env.GMAIL_USER || 'noreply@sky-track.com';
-      const fromName = process.env.EMAIL_FROM_NAME || 'SkyTrack';
-      
-      const mailOptions = {
-        from: `"${fromName}" <${fromEmail}>`,
-        to,
+      const { data, error } = await this.resend.emails.send({
+        from: 'SkyTrack <noreply@sky-track.com>', // Dominio verificado en Resend
+        to: [to],
         subject,
         html: body
-      };
+      });
 
-      const info = await this.transporter.sendMail(mailOptions);
-      
+      if (error) {
+        this.logEmailAttempt(emailType, to, 'error', { error: error.message });
+        throw new Error(`Error enviando email: ${error.message}`);
+      }
+
       this.logEmailAttempt(emailType, to, 'success', { 
-        messageId: info.messageId,
+        messageId: data?.id,
         subject,
         timestamp: new Date().toISOString()
       });
 
-      return { success: true, message: 'Email enviado correctamente', info };
+      return { success: true, message: 'Email enviado correctamente', data };
     } catch (error) {
       this.logEmailAttempt(emailType, to, 'error', { 
         error: error instanceof Error ? error.message : error,
@@ -159,4 +150,4 @@ export class EmailService {
 }
 
 // Instancia singleton
-export const emailService = new EmailService();
+export const emailServiceResend = new EmailServiceResend();

@@ -67,16 +67,51 @@ export default function VerifyCodePage() {
 
     setIsLoading(true)
 
-    // Simular validación del código (en un caso real, esto sería una llamada a la API)
-    setTimeout(() => {
-      // Para demo, aceptamos cualquier código de 6 dígitos
-      setSuccess("Código verificado correctamente")
-      // Redirigir a la página de reset de contraseña
-      setTimeout(() => {
-        router.push(`/reset-password?email=${encodeURIComponent(email)}`)
-      }, 1500)
+    try {
+      console.log('🔍 [FRONTEND] Iniciando verificación de código...')
+      console.log('📧 [FRONTEND] Email:', email)
+      console.log('🔢 [FRONTEND] Código:', code)
+      
+      const url = '/api/auth/verify-code'
+      console.log('🔗 [FRONTEND] URL:', url)
+      console.log('📤 [FRONTEND] Enviando POST a:', url)
+      
+      // Validar código usando el endpoint del backend
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, code })
+      })
+
+      console.log('📥 [FRONTEND] Respuesta recibida:')
+      console.log('   Status:', response.status)
+      console.log('   OK:', response.ok)
+
+      const data = await response.json()
+      console.log('📋 [FRONTEND] Datos de respuesta:', data)
+
+      if (data.success) {
+        console.log('✅ [FRONTEND] Código verificado correctamente')
+        console.log('🔑 [FRONTEND] Token recibido:', data.data?.token ? 'Sí' : 'No')
+        setSuccess("Código verificado correctamente")
+        // Redirigir a la página de reset de contraseña
+        setTimeout(() => {
+          console.log('🔄 [FRONTEND] Redirigiendo a reset-password...')
+          router.push(`/reset-password?email=${encodeURIComponent(email)}&token=${data.data.token}`)
+        }, 1500)
+      } else {
+        console.log('❌ [FRONTEND] Error en la verificación:', data.message)
+        setError(data.message || "Código inválido o expirado")
+      }
+    } catch (error) {
+      console.error('💥 [FRONTEND] Error de conexión:', error)
+      setError("Error de conexión. Intenta nuevamente.")
+    } finally {
+      console.log('🏁 [FRONTEND] Finalizando verificación de código')
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   const handleResendCode = async () => {
@@ -84,12 +119,45 @@ export default function VerifyCodePage() {
     setSuccess("")
     setIsLoading(true)
 
-    // Simular reenvío del código
-    setTimeout(() => {
-      setSuccess("Código reenviado correctamente")
-      setTimeLeft(300) // Resetear el timer
+    try {
+      console.log('🔄 [FRONTEND] Reenviando código de verificación...')
+      console.log('📧 [FRONTEND] Email:', email)
+      
+      const url = '/api/auth/forgot'
+      console.log('🔗 [FRONTEND] URL:', url)
+      console.log('📤 [FRONTEND] Enviando POST a:', url)
+      
+      // Reenviar código usando el endpoint del backend
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email })
+      })
+
+      console.log('📥 [FRONTEND] Respuesta recibida:')
+      console.log('   Status:', response.status)
+      console.log('   OK:', response.ok)
+
+      const data = await response.json()
+      console.log('📋 [FRONTEND] Datos de respuesta:', data)
+
+      if (data.success) {
+        console.log('✅ [FRONTEND] Código reenviado correctamente')
+        setSuccess("Código reenviado correctamente")
+        setTimeLeft(300) // Resetear el timer
+      } else {
+        console.log('❌ [FRONTEND] Error al reenviar código:', data.message)
+        setError(data.message || "Error al reenviar código")
+      }
+    } catch (error) {
+      console.error('💥 [FRONTEND] Error de conexión al reenviar:', error)
+      setError("Error de conexión. Intenta nuevamente.")
+    } finally {
+      console.log('🏁 [FRONTEND] Finalizando reenvío de código')
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   return (
@@ -140,7 +208,7 @@ export default function VerifyCodePage() {
                 className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500 text-center text-lg font-mono tracking-widest"
               />
               <p className="text-xs text-slate-500 text-center">
-                Para demo, puedes usar cualquier código de 6 dígitos
+                Revisa tu email para obtener el código de verificación
               </p>
             </div>
 

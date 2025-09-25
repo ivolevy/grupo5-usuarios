@@ -4,6 +4,9 @@ import { logger } from '@/lib/logger';
 import { getClientIp } from '@/lib/rate-limiter';
 import { hasPermission, Permission } from '@/lib/permissions';
 
+// Re-exportar enum para uso externo
+export { Permission } from '@/lib/permissions';
+
 // Extender el tipo Request para incluir user
 declare global {
   namespace Express {
@@ -34,9 +37,12 @@ export function verifyJWTMiddleware(request: NextRequest): {
 
     if (!token) {
       logger.warn('Missing authorization token', {
+        action: 'missing_token',
         ip: clientIp,
         userAgent,
-        path: request.nextUrl.pathname
+        data: {
+          path: request.nextUrl.pathname
+        }
       });
 
       return {
@@ -51,9 +57,12 @@ export function verifyJWTMiddleware(request: NextRequest): {
 
     if (!decoded) {
       logger.warn('Invalid or expired token', {
+        action: 'invalid_token',
         ip: clientIp,
         userAgent,
-        path: request.nextUrl.pathname
+        data: {
+          path: request.nextUrl.pathname
+        }
       });
 
       return {
@@ -66,10 +75,13 @@ export function verifyJWTMiddleware(request: NextRequest): {
     // Verificar que el token no esté expirado
     if (decoded.exp && decoded.exp < Date.now() / 1000) {
       logger.warn('Expired token used', {
+        action: 'expired_token',
         ip: clientIp,
         userId: decoded.userId,
         userAgent,
-        path: request.nextUrl.pathname
+        data: {
+          path: request.nextUrl.pathname
+        }
       });
 
       return {
@@ -80,10 +92,13 @@ export function verifyJWTMiddleware(request: NextRequest): {
     }
 
     logger.info('Successful authentication', {
+      action: 'auth_success',
       ip: clientIp,
       userId: decoded.userId,
-      userRole: decoded.rol,
-      path: request.nextUrl.pathname
+      data: {
+        userRole: decoded.rol,
+        path: request.nextUrl.pathname
+      }
     });
 
     return {
@@ -93,10 +108,13 @@ export function verifyJWTMiddleware(request: NextRequest): {
 
   } catch (error) {
     logger.error('Authentication middleware error', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+      action: 'auth_error',
       ip: clientIp,
       userAgent,
-      path: request.nextUrl.pathname
+      data: {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        path: request.nextUrl.pathname
+      }
     });
 
     return {
@@ -178,8 +196,8 @@ export function withAuth(
   options: {
     requireAuth?: boolean;
     requiredPermissions?: Permission[];
-    requireAnyPermission?: Permission[];
-    requireAllPermissions?: Permission[];
+    requireAnyPermissionList?: Permission[];
+    requireAllPermissionsList?: Permission[];
     allowSelfAccess?: boolean;
   } = {}
 ) {
@@ -187,8 +205,8 @@ export function withAuth(
     const {
       requireAuth = true,
       requiredPermissions = [],
-      requireAnyPermission = [],
-      requireAllPermissions = [],
+      requireAnyPermissionList = [],
+      requireAllPermissionsList = [],
       allowSelfAccess = false
     } = options;
 
@@ -217,10 +235,13 @@ export function withAuth(
     if (requiredPermissions.length > 0) {
       if (!requireAllPermissions(user, requiredPermissions)) {
         logger.warn('Insufficient permissions', {
+          action: 'insufficient_permissions',
           userId: user.userId,
-          userRole: user.rol,
-          requiredPermissions,
-          path: request.nextUrl.pathname
+          data: {
+            userRole: user.rol,
+            requiredPermissions,
+            path: request.nextUrl.pathname
+          }
         });
 
         return NextResponse.json(
@@ -235,13 +256,16 @@ export function withAuth(
     }
 
     // Verificar permisos OR
-    if (requireAnyPermission.length > 0) {
-      if (!requireAnyPermission(user, requireAnyPermission)) {
+    if (requireAnyPermissionList.length > 0) {
+      if (!requireAnyPermission(user, requireAnyPermissionList)) {
         logger.warn('Missing required permissions (OR)', {
+          action: 'missing_permissions_or',
           userId: user.userId,
-          userRole: user.rol,
-          requiredPermissions: requireAnyPermission,
-          path: request.nextUrl.pathname
+          data: {
+            userRole: user.rol,
+            requiredPermissions: requireAnyPermissionList,
+            path: request.nextUrl.pathname
+          }
         });
 
         return NextResponse.json(
@@ -256,13 +280,16 @@ export function withAuth(
     }
 
     // Verificar permisos AND
-    if (requireAllPermissions.length > 0) {
-      if (!requireAllPermissions(user, requireAllPermissions)) {
+    if (requireAllPermissionsList.length > 0) {
+      if (!requireAllPermissions(user, requireAllPermissionsList)) {
         logger.warn('Missing required permissions (AND)', {
+          action: 'missing_permissions_and',
           userId: user.userId,
-          userRole: user.rol,
-          requiredPermissions: requireAllPermissions,
-          path: request.nextUrl.pathname
+          data: {
+            userRole: user.rol,
+            requiredPermissions: requireAllPermissionsList,
+            path: request.nextUrl.pathname
+          }
         });
 
         return NextResponse.json(
@@ -280,10 +307,13 @@ export function withAuth(
     if (allowSelfAccess && context?.params?.id) {
       if (!canAccessResource(user, context.params.id)) {
         logger.warn('Resource access denied', {
+          action: 'resource_access_denied',
           userId: user.userId,
-          userRole: user.rol,
-          resourceId: context.params.id,
-          path: request.nextUrl.pathname
+          data: {
+            userRole: user.rol,
+            resourceId: context.params.id,
+            path: request.nextUrl.pathname
+          }
         });
 
         return NextResponse.json(
@@ -316,12 +346,15 @@ export function logRequest(request: NextRequest, response: NextResponse) {
   const userId = (request as any).user?.userId || 'anonymous';
 
   logger.info('API request completed', {
-    method: request.method,
-    path: request.nextUrl.pathname,
-    status: response.status,
+    action: 'request_completed',
     ip: clientIp,
     userId,
     userAgent,
-    timestamp: new Date().toISOString()
+    data: {
+      method: request.method,
+      path: request.nextUrl.pathname,
+      status: response.status,
+      timestamp: new Date().toISOString()
+    }
   });
 }

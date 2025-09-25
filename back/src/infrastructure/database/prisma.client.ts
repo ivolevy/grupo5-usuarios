@@ -3,31 +3,17 @@
  * Configuración centralizada de la conexión a la base de datos
  */
 
-import { PrismaClient } from '@prisma/client';
+// Importar el cliente de Supabase en lugar de Prisma
+import { prisma, UpdateUsuarioData } from '../../lib/supabase-client';
 
-// Configuración del cliente Prisma
-const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
-  errorFormat: 'pretty',
-});
-
-// Middleware para logging de queries en desarrollo
-if (process.env.NODE_ENV === 'development') {
-  prisma.$use(async (params, next) => {
-    const before = Date.now();
-    const result = await next(params);
-    const after = Date.now();
-    
-    console.log(`Query ${params.model}.${params.action} took ${after - before}ms`);
-    return result;
-  });
-}
+// Configuración del cliente (usando Supabase)
+// El cliente ya está configurado en supabase-client.ts
 
 // Función para conectar a la base de datos
 export async function connectDatabase(): Promise<void> {
   try {
-    await prisma.$connect();
-    console.log('✅ Database connected successfully');
+    // Con Supabase no necesitamos conectar explícitamente
+    console.log('✅ Database connected successfully (Supabase)');
   } catch (error) {
     console.error('❌ Database connection failed:', error);
     throw error;
@@ -48,7 +34,8 @@ export async function disconnectDatabase(): Promise<void> {
 // Función para verificar la conexión
 export async function checkDatabaseConnection(): Promise<boolean> {
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    // Verificar conexión con una consulta simple
+    await prisma.usuarios.count();
     return true;
   } catch (error) {
     console.error('Database connection check failed:', error);
@@ -58,3 +45,4 @@ export async function checkDatabaseConnection(): Promise<boolean> {
 
 // Exportar el cliente Prisma
 export { prisma };
+export type { UpdateUsuarioData };

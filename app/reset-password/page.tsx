@@ -21,16 +21,20 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [passwordError, setPasswordError] = useState("")
   const [email, setEmail] = useState("")
+  const [token, setToken] = useState("")
   const [isCheckingPassword, setIsCheckingPassword] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {
     const emailParam = searchParams.get('email')
-    if (emailParam) {
+    const tokenParam = searchParams.get('token')
+    
+    if (emailParam && tokenParam) {
       setEmail(emailParam)
+      setToken(tokenParam)
     } else {
-      // Si no hay email, redirigir al forgot-password
+      // Si no hay email o token, redirigir al forgot-password
       router.push('/forgot-password')
     }
   }, [searchParams, router])
@@ -134,32 +138,51 @@ export default function ResetPasswordPage() {
     setIsLoading(true)
 
     try {
-      // Cambiar la contraseña en la base de datos
-      const response = await fetch('/api/usuarios/change-password', {
+      console.log('🔑 [FRONTEND] Iniciando cambio de contraseña...')
+      console.log('📧 [FRONTEND] Email:', email)
+      console.log('🎫 [FRONTEND] Token:', token ? 'Presente' : 'Ausente')
+      console.log('🔒 [FRONTEND] Nueva contraseña:', password ? 'Presente' : 'Ausente')
+      
+      const url = '/api/auth/reset'
+      console.log('🔗 [FRONTEND] URL:', url)
+      console.log('📤 [FRONTEND] Enviando POST a:', url)
+      
+      // Cambiar la contraseña usando el endpoint del backend con token
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: email,
-          newPassword: password
+          token: token,
+          password: password
         })
       })
 
+      console.log('📥 [FRONTEND] Respuesta recibida:')
+      console.log('   Status:', response.status)
+      console.log('   OK:', response.ok)
+
       const data = await response.json()
+      console.log('📋 [FRONTEND] Datos de respuesta:', data)
 
       if (data.success) {
+        console.log('✅ [FRONTEND] Contraseña restablecida correctamente')
         setSuccess("Contraseña restablecida correctamente")
         // Redirigir al login después de 2 segundos
         setTimeout(() => {
+          console.log('🔄 [FRONTEND] Redirigiendo a login...')
           router.push('/login?message=password-reset')
         }, 2000)
       } else {
+        console.log('❌ [FRONTEND] Error al cambiar contraseña:', data.message)
         setError(data.message || "Error al cambiar la contraseña")
       }
     } catch (error) {
+      console.error('💥 [FRONTEND] Error de conexión:', error)
       setError("Error de conexión. Intenta nuevamente.")
     } finally {
+      console.log('🏁 [FRONTEND] Finalizando cambio de contraseña')
       setIsLoading(false)
     }
   }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { codeStorageService } from '@/lib/code-storage';
 import { validateData, verifyCodeSchema } from '@/lib/validations';
 import { logger } from '@/lib/logger';
 import { getClientIp } from '@/lib/rate-limiter';
@@ -32,37 +33,23 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Verificar que existe un token de reset válido
-    if (!user.password_reset_token || !user.password_reset_expires) {
+    // Validar el código usando el servicio de almacenamiento
+    console.log(`🔍 [CODE VERIFICATION] Validando código para ${email}...`);
+    const validationResult = await codeStorageService.validateCode(email, code);
+
+    if (!validationResult.valid) {
+      console.log(`❌ [CODE VERIFICATION] Código inválido para ${email}: ${validationResult.message}`);
       return NextResponse.json({
         success: false,
-        message: 'Código inválido o expirado'
+        message: validationResult.message
       }, { status: 400 });
     }
 
-    // Verificar que el token no haya expirado
-    const now = new Date();
-    const expiresAt = new Date(user.password_reset_expires);
-    
-    if (now > expiresAt) {
-      // Limpiar token expirado
-      await prisma.usuarios.update(
-        { id: user.id },
-        {
-          password_reset_token: null,
-          password_reset_expires: null
-        }
-      );
+    console.log(`✅ [CODE VERIFICATION] Código válido para ${email}`);
 
-      return NextResponse.json({
-        success: false,
-        message: 'Código inválido o expirado'
-      }, { status: 400 });
-    }
-
-    // En un sistema real, aquí verificarías el código contra el que se envió por email
-    // Por simplicidad, aceptamos cualquier código de 6 dígitos si el token es válido
-    // En producción, deberías almacenar el código en la BD o usar un servicio de verificación
+    // Generar token de reset después de validar el código
+    const { token, expiresAt } = await codeStorageService.generateResetToken(email);
+    console.log(`🔑 [CODE VERIFICATION] Token de reset generado para ${email}`);
 
     logger.userAction('password_reset_code_verified', user.id, clientIp, {
       email,
@@ -74,7 +61,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Código verificado correctamente',
       data: {
-        token: user.password_reset_token
+        token
       }
     });
 

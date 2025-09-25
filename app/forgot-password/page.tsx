@@ -36,8 +36,15 @@ export default function ForgotPasswordPage() {
     setIsLoading(true)
 
     try {
-      // Verificar si el email existe en la base de datos
-      const response = await fetch('/api/usuarios/check-email', {
+      console.log('🌐 [FRONTEND] Iniciando solicitud de recupero de contraseña...')
+      console.log('📧 [FRONTEND] Email:', email)
+      
+      const url = '/api/auth/forgot'
+      console.log('🔗 [FRONTEND] URL:', url)
+      console.log('📤 [FRONTEND] Enviando POST a:', url)
+      
+      // Enviar solicitud de recupero de contraseña al backend
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,20 +52,35 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email })
       })
 
-      const data = await response.json()
+      console.log('📥 [FRONTEND] Respuesta recibida:')
+      console.log('   Status:', response.status)
+      console.log('   OK:', response.ok)
+      console.log('   Headers:', Object.fromEntries(response.headers.entries()))
 
-      if (data.exists) {
-        setSuccess("Email verificado correctamente")
+      const data = await response.json()
+      console.log('📋 [FRONTEND] Datos de respuesta:', data)
+
+      if (data.success) {
+        console.log('✅ [FRONTEND] Solicitud exitosa - Email enviado')
+        setSuccess("Código de verificación enviado a tu email.")
         // Redirigir a la página de código después de 2 segundos
         setTimeout(() => {
+          console.log('🔄 [FRONTEND] Redirigiendo a verify-code...')
           router.push(`/verify-code?email=${encodeURIComponent(email)}`)
         }, 2000)
       } else {
-        setError("El email no está registrado en el sistema")
+        console.log('❌ [FRONTEND] Error en la respuesta:', data.message)
+        if (data.data?.emailExists === false) {
+          setError("El email no está registrado en nuestro sistema.")
+        } else {
+          setError(data.message || "Error al enviar código de verificación")
+        }
       }
     } catch (error) {
+      console.error('💥 [FRONTEND] Error de conexión:', error)
       setError("Error de conexión. Intenta nuevamente.")
     } finally {
+      console.log('🏁 [FRONTEND] Finalizando solicitud de recupero')
       setIsLoading(false)
     }
   }
