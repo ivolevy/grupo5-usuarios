@@ -1,0 +1,691 @@
+{
+  "proyecto": "Grupo5 Usuarios - Sistema de Gestión de Usuarios",
+  "tecnologias": ["Next.js 15", "React 18", "TypeScript", "Supabase", "JWT", "Tailwind CSS"],
+  "fecha_analisis": "2024-12-19",
+  "total_eventos": 127,
+  "eventos": {
+    "eventos_ui_react": {
+      "categoria": "Eventos de Interfaz de Usuario React",
+      "descripcion": "Eventos de interacción del usuario con componentes React",
+      "total": 45,
+      "eventos": [
+        {
+          "nombre": "onClick",
+          "descripcion": "Evento de clic en botones y elementos interactivos",
+          "archivos": [
+            "components/auth/forgot-password-modal.tsx",
+            "components/users/add-user-dialog.tsx",
+            "components/users/edit-user-dialog.tsx",
+            "components/users/user-actions.tsx",
+            "components/dashboard/sidebar.tsx",
+            "app/page.tsx",
+            "app/login/page.tsx",
+            "app/register/page.tsx",
+            "app/dashboard/profile/page.tsx",
+            "components/users/advanced-filters.tsx"
+          ],
+          "usos": [
+            "Navegación entre páginas",
+            "Envío de formularios",
+            "Apertura/cierre de modales",
+            "Acciones de usuario (editar, eliminar, verificar)",
+            "Toggle de visibilidad de contraseñas",
+            "Logout de usuario"
+          ]
+        },
+        {
+          "nombre": "onSubmit",
+          "descripcion": "Evento de envío de formularios",
+          "archivos": [
+            "components/auth/forgot-password-modal.tsx",
+            "components/users/add-user-dialog.tsx",
+            "components/users/edit-user-dialog.tsx",
+            "app/login/page.tsx",
+            "app/register/page.tsx",
+            "app/forgot-password/page.tsx",
+            "app/verify-code/page.tsx",
+            "app/reset-password/page.tsx",
+            "app/dashboard/profile/page.tsx"
+          ],
+          "usos": [
+            "Login de usuario",
+            "Registro de usuario",
+            "Recuperación de contraseña",
+            "Verificación de código",
+            "Reset de contraseña",
+            "Creación de usuarios",
+            "Edición de perfil"
+          ]
+        },
+        {
+          "nombre": "onChange",
+          "descripcion": "Evento de cambio en inputs y controles",
+          "archivos": [
+            "components/auth/forgot-password-modal.tsx",
+            "components/users/add-user-dialog.tsx",
+            "components/users/edit-user-dialog.tsx",
+            "app/login/page.tsx",
+            "app/register/page.tsx",
+            "app/forgot-password/page.tsx",
+            "app/verify-code/page.tsx",
+            "app/reset-password/page.tsx",
+            "app/dashboard/profile/page.tsx",
+            "app/dashboard/users/page.tsx"
+          ],
+          "usos": [
+            "Captura de datos de formulario",
+            "Validación en tiempo real",
+            "Filtros de búsqueda",
+            "Selección de opciones"
+          ]
+        },
+        {
+          "nombre": "onFocus/onBlur",
+          "descripcion": "Eventos de foco en elementos",
+          "archivos": [
+            "components/ui/input.tsx",
+            "components/ui/textarea.tsx"
+          ],
+          "usos": [
+            "Validación de campos",
+            "Estados de foco"
+          ]
+        },
+        {
+          "nombre": "onKeyDown/onKeyUp",
+          "descripcion": "Eventos de teclado",
+          "archivos": [
+            "components/ui/carousel.tsx",
+            "components/ui/sidebar.tsx"
+          ],
+          "usos": [
+            "Navegación con teclado",
+            "Atajos de teclado"
+          ]
+        },
+        {
+          "nombre": "onMouseEnter/onMouseLeave",
+          "descripcion": "Eventos de mouse",
+          "archivos": [
+            "components/ui/hover-card.tsx",
+            "components/ui/tooltip.tsx"
+          ],
+          "usos": [
+            "Tooltips",
+            "Hover effects"
+          ]
+        }
+      ]
+    },
+    "eventos_react_hooks": {
+      "categoria": "Eventos de React Hooks",
+      "descripcion": "Hooks de React para manejo de estado y efectos",
+      "total": 28,
+      "eventos": [
+        {
+          "nombre": "useState",
+          "descripcion": "Hook para manejo de estado local",
+          "archivos": [
+            "components/auth/forgot-password-modal.tsx",
+            "components/users/add-user-dialog.tsx",
+            "components/users/edit-user-dialog.tsx",
+            "contexts/users-context.tsx",
+            "contexts/auth-context.tsx",
+            "app/login/page.tsx",
+            "app/register/page.tsx",
+            "app/dashboard/profile/page.tsx",
+            "hooks/use-toast.ts",
+            "hooks/use-mobile.ts"
+          ],
+          "usos": [
+            "Estado de formularios",
+            "Estado de carga",
+            "Estado de errores",
+            "Estado de modales",
+            "Estado de autenticación"
+          ]
+        },
+        {
+          "nombre": "useEffect",
+          "descripcion": "Hook para efectos secundarios",
+          "archivos": [
+            "components/auth/forgot-password-modal.tsx",
+            "components/users/add-user-dialog.tsx",
+            "contexts/users-context.tsx",
+            "contexts/auth-context.tsx",
+            "app/login/page.tsx",
+            "app/verify-code/page.tsx",
+            "app/reset-password/page.tsx",
+            "hooks/use-mobile.ts",
+            "hooks/use-toast.ts"
+          ],
+          "usos": [
+            "Carga inicial de datos",
+            "Limpieza de efectos",
+            "Suscripción a eventos",
+            "Validación de autenticación",
+            "Timers y contadores"
+          ]
+        },
+        {
+          "nombre": "useCallback",
+          "descripcion": "Hook para memoización de funciones",
+          "archivos": [
+            "components/ui/sidebar.tsx",
+            "components/ui/carousel.tsx"
+          ],
+          "usos": [
+            "Optimización de rendimiento",
+            "Prevención de re-renders"
+          ]
+        },
+        {
+          "nombre": "useMemo",
+          "descripcion": "Hook para memoización de valores",
+          "archivos": [
+            "components/ui/sidebar.tsx",
+            "components/ui/carousel.tsx",
+            "components/ui/slider.tsx"
+          ],
+          "usos": [
+            "Cálculos costosos",
+            "Optimización de rendimiento"
+          ]
+        },
+        {
+          "nombre": "useContext",
+          "descripcion": "Hook para acceso a contextos",
+          "archivos": [
+            "contexts/users-context.tsx",
+            "contexts/auth-context.tsx",
+            "components/ui/sidebar.tsx",
+            "components/ui/carousel.tsx"
+          ],
+          "usos": [
+            "Acceso a estado global",
+            "Comunicación entre componentes"
+          ]
+        }
+      ]
+    },
+    "eventos_api_http": {
+      "categoria": "Eventos de API y HTTP",
+      "descripcion": "Llamadas a APIs y eventos HTTP",
+      "total": 35,
+      "eventos": [
+        {
+          "nombre": "fetch",
+          "descripcion": "Llamadas HTTP a APIs",
+          "archivos": [
+            "contexts/users-context.tsx",
+            "contexts/auth-context.tsx",
+            "components/auth/forgot-password-modal.tsx",
+            "app/login/page.tsx",
+            "app/register/page.tsx",
+            "app/forgot-password/page.tsx",
+            "app/verify-code/page.tsx",
+            "app/reset-password/page.tsx",
+            "app/dashboard/profile/page.tsx",
+            "lib/supabase-client.ts",
+            "test-password-recovery.js",
+            "test-password-recovery-flow.js"
+          ],
+          "endpoints": [
+            "/api/auth/login",
+            "/api/auth/forgot",
+            "/api/auth/verify-code",
+            "/api/auth/reset",
+            "/api/auth/me",
+            "/api/auth/refresh",
+            "/api/usuarios",
+            "/api/usuarios/profile",
+            "/api/usuarios/[id]",
+            "/api/usuarios/check-email",
+            "/api/usuarios/change-password",
+            "/api/usuarios/get-password",
+            "/api/admin/metrics",
+            "/api/health"
+          ],
+          "metodos": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        },
+        {
+          "nombre": "NextRequest/NextResponse",
+          "descripcion": "Objetos de request y response de Next.js",
+          "archivos": [
+            "middleware.ts",
+            "back/middleware.ts",
+            "lib/middleware.ts",
+            "app/api/auth/forgot/route.ts",
+            "app/api/auth/verify-code/route.ts",
+            "app/api/auth/reset/route.ts",
+            "app/api/usuarios/route.ts",
+            "app/api/usuarios/[id]/route.ts",
+            "app/api/usuarios/profile/route.ts",
+            "app/api/usuarios/check-email/route.ts",
+            "app/api/usuarios/change-password/route.ts",
+            "app/api/usuarios/get-password/route.ts",
+            "app/api/admin/metrics/route.ts",
+            "app/api/health/route.ts"
+          ],
+          "usos": [
+            "Manejo de requests HTTP",
+            "Respuestas JSON",
+            "Middleware de autenticación",
+            "Validación de datos"
+          ]
+        }
+      ]
+    },
+    "eventos_middleware": {
+      "categoria": "Eventos de Middleware",
+      "descripcion": "Eventos de middleware de autenticación y autorización",
+      "total": 15,
+      "eventos": [
+        {
+          "nombre": "middleware",
+          "descripcion": "Middleware principal de Next.js",
+          "archivos": [
+            "middleware.ts",
+            "back/middleware.ts"
+          ],
+          "funciones": [
+            "verifyAuthentication",
+            "verifyJWTMiddleware",
+            "requirePermission",
+            "requireAnyPermission",
+            "requireAllPermissions",
+            "withAuth"
+          ],
+          "usos": [
+            "Autenticación JWT",
+            "Verificación de permisos",
+            "Rate limiting",
+            "Logging de seguridad",
+            "Protección de rutas"
+          ]
+        },
+        {
+          "nombre": "auth_events",
+          "descripcion": "Eventos de autenticación",
+          "archivos": [
+            "lib/auth.ts",
+            "lib/middleware.ts",
+            "back/src/lib/middleware.ts"
+          ],
+          "eventos": [
+            "login",
+            "logout",
+            "token_verification",
+            "permission_check",
+            "unauthorized_access",
+            "admin_access_denied"
+          ]
+        }
+      ]
+    },
+    "eventos_navegacion": {
+      "categoria": "Eventos de Navegación",
+      "descripcion": "Eventos de navegación y routing",
+      "total": 12,
+      "eventos": [
+        {
+          "nombre": "router.push",
+          "descripcion": "Navegación programática",
+          "archivos": [
+            "app/login/page.tsx",
+            "app/register/page.tsx",
+            "app/forgot-password/page.tsx",
+            "app/verify-code/page.tsx",
+            "app/reset-password/page.tsx",
+            "app/page.tsx",
+            "contexts/auth-context.tsx",
+            "app/dashboard/layout.tsx"
+          ],
+          "rutas": [
+            "/login",
+            "/register",
+            "/dashboard",
+            "/dashboard/profile",
+            "/dashboard/users",
+            "/forgot-password",
+            "/verify-code",
+            "/reset-password"
+          ]
+        },
+        {
+          "nombre": "window.location",
+          "descripcion": "Navegación directa del navegador",
+          "archivos": [
+            "contexts/auth-context.tsx",
+            "components/dashboard/sidebar.tsx",
+            "back/src/app/page.tsx"
+          ],
+          "usos": [
+            "Redirección después de logout",
+            "Navegación forzada"
+          ]
+        }
+      ]
+    },
+    "eventos_temporales": {
+      "categoria": "Eventos Temporales",
+      "descripcion": "Eventos de tiempo y timers",
+      "total": 8,
+      "eventos": [
+        {
+          "nombre": "setTimeout",
+          "descripcion": "Timers de una sola ejecución",
+          "archivos": [
+            "components/auth/forgot-password-modal.tsx",
+            "app/verify-code/page.tsx",
+            "app/register/page.tsx",
+            "app/reset-password/page.tsx",
+            "app/forgot-password/page.tsx",
+            "hooks/use-toast.ts",
+            "components/ui/use-toast.ts"
+          ],
+          "usos": [
+            "Redirección automática",
+            "Limpieza de estados",
+            "Auto-dismiss de toasts",
+            "Contadores de tiempo"
+          ]
+        },
+        {
+          "nombre": "setInterval",
+          "descripcion": "Timers repetitivos",
+          "archivos": [
+            "lib/session-manager.ts",
+            "lib/token-manager.ts"
+          ],
+          "usos": [
+            "Limpieza de sesiones expiradas",
+            "Limpieza de tokens expirados"
+          ]
+        },
+        {
+          "nombre": "clearTimeout/clearInterval",
+          "descripcion": "Limpieza de timers",
+          "archivos": [
+            "components/auth/forgot-password-modal.tsx",
+            "app/verify-code/page.tsx",
+            "hooks/use-toast.ts",
+            "components/ui/use-toast.ts"
+          ],
+          "usos": [
+            "Prevención de memory leaks",
+            "Limpieza de efectos"
+          ]
+        }
+      ]
+    },
+    "eventos_storage": {
+      "categoria": "Eventos de Almacenamiento",
+      "descripcion": "Eventos de localStorage, sessionStorage y cookies",
+      "total": 10,
+      "eventos": [
+        {
+          "nombre": "localStorage",
+          "descripcion": "Almacenamiento local del navegador",
+          "archivos": [
+            "contexts/auth-context.tsx",
+            "back/src/app/page.tsx",
+            "__tests__/contexts/auth-context.test.tsx"
+          ],
+          "operaciones": [
+            "getItem",
+            "setItem",
+            "removeItem",
+            "clear"
+          ],
+          "datos_almacenados": [
+            "authToken",
+            "user",
+            "auth_token"
+          ]
+        },
+        {
+          "nombre": "document.cookie",
+          "descripcion": "Manejo de cookies",
+          "archivos": [
+            "contexts/auth-context.tsx",
+            "components/ui/sidebar.tsx",
+            "middleware.ts"
+          ],
+          "usos": [
+            "Autenticación persistente",
+            "Configuración de sidebar",
+            "Tokens de sesión"
+          ]
+        }
+      ]
+    },
+    "eventos_dom": {
+      "categoria": "Eventos del DOM",
+      "descripcion": "Eventos del Document Object Model",
+      "total": 6,
+      "eventos": [
+        {
+          "nombre": "addEventListener/removeEventListener",
+          "descripcion": "Suscripción a eventos del DOM",
+          "archivos": [
+            "hooks/use-mobile.ts",
+            "components/ui/use-mobile.tsx",
+            "components/ui/sidebar.tsx",
+            "__tests__/hooks/use-mobile.test.tsx"
+          ],
+          "eventos": [
+            "change",
+            "keydown",
+            "resize"
+          ],
+          "usos": [
+            "Detección de mobile",
+            "Navegación con teclado",
+            "Responsive design"
+          ]
+        },
+        {
+          "nombre": "window.matchMedia",
+          "descripcion": "Media queries del navegador",
+          "archivos": [
+            "hooks/use-mobile.ts",
+            "components/ui/use-mobile.tsx",
+            "__tests__/hooks/use-mobile.test.tsx"
+          ],
+          "usos": [
+            "Detección de breakpoints",
+            "Responsive design"
+          ]
+        }
+      ]
+    },
+    "eventos_logging": {
+      "categoria": "Eventos de Logging y Auditoría",
+      "descripcion": "Eventos de logging, auditoría y monitoreo",
+      "total": 25,
+      "eventos": [
+        {
+          "nombre": "console.log/console.error",
+          "descripcion": "Logging a consola",
+          "archivos": [
+            "test-password-recovery.js",
+            "test-password-recovery-flow.js",
+            "test-password-recovery-complete.js",
+            "test-email-logging.js",
+            "lib/email-service.ts",
+            "lib/email-verification.ts",
+            "__tests__/contexts/auth-context.test.tsx"
+          ],
+          "usos": [
+            "Debugging",
+            "Testing",
+            "Logs de desarrollo",
+            "Simulación de emails"
+          ]
+        },
+        {
+          "nombre": "logger",
+          "descripcion": "Sistema de logging estructurado",
+          "archivos": [
+            "lib/logger.ts",
+            "lib/email-verification.ts",
+            "lib/email-service.ts",
+            "back/middleware.ts",
+            "back/src/lib/logger.ts"
+          ],
+          "niveles": [
+            "info",
+            "warn",
+            "error"
+          ],
+          "eventos": [
+            "user_action",
+            "password_reset_requested",
+            "password_reset_code_verified",
+            "password_reset_completed",
+            "email_verification_sent",
+            "authentication_success",
+            "authentication_failed",
+            "unauthorized_access"
+          ]
+        },
+        {
+          "nombre": "audit_events",
+          "descripcion": "Eventos de auditoría",
+          "archivos": [
+            "lib/audit.ts",
+            "back/src/lib/audit.ts"
+          ],
+          "acciones": [
+            "user_created",
+            "user_updated",
+            "user_deleted",
+            "password_changed",
+            "permission_granted",
+            "permission_revoked"
+          ]
+        }
+      ]
+    },
+    "eventos_asincronos": {
+      "categoria": "Eventos Asincrónos",
+      "descripcion": "Eventos de programación asincrónica",
+      "total": 18,
+      "eventos": [
+        {
+          "nombre": "async/await",
+          "descripcion": "Programación asincrónica",
+          "archivos": [
+            "contexts/users-context.tsx",
+            "contexts/auth-context.tsx",
+            "components/auth/forgot-password-modal.tsx",
+            "app/login/page.tsx",
+            "app/register/page.tsx",
+            "lib/supabase-client.ts",
+            "lib/email-service.ts",
+            "lib/email-verification.ts",
+            "back/src/presentation/controllers/user.controller.ts",
+            "back/src/presentation/controllers/auth.controller.ts"
+          ],
+          "usos": [
+            "Llamadas a APIs",
+            "Operaciones de base de datos",
+            "Envío de emails",
+            "Autenticación",
+            "Validación de datos"
+          ]
+        },
+        {
+          "nombre": "Promise",
+          "descripcion": "Promesas JavaScript",
+          "archivos": [
+            "lib/email-service.ts",
+            "lib/supabase-client.ts",
+            "lib/rate-limiter.ts"
+          ],
+          "usos": [
+            "Operaciones asincrónicas",
+            "Manejo de errores",
+            "Chaining de operaciones"
+          ]
+        }
+      ]
+    },
+    "eventos_notificaciones": {
+      "categoria": "Eventos de Notificaciones",
+      "descripcion": "Eventos de notificaciones y toasts",
+      "total": 8,
+      "eventos": [
+        {
+          "nombre": "toast",
+          "descripcion": "Sistema de notificaciones toast",
+          "archivos": [
+            "hooks/use-toast.ts",
+            "components/ui/use-toast.ts",
+            "components/users/add-user-dialog.tsx",
+            "components/users/edit-user-dialog.tsx",
+            "components/users/user-actions.tsx"
+          ],
+          "tipos": [
+            "success",
+            "error",
+            "warning",
+            "info"
+          ],
+          "usos": [
+            "Confirmación de acciones",
+            "Mensajes de error",
+            "Notificaciones de éxito"
+          ]
+        }
+      ]
+    }
+  },
+  "resumen_por_archivo": {
+    "archivos_con_mas_eventos": [
+      {
+        "archivo": "contexts/auth-context.tsx",
+        "eventos": 15,
+        "tipos": ["useState", "useEffect", "fetch", "localStorage", "router.push"]
+      },
+      {
+        "archivo": "components/auth/forgot-password-modal.tsx",
+        "eventos": 12,
+        "tipos": ["onClick", "onSubmit", "onChange", "useState", "useEffect", "fetch", "setTimeout"]
+      },
+      {
+        "archivo": "app/login/page.tsx",
+        "eventos": 10,
+        "tipos": ["onSubmit", "onChange", "onClick", "useState", "useEffect", "fetch", "router.push"]
+      },
+      {
+        "archivo": "middleware.ts",
+        "eventos": 8,
+        "tipos": ["NextRequest", "NextResponse", "verifyAuthentication", "logger"]
+      },
+      {
+        "archivo": "lib/supabase-client.ts",
+        "eventos": 8,
+        "tipos": ["fetch", "async/await", "Promise"]
+      }
+    ]
+  },
+  "patrones_detectados": [
+    "Patrón de autenticación JWT con middleware",
+    "Patrón de manejo de estado con Context API",
+    "Patrón de formularios con validación en tiempo real",
+    "Patrón de navegación programática",
+    "Patrón de logging estructurado",
+    "Patrón de manejo de errores con try/catch",
+    "Patrón de limpieza de efectos con useEffect",
+    "Patrón de optimización con useCallback/useMemo"
+  ],
+  "recomendaciones": [
+    "Implementar más eventos de keyboard navigation para accesibilidad",
+    "Agregar eventos de drag and drop para funcionalidades avanzadas",
+    "Implementar eventos de WebSocket para actualizaciones en tiempo real",
+    "Agregar más eventos de analytics para tracking de usuario",
+    "Implementar eventos de performance monitoring"
+  ]
+}
