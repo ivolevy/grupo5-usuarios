@@ -43,3 +43,4 @@ jobs:
         GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
         BCRYPT_SALT_ROUNDS: ${{ secrets.BCRYPT_SALT_ROUNDS }}
+        NEXT_DISABLE_EXPORT: 'true'
