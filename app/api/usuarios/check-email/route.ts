@@ -1,4 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
+/**
+ * @openapi
+ * /api/usuarios/check-email:
+ *   post:
+ *     tags: [usuarios]
+ *     summary: Check if user email exists
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Email existence status
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Internal server error
+ */
 import { supabaseRequest } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {

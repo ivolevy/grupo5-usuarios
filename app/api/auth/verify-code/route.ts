@@ -1,4 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
+/**
+ * @openapi
+ * /api/auth/verify-code:
+ *   post:
+ *     tags: [auth]
+ *     summary: Verify email code and issue reset token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, code]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               code:
+ *                 type: string
+ *                 pattern: "^\\d{6}$"
+ *     responses:
+ *       200:
+ *         description: Code verified
+ *       400:
+ *         description: Invalid email or code
+ *       429:
+ *         description: Rate limit exceeded
+ *       500:
+ *         description: Internal server error
+ */
 import { verifyCode } from '@/lib/email-verification';
 import { isValidEmail } from '@/lib/email-service';
 import { logger } from '@/lib/logger';

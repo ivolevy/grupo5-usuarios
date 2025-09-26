@@ -1,4 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
+/**
+ * @openapi
+ * /api/usuarios/get-password:
+ *   post:
+ *     tags: [usuarios]
+ *     summary: Check if newPassword equals current password or exists
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password comparison or presence
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Internal server error
+ */
 import { supabaseRequest } from '@/lib/supabase'
 import bcrypt from 'bcryptjs'
 

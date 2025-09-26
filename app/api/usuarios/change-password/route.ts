@@ -1,4 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
+/**
+ * @openapi
+ * /api/usuarios/change-password:
+ *   post:
+ *     tags: [usuarios]
+ *     summary: Change user password by email
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, newPassword]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 8
+ *     responses:
+ *       200:
+ *         description: Password updated
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error
+ */
 import { supabaseRequest } from '@/lib/supabase'
 import bcrypt from 'bcryptjs'
 

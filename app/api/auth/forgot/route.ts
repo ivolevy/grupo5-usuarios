@@ -1,4 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
+/**
+ * @openapi
+ * /api/auth/forgot:
+ *   post:
+ *     tags: [auth]
+ *     summary: Request password recovery code
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Verification code sent
+ *       400:
+ *         description: Invalid request
+ *       429:
+ *         description: Rate limit exceeded
+ *       500:
+ *         description: Internal server error
+ */
 import { storeVerificationCode } from '@/lib/email-verification';
 import { sendVerificationCode, isValidEmail } from '@/lib/email-service';
 import { logger } from '@/lib/logger';

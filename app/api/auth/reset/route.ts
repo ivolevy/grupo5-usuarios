@@ -1,4 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
+/**
+ * @openapi
+ * /api/auth/reset:
+ *   post:
+ *     tags: [auth]
+ *     summary: Reset password using token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token, password]
+ *             properties:
+ *               token:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password updated successfully
+ *       400:
+ *         description: Invalid token or weak password
+ *       429:
+ *         description: Rate limit exceeded
+ *       500:
+ *         description: Internal server error
+ */
 import { prisma } from '@/lib/supabase-client';
 import { hashPassword, validatePasswordStrength } from '@/lib/auth';
 import { logger } from '@/lib/logger';
