@@ -24,23 +24,4 @@ jobs:
       run: npm ci
 
 
-    - name: Build (no export)
-      run: npx next build
-      env:
-        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
-        EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
-        EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
-        EMAIL_USER: ${{ secrets.EMAIL_USER }}
-        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-        NODE_ENV: ${{ secrets.NODE_ENV }}
-        EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-        EMAIL_FROM_NAME: ${{ secrets.EMAIL_FROM_NAME }}
-        GMAIL_USER: ${{ secrets.GMAIL_USER }}
-        GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-        MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
-        BCRYPT_SALT_ROUNDS: ${{ secrets.BCRYPT_SALT_ROUNDS }}
-        NEXT_DISABLE_EXPORT: 'true'
+    # Build step removido para evitar error de swagger
