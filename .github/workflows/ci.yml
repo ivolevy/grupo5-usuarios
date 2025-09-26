@@ -24,4 +24,8 @@ jobs:
       run: npm ci
 
 
-    # Build step removido para evitar error de swagger
+    - name: Check Prettier formatting
+      run: npx prettier --check .
+
+    - name: List main files
+      run: ls -l package.json README.md
