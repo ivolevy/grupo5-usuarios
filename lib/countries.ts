@@ -145,7 +145,7 @@ export const countries = [
   { code: "GB", name: "Reino Unido" },
   { code: "CF", name: "República Centroafricana" },
   { code: "CZ", name: "República Checa" },
-  { code: "CD", name: "República del Congo" },
+  { code: "RC", name: "República del Congo" },
   { code: "CD", name: "República Democrática del Congo" },
   { code: "DO", name: "República Dominicana" },
   { code: "RW", name: "Ruanda" },

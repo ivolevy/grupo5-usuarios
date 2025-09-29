@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * /api/usuarios/check-email:
  *   post:
  *     tags: [usuarios]
- *     summary: Check if user email exists
+ *     summary: Check if user email exists in LDAP
  *     requestBody:
  *       required: true
  *       content:
@@ -24,7 +24,22 @@ import { NextRequest, NextResponse } from 'next/server'
  *       500:
  *         description: Internal server error
  */
-import { supabaseRequest } from '@/lib/supabase'
+import { LDAPRepositoryImpl } from '../../../../back/src/infrastructure/repositories/ldap.repository.impl';
+import { LDAPServiceImpl } from '../../../../back/src/application/services/ldap.service.impl';
+import { LDAPConfig } from '../../../../back/src/types/ldap.types';
+
+// Configuración LDAP
+const ldapConfig: LDAPConfig = {
+  url: process.env.LDAP_URL || 'ldap://35.184.48.90:389',
+  baseDN: process.env.LDAP_BASE_DN || 'dc=empresa,dc=local',
+  bindDN: process.env.LDAP_BIND_DN || 'cn=admin,dc=empresa,dc=local',
+  bindPassword: process.env.LDAP_BIND_PASSWORD || 'boca2002',
+  usersOU: process.env.LDAP_USERS_OU || 'ou=users,dc=empresa,dc=local'
+};
+
+// Instanciar servicios LDAP
+const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
+const ldapService = new LDAPServiceImpl(ldapRepository);
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,22 +52,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar si el email existe en la base de datos usando Supabase directamente
-    const encodedEmail = encodeURIComponent(email)
-    const url = `usuarios?email=eq.${encodedEmail}&select=*`
+    // Verificar si el email existe en LDAP
+    const result = await ldapService.getUserByEmail(email)
     
-    const response = await supabaseRequest(url)
-    const users = await response.json()
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, message: 'Error al verificar email en LDAP' },
+        { status: 500 }
+      )
+    }
 
-    const user = users.length > 0 ? users[0] : null
+    const user = result.data
 
     return NextResponse.json({
       success: true,
       exists: !!user,
-      message: user ? 'Email encontrado' : 'Email no encontrado'
+      message: user ? 'Email encontrado en LDAP' : 'Email no encontrado en LDAP'
     })
 
   } catch (error) {
+    console.error('Error verificando email en LDAP:', error)
     return NextResponse.json(
       { success: false, message: 'Error interno del servidor' },
       { status: 500 }

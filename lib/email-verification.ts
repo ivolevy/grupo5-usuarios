@@ -1,9 +1,24 @@
-import { prisma } from './supabase-client';
 import { logger } from './logger';
+import { LDAPRepositoryImpl } from '../back/src/infrastructure/repositories/ldap.repository.impl';
+import { LDAPServiceImpl } from '../back/src/application/services/ldap.service.impl';
+import { LDAPConfig } from '../back/src/types/ldap.types';
 
 // Configuración para códigos de verificación
 const CODE_EXPIRATION_MINUTES = 5; // 5 minutos
 const CODE_LENGTH = 6;
+
+// Configuración LDAP
+const ldapConfig: LDAPConfig = {
+  url: process.env.LDAP_URL || 'ldap://35.184.48.90:389',
+  baseDN: process.env.LDAP_BASE_DN || 'dc=empresa,dc=local',
+  bindDN: process.env.LDAP_BIND_DN || 'cn=admin,dc=empresa,dc=local',
+  bindPassword: process.env.LDAP_BIND_PASSWORD || 'boca2002',
+  usersOU: process.env.LDAP_USERS_OU || 'ou=users,dc=empresa,dc=local'
+};
+
+// Instanciar servicios LDAP
+const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
+const ldapService = new LDAPServiceImpl(ldapRepository);
 
 export interface VerificationCodeData {
   email: string;
@@ -48,22 +63,56 @@ export async function storeVerificationCode(email: string): Promise<string | fal
       data: { email, expiresAt: expiresAt.toISOString() }
     });
 
-    // Buscar si ya existe un código para este email
-    const existingUser = await prisma.usuarios.findFirst({ email });
+    // Buscar el usuario en LDAP
+    const userResult = await ldapService.getUserByEmail(email);
     
-    if (existingUser) {
-      // Actualizar el usuario existente con el nuevo código
-      await prisma.usuarios.updateByEmail(email, {
-        password_reset_token: code,
-        password_reset_expires: expiresAt.toISOString()
-      });
-    } else {
+    if (!userResult.success || !userResult.data) {
       // Si no existe el usuario, no enviamos el código por seguridad
       logger.warn(`Intento de generar código para email no registrado: ${email}`, {
         action: 'verification_code_attempt',
         data: { email }
       });
-      // No lanzamos error, solo retornamos false para indicar que no se procesó
+      return false;
+    }
+
+    const user = userResult.data;
+    
+    // Actualizar el usuario en LDAP con el nuevo código
+    const currentDescription = user.description || '';
+    const newDescription = currentDescription
+      .replace(/TR:[^|]*/, `TR:${code}`)
+      .replace(/RE:[^|]*/, `RE:${expiresAt.toISOString().replace(/:/g, '-')}`);
+
+    // Si no hay campos TR: o RE:, agregarlos
+    let finalDescription = newDescription;
+    if (!finalDescription.includes('TR:')) {
+      finalDescription += `|TR:${code}`;
+    }
+    if (!finalDescription.includes('RE:')) {
+      finalDescription += `|RE:${expiresAt.toISOString().replace(/:/g, '-')}`;
+    }
+
+    logger.info(`Actualizando description en LDAP:`, {
+      action: 'store_verification_code_update',
+      data: { 
+        email,
+        currentDescription,
+        newDescription,
+        finalDescription,
+        code,
+        expiresAt: expiresAt.toISOString().substring(0, 10)
+      }
+    });
+
+    const updateResult = await ldapService.updateUser(user.uid, {
+      description: finalDescription
+    });
+
+    if (!updateResult.success) {
+      logger.error(`Error al actualizar código en LDAP para ${email}`, {
+        action: 'store_verification_code_ldap_error',
+        data: { email, error: updateResult.error }
+      });
       return false;
     }
 
@@ -96,10 +145,10 @@ export async function verifyCode(email: string, code: string): Promise<{
       data: { email, codeLength: code.length }
     });
 
-    // Buscar el usuario
-    const user = await prisma.usuarios.findFirst({ email });
+    // Buscar el usuario en LDAP
+    const userResult = await ldapService.getUserByEmail(email);
     
-    if (!user) {
+    if (!userResult.success || !userResult.data) {
       logger.warn(`Intento de verificar código para email no registrado: ${email}`, {
         action: 'verify_code_invalid_email',
         data: { email }
@@ -110,11 +159,31 @@ export async function verifyCode(email: string, code: string): Promise<{
       };
     }
 
-    // Verificar si el código coincide
-    if (user.password_reset_token !== code) {
+    const user = userResult.data;
+
+    // Log detallado para diagnóstico
+    logger.info(`Datos del usuario para verificación:`, {
+      action: 'verify_code_user_data',
+      data: { 
+        email,
+        uid: user.uid,
+        description: user.description,
+        passwordResetToken: user.passwordResetToken,
+        passwordResetExpires: user.passwordResetExpires,
+        codeToVerify: code
+      }
+    });
+
+    // Verificar si el código coincide (está en el description)
+    if (user.passwordResetToken !== code) {
       logger.warn(`Código incorrecto para ${email}`, {
         action: 'verify_code_incorrect',
-        data: { email }
+        data: { 
+          email,
+          expectedCode: user.passwordResetToken,
+          receivedCode: code,
+          description: user.description
+        }
       });
       return {
         isValid: false,
@@ -123,10 +192,10 @@ export async function verifyCode(email: string, code: string): Promise<{
     }
 
     // Verificar si el código ha expirado
-    if (!user.password_reset_expires || isCodeExpired(new Date(user.password_reset_expires))) {
+    if (!user.passwordResetExpires || isCodeExpired(new Date(user.passwordResetExpires))) {
       logger.warn(`Código expirado para ${email}`, {
         action: 'verify_code_expired',
-        data: { email, expiresAt: user.password_reset_expires }
+        data: { email, expiresAt: user.passwordResetExpires }
       });
       return {
         isValid: false,
@@ -137,11 +206,26 @@ export async function verifyCode(email: string, code: string): Promise<{
     // Generar token temporal para reset de contraseña
     const resetToken = generateResetToken();
     
-    // Limpiar el código de verificación y guardar el token de reset
-    await prisma.usuarios.updateByEmail(email, {
-      password_reset_token: resetToken,
-      password_reset_expires: getCodeExpiration().toISOString()
+    // Actualizar el usuario en LDAP con el token de reset
+    const currentDescription = user.description || '';
+    const newDescription = currentDescription
+      .replace(/TR:[^|]*/, `TR:${resetToken}`)
+      .replace(/RE:[^|]*/, `RE:${getCodeExpiration().toISOString().replace(/:/g, '-')}`);
+
+    const updateResult = await ldapService.updateUser(user.uid, {
+      description: newDescription
     });
+
+    if (!updateResult.success) {
+      logger.error(`Error al actualizar token en LDAP para ${email}`, {
+        action: 'verify_code_ldap_error',
+        data: { email, error: updateResult.error }
+      });
+      return {
+        isValid: false,
+        message: 'Error interno del servidor'
+      };
+    }
 
     logger.info(`Código verificado exitosamente para ${email}`, {
       action: 'verify_code_success',

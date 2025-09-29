@@ -29,8 +29,23 @@ import { NextRequest, NextResponse } from 'next/server'
  *       500:
  *         description: Internal server error
  */
-import { supabaseRequest } from '@/lib/supabase'
-import bcrypt from 'bcryptjs'
+import { LDAPRepositoryImpl } from '../../../back/src/infrastructure/repositories/ldap.repository.impl';
+import { LDAPServiceImpl } from '../../../back/src/application/services/ldap.service.impl';
+import { LDAPConfig } from '../../../back/src/types/ldap.types';
+import { hashPassword } from '@/lib/auth';
+
+// Configuración LDAP
+const ldapConfig: LDAPConfig = {
+  url: process.env.LDAP_URL || 'ldap://35.184.48.90:389',
+  baseDN: process.env.LDAP_BASE_DN || 'dc=empresa,dc=local',
+  bindDN: process.env.LDAP_BIND_DN || 'cn=admin,dc=empresa,dc=local',
+  bindPassword: process.env.LDAP_BIND_PASSWORD || 'boca2002',
+  usersOU: process.env.LDAP_USERS_OU || 'ou=users,dc=empresa,dc=local'
+};
+
+// Instanciar servicios LDAP
+const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
+const ldapService = new LDAPServiceImpl(ldapRepository);
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,44 +65,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Primero verificar que el usuario existe
-    const encodedEmail = encodeURIComponent(email)
-    const checkUrl = `usuarios?email=eq.${encodedEmail}&select=id,email`
-    
-    const checkResponse = await supabaseRequest(checkUrl)
-    const users = await checkResponse.json()
-    
-    if (users.length === 0) {
+    // Buscar usuario en LDAP por email
+    const userResult = await ldapService.getUserByEmail(email);
+
+    if (!userResult.success || !userResult.data) {
       return NextResponse.json({
         success: false,
-        message: 'Usuario no encontrado'
-      }, { status: 404 })
+        message: 'Usuario no encontrado en LDAP'
+      }, { status: 404 });
     }
 
+    const user = userResult.data;
+
     // Hashear la nueva contraseña
-    const saltRounds = 10
-    const hashedPassword = await bcrypt.hash(newPassword, saltRounds)
+    const hashedPassword = await hashPassword(newPassword);
 
-    // Actualizar la contraseña en la base de datos
-    const updateUrl = `usuarios?email=eq.${encodedEmail}`
-    
-    const updateResponse = await supabaseRequest(updateUrl, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        password: hashedPassword,
-        updated_at: new Date().toISOString()
-      }),
-      headers: {
-        'Prefer': 'return=representation'
-      }
-    })
+    // Actualizar la contraseña en LDAP
+    const updateResult = await ldapService.updateUser(user.uid, {
+      userPassword: hashedPassword
+    });
 
-    await updateResponse.json()
+    if (!updateResult.success) {
+      return NextResponse.json({
+        success: false,
+        message: 'Error al actualizar contraseña en LDAP',
+        error: updateResult.error
+      }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Contraseña actualizada correctamente'
-    })
+      message: 'Contraseña actualizada correctamente en LDAP'
+    });
 
   } catch (error) {
     return NextResponse.json(

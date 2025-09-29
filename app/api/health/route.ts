@@ -14,7 +14,22 @@
  *         description: Service unhealthy
  */
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { LDAPRepositoryImpl } from '../../../back/src/infrastructure/repositories/ldap.repository.impl';
+import { LDAPServiceImpl } from '../../../back/src/application/services/ldap.service.impl';
+import { LDAPConfig } from '../../../back/src/types/ldap.types';
+
+// Configuración LDAP
+const ldapConfig: LDAPConfig = {
+  url: process.env.LDAP_URL || 'ldap://35.184.48.90:389',
+  baseDN: process.env.LDAP_BASE_DN || 'dc=empresa,dc=local',
+  bindDN: process.env.LDAP_BIND_DN || 'cn=admin,dc=empresa,dc=local',
+  bindPassword: process.env.LDAP_BIND_PASSWORD || 'boca2002',
+  usersOU: process.env.LDAP_USERS_OU || 'ou=users,dc=empresa,dc=local'
+};
+
+// Instanciar servicios LDAP
+const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
+const ldapService = new LDAPServiceImpl(ldapRepository);
 
 interface HealthCheck {
   service: string;
@@ -28,61 +43,59 @@ export async function GET() {
   const checks: HealthCheck[] = [];
 
 
-  // Obtener información de la base de datos
-  const databaseUrl = process.env.DATABASE_URL;
-  const dbInfo = databaseUrl ? {
-    host: databaseUrl.includes('supabase') ? 'Supabase' : 'Local/Other',
-    provider: 'PostgreSQL',
-    url: databaseUrl.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') // Ocultar credenciales
-  } : {
-    host: 'Not configured',
-    provider: 'Unknown',
-    url: 'DATABASE_URL not found'
+  // Obtener información de LDAP
+  const ldapInfo = {
+    host: ldapConfig.url,
+    provider: 'LDAP',
+    baseDN: ldapConfig.baseDN,
+    usersOU: ldapConfig.usersOU
   };
 
-  // Check 1: Database connection
+  // Check 1: LDAP connection
   try {
-    const dbStart = Date.now();
-    await prisma.usuarios.count();
+    const ldapStart = Date.now();
+    const result = await ldapService.getAllUsers();
     checks.push({
-      service: 'database',
-      status: 'healthy',
-      responseTime: Date.now() - dbStart,
+      service: 'ldap',
+      status: result.success ? 'healthy' : 'unhealthy',
+      responseTime: Date.now() - ldapStart,
       details: { 
-        ...dbInfo,
-        connection: 'successful',
-        method: 'Supabase REST API'
+        ...ldapInfo,
+        connection: result.success ? 'successful' : 'failed',
+        method: 'LDAP API',
+        userCount: result.data ? result.data.length : 0
       }
     });
   } catch (error) {
     checks.push({
-      service: 'database',
+      service: 'ldap',
       status: 'unhealthy',
       responseTime: Date.now() - startTime,
       details: { 
-        ...dbInfo,
+        ...ldapInfo,
         error: error instanceof Error ? error.message : 'Unknown error',
         connection: 'failed'
       }
     });
   }
 
-  // Check 2: Users table
+  // Check 2: LDAP users count
   try {
-    const tableStart = Date.now();
-    const count = await prisma.usuarios.count();
+    const countStart = Date.now();
+    const result = await ldapService.getAllUsers();
+    const userCount = result.success && result.data ? result.data.length : 0;
     checks.push({
-      service: 'users_table',
-      status: 'healthy',
-      responseTime: Date.now() - tableStart,
+      service: 'ldap_users',
+      status: result.success ? 'healthy' : 'unhealthy',
+      responseTime: Date.now() - countStart,
       details: { 
-        userCount: count,
-        method: 'Supabase REST API'
+        userCount,
+        method: 'LDAP API'
       }
     });
   } catch (error) {
     checks.push({
-      service: 'users_table',
+      service: 'ldap_users',
       status: 'unhealthy',
       responseTime: Date.now() - startTime,
       details: { error: error instanceof Error ? error.message : 'Unknown error' }

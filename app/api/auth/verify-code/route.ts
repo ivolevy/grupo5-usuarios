@@ -29,15 +29,31 @@ import { NextRequest, NextResponse } from 'next/server';
  *       500:
  *         description: Internal server error
  */
+import { LDAPRepositoryImpl } from '../../../../back/src/infrastructure/repositories/ldap.repository.impl';
+import { LDAPServiceImpl } from '../../../../back/src/application/services/ldap.service.impl';
+import { LDAPConfig } from '../../../../back/src/types/ldap.types';
 import { verifyCode } from '@/lib/email-verification';
 import { isValidEmail } from '@/lib/email-service';
 import { logger } from '@/lib/logger';
 import { rateLimiter } from '@/lib/rate-limiter';
 
+// Configuración LDAP
+const ldapConfig: LDAPConfig = {
+  url: process.env.LDAP_URL || 'ldap://35.184.48.90:389',
+  baseDN: process.env.LDAP_BASE_DN || 'dc=empresa,dc=local',
+  bindDN: process.env.LDAP_BIND_DN || 'cn=admin,dc=empresa,dc=local',
+  bindPassword: process.env.LDAP_BIND_PASSWORD || 'boca2002',
+  usersOU: process.env.LDAP_USERS_OU || 'ou=users,dc=empresa,dc=local'
+};
+
+// Instanciar servicios LDAP
+const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
+const ldapService = new LDAPServiceImpl(ldapRepository);
+
 export async function POST(request: NextRequest) {
   try {
     // Logging de la petición entrante
-    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     logger.info('Petición de verificación de código recibida', {
       action: 'verify_code_request',
       ip: clientIP,
@@ -138,10 +154,55 @@ export async function POST(request: NextRequest) {
       data: { email, codeLength: code.length }
     });
 
+    // Verificar que el email existe en LDAP
+    const userResult = await ldapService.getUserByEmail(email);
+    
+    if (!userResult.success || !userResult.data) {
+      logger.warn(`Email no encontrado en LDAP para verificación: ${email}`, {
+        action: 'verify_code_email_not_found',
+        ip: clientIP,
+        data: { email }
+      });
+
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Email no encontrado en el sistema' 
+        },
+        { status: 400 }
+      );
+    }
+
     // Verificar el código
     const verificationResult = await verifyCode(email, code);
 
     if (verificationResult.isValid) {
+      // Generar token de reset y actualizar en LDAP
+      const resetToken = verificationResult.token;
+      const resetExpires = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutos
+      
+      const currentDescription = userResult.data.description || '';
+      const newDescription = currentDescription
+        .replace(/TR:[^|]*/, `TR:${resetToken}`)
+        .replace(/RE:[^|]*/, `RE:${resetExpires.substring(0, 10)}`);
+
+      const updateResult = await ldapService.updateUser(userResult.data.uid, {
+        description: newDescription
+      });
+
+      if (!updateResult.success) {
+        logger.error('Error al actualizar token de reset en LDAP', {
+          action: 'verify_code_ldap_update_error',
+          ip: clientIP,
+          data: { email, error: updateResult.error }
+        });
+        
+        return NextResponse.json(
+          { success: false, message: 'Error al generar token de reset. Intenta nuevamente.' },
+          { status: 500 }
+        );
+      }
+
       logger.info(`Código verificado exitosamente para: ${email}`, {
         action: 'verify_code_success',
         ip: clientIP,
@@ -153,7 +214,7 @@ export async function POST(request: NextRequest) {
         message: verificationResult.message,
         data: {
           email,
-          token: verificationResult.token,
+          token: resetToken,
           expiresIn: 5 // minutos
         }
       });
@@ -174,7 +235,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     
     logger.error('Error interno en verificación de código', {
       action: 'verify_code_internal_error',

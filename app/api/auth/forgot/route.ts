@@ -26,10 +26,26 @@ import { NextRequest, NextResponse } from 'next/server';
  *       500:
  *         description: Internal server error
  */
+import { LDAPRepositoryImpl } from '../../../../back/src/infrastructure/repositories/ldap.repository.impl';
+import { LDAPServiceImpl } from '../../../../back/src/application/services/ldap.service.impl';
+import { LDAPConfig } from '../../../../back/src/types/ldap.types';
 import { storeVerificationCode } from '@/lib/email-verification';
 import { sendVerificationCode, isValidEmail } from '@/lib/email-service';
 import { logger } from '@/lib/logger';
 import { rateLimiter } from '@/lib/rate-limiter';
+
+// Configuración LDAP
+const ldapConfig: LDAPConfig = {
+  url: process.env.LDAP_URL || 'ldap://35.184.48.90:389',
+  baseDN: process.env.LDAP_BASE_DN || 'dc=empresa,dc=local',
+  bindDN: process.env.LDAP_BIND_DN || 'cn=admin,dc=empresa,dc=local',
+  bindPassword: process.env.LDAP_BIND_PASSWORD || 'boca2002',
+  usersOU: process.env.LDAP_USERS_OU || 'ou=users,dc=empresa,dc=local'
+};
+
+// Instanciar servicios LDAP
+const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
+const ldapService = new LDAPServiceImpl(ldapRepository);
 
 export async function POST(request: NextRequest) {
   try {
@@ -120,15 +136,35 @@ export async function POST(request: NextRequest) {
       data: { email }
     });
 
-    // Generar y almacenar código de verificación
-    const code = await storeVerificationCode(email);
+    // Verificar si el email existe en LDAP
+    const userResult = await ldapService.getUserByEmail(email);
     
-    // Si no se pudo generar el código (email no existe), retornar mensaje específico
-    if (!code) {
-      logger.info(`Solicitud de recupero para email no registrado: ${email}`, {
+    // Log detallado para diagnóstico
+    logger.info(`Resultado de búsqueda de usuario en LDAP:`, {
+      action: 'forgot_password_ldap_search_result',
+      ip: clientIP,
+      data: { 
+        email,
+        success: userResult.success,
+        hasData: !!userResult.data,
+        userData: userResult.data ? {
+          uid: userResult.data.uid,
+          email: userResult.data.mail,
+          cn: userResult.data.cn
+        } : null
+      }
+    });
+    
+    if (!userResult.success || !userResult.data) {
+      logger.info(`Solicitud de recupero para email no registrado en LDAP: ${email}`, {
         action: 'forgot_password_email_not_found',
         ip: clientIP,
-        data: { email }
+        data: { 
+          email,
+          success: userResult.success,
+          hasData: !!userResult.data,
+          error: userResult.error
+        }
       });
 
       return NextResponse.json({
@@ -139,6 +175,23 @@ export async function POST(request: NextRequest) {
           emailExists: false
         }
       });
+    }
+
+    // Generar y almacenar código de verificación
+    const code = await storeVerificationCode(email);
+    
+    // Si no se pudo generar el código, retornar error
+    if (!code) {
+      logger.error(`Error al generar código de verificación para: ${email}`, {
+        action: 'forgot_password_code_generation_error',
+        ip: clientIP,
+        data: { email }
+      });
+
+      return NextResponse.json({
+        success: false,
+        message: 'Error al generar código de verificación. Intenta nuevamente.'
+      }, { status: 500 });
     }
     
     // Enviar email con el código

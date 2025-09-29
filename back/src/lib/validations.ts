@@ -18,11 +18,17 @@ export const createUsuarioSchema = z.object({
 });
 
 export const updateUsuarioSchema = z.object({
+  nombre_completo: z
+    .string()
+    .max(200, 'El nombre completo es demasiado largo')
+    .optional()
+    .transform(val => val === '' ? undefined : val),
   email: z
     .string()
     .email('Debe ser un email válido')
     .max(255, 'El email es demasiado largo')
-    .optional(),
+    .optional()
+    .transform(val => val === '' ? undefined : val),
   password: z
     .string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
@@ -31,12 +37,27 @@ export const updateUsuarioSchema = z.object({
   rol: z
     .enum(['admin', 'usuario', 'moderador'])
     .optional(),
+  email_verified: z
+    .boolean()
+    .optional(),
+  nacionalidad: z
+    .string()
+    .max(100, 'La nacionalidad es demasiado larga')
+    .optional()
+    .transform(val => val === '' ? undefined : val),
+  telefono: z
+    .string()
+    .max(20, 'El teléfono es demasiado largo')
+    .regex(/^[\+]?[0-9\s\-\(\)]*$/, 'El teléfono debe contener solo números, espacios, guiones y paréntesis')
+    .optional()
+    .transform(val => val === '' ? undefined : val),
 });
 
 export const usuarioParamsSchema = z.object({
   id: z
     .string()
-    .uuid('Debe ser un UUID válido'),
+    .min(1, 'El ID es requerido')
+    .max(50, 'El ID es demasiado largo'),
 });
 
 // Validaciones para recupero de contraseña

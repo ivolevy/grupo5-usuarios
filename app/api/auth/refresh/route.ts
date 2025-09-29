@@ -15,9 +15,24 @@
  *         description: User not found
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { LDAPRepositoryImpl } from '../../../../back/src/infrastructure/repositories/ldap.repository.impl';
+import { LDAPServiceImpl } from '../../../../back/src/application/services/ldap.service.impl';
+import { LDAPConfig } from '../../../../back/src/types/ldap.types';
 import { generateJWT } from '@/lib/auth';
 import { verifyJWTMiddleware } from '@/lib/middleware';
+
+// Configuración LDAP
+const ldapConfig: LDAPConfig = {
+  url: process.env.LDAP_URL || 'ldap://35.184.48.90:389',
+  baseDN: process.env.LDAP_BASE_DN || 'dc=empresa,dc=local',
+  bindDN: process.env.LDAP_BIND_DN || 'cn=admin,dc=empresa,dc=local',
+  bindPassword: process.env.LDAP_BIND_PASSWORD || 'boca2002',
+  usersOU: process.env.LDAP_USERS_OU || 'ou=users,dc=empresa,dc=local'
+};
+
+// Instanciar servicios LDAP
+const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
+const ldapService = new LDAPServiceImpl(ldapRepository);
 
 // POST /api/auth/refresh - Refrescar token JWT
 export async function POST(request: NextRequest) {
@@ -41,28 +56,51 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
-    // Verificar que el usuario siga existiendo en la base de datos
-    const currentUser = await prisma.usuarios.findUnique({ id: user.userId });
+    // Verificar que el usuario siga existiendo en LDAP
+    let userResult;
+    try {
+      userResult = await ldapService.getUserByEmail(user.email);
+    } catch (error) {
+      userResult = await ldapService.getUserByUid(user.userId);
+    }
 
-    if (!currentUser) {
+    if (!userResult.success || !userResult.data) {
       return NextResponse.json({
         success: false,
-        message: 'Usuario no encontrado'
+        message: 'Usuario no encontrado en LDAP'
       }, { status: 404 });
     }
 
+    const currentUser = userResult.data;
+
     // Generar nuevo JWT con información actualizada
     const newToken = generateJWT({
-      userId: currentUser.id,
-      email: currentUser.email,
-      rol: currentUser.rol
+      userId: currentUser.supabaseId || currentUser.uid,
+      email: currentUser.mail,
+      rol: currentUser.rol || user.rol || 'usuario'
     });
+
+    // Transformar datos de LDAP al formato esperado
+    const userData = {
+      id: currentUser.supabaseId || currentUser.uid,
+      email: currentUser.mail,
+      nombre_completo: currentUser.nombreCompleto || currentUser.cn,
+      rol: currentUser.rol || user.rol || 'usuario',
+      email_verified: currentUser.emailVerified || false,
+      nacionalidad: currentUser.nacionalidad || null,
+      telefono: currentUser.telefono || null,
+      created_at: currentUser.createdAt || new Date().toISOString(),
+      updated_at: currentUser.updatedAt || new Date().toISOString(),
+      last_login_at: currentUser.lastLoginAt || null,
+      uid: currentUser.uid,
+      dn: currentUser.dn
+    };
 
     return NextResponse.json({
       success: true,
-      message: 'Token refrescado exitosamente',
+      message: 'Token refrescado exitosamente desde LDAP',
       data: {
-        user: currentUser,
+        user: userData,
         token: newToken,
         tokenType: 'Bearer',
         expiresIn: '24h'

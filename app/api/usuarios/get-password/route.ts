@@ -26,8 +26,23 @@ import { NextRequest, NextResponse } from 'next/server'
  *       500:
  *         description: Internal server error
  */
-import { supabaseRequest } from '@/lib/supabase'
-import bcrypt from 'bcryptjs'
+import { LDAPRepositoryImpl } from '../../../back/src/infrastructure/repositories/ldap.repository.impl';
+import { LDAPServiceImpl } from '../../../back/src/application/services/ldap.service.impl';
+import { LDAPConfig } from '../../../back/src/types/ldap.types';
+import { verifyPassword } from '@/lib/auth';
+
+// Configuración LDAP
+const ldapConfig: LDAPConfig = {
+  url: process.env.LDAP_URL || 'ldap://35.184.48.90:389',
+  baseDN: process.env.LDAP_BASE_DN || 'dc=empresa,dc=local',
+  bindDN: process.env.LDAP_BIND_DN || 'cn=admin,dc=empresa,dc=local',
+  bindPassword: process.env.LDAP_BIND_PASSWORD || 'boca2002',
+  usersOU: process.env.LDAP_USERS_OU || 'ou=users,dc=empresa,dc=local'
+};
+
+// Instanciar servicios LDAP
+const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
+const ldapService = new LDAPServiceImpl(ldapRepository);
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,37 +55,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Obtener la contraseña actual del usuario
-    const encodedEmail = encodeURIComponent(email)
-    const url = `usuarios?email=eq.${encodedEmail}&select=password`
-    
-    const response = await supabaseRequest(url)
-    const users = await response.json()
+    // Buscar usuario en LDAP por email
+    const userResult = await ldapService.getUserByEmail(email);
 
-    if (users.length === 0) {
+    if (!userResult.success || !userResult.data) {
       return NextResponse.json({
         success: false,
-        message: 'Usuario no encontrado'
-      })
+        message: 'Usuario no encontrado en LDAP'
+      }, { status: 404 });
     }
 
-    const user = users[0]
+    const user = userResult.data;
 
     // Si se proporciona una nueva contraseña, compararla con la actual
     if (newPassword) {
-      const isSamePassword = await bcrypt.compare(newPassword, user.password)
+      const isSamePassword = await verifyPassword(newPassword, user.userPassword);
       
       return NextResponse.json({
         success: true,
         isSamePassword
-      })
+      });
     }
 
     // Si no se proporciona nueva contraseña, solo devolver que existe
     return NextResponse.json({
       success: true,
-      hasPassword: !!user.password
-    })
+      hasPassword: !!user.userPassword
+    });
 
   } catch (error) {
     return NextResponse.json(

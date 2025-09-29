@@ -105,7 +105,8 @@ export const updateProfileSchema = z.object({
 export const usuarioParamsSchema = z.object({
   id: z
     .string()
-    .uuid('Debe ser un UUID válido'),
+    .min(1, 'El ID es requerido')
+    .max(50, 'El ID es demasiado largo'),
 });
 
 // Tipos TypeScript derivados de los schemas
