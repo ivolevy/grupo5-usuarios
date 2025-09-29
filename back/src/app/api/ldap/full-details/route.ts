@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LDAPRepositoryImpl } from '../../../../infrastructure/repositories/ldap.repository.impl';
-import { LDAPConfig } from '../../../../types/ldap.types';
+import { LDAPServiceImpl } from '../../../../application/services/ldap.service.impl';
+import { LDAPConfig, LDAPUser } from '@/types/ldap.types';
 
 // Configuración LDAP
 const ldapConfig: LDAPConfig = {
@@ -11,8 +12,9 @@ const ldapConfig: LDAPConfig = {
   usersOU: process.env.LDAP_USERS_OU || 'ou=users,dc=empresa,dc=local'
 };
 
-// Instanciar repositorio
+// Instanciar servicios
 const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
+const ldapService = new LDAPServiceImpl(ldapRepository);
 
 // GET /api/ldap/full-details - Obtener TODOS los usuarios con TODA la información
 export async function GET(request: NextRequest) {
@@ -20,7 +22,8 @@ export async function GET(request: NextRequest) {
     console.log('🔍 Obteniendo TODOS los usuarios con información completa...');
     
     // Obtener todos los usuarios con información completa
-    const users = await ldapRepository.getAllUsers();
+    const result = await ldapService.getAllUsers();
+    const users = result.data || [];
     
     if (!users || users.length === 0) {
       return NextResponse.json({
@@ -32,7 +35,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Procesar cada usuario para mostrar información detallada
-    const detailedUsers = users.map(user => {
+    const detailedUsers = users.map((user: LDAPUser) => {
       return {
         // Información básica LDAP
         dn: user.dn,
@@ -82,18 +85,18 @@ export async function GET(request: NextRequest) {
     const stats = {
       totalUsers: users.length,
       usersByRole: {
-        admin: users.filter(u => u.rol === 'admin').length,
-        moderador: users.filter(u => u.rol === 'moderador').length,
-        usuario: users.filter(u => u.rol === 'usuario').length,
-        unknown: users.filter(u => !u.rol).length
+        admin: users.filter((u: LDAPUser) => u.rol === 'admin').length,
+        moderador: users.filter((u: LDAPUser) => u.rol === 'moderador').length,
+        usuario: users.filter((u: LDAPUser) => u.rol === 'usuario').length,
+        unknown: users.filter((u: LDAPUser) => !u.rol).length
       },
       usersByVerification: {
-        verified: users.filter(u => u.emailVerified === true).length,
-        unverified: users.filter(u => u.emailVerified === false).length,
-        unknown: users.filter(u => u.emailVerified === undefined).length
+        verified: users.filter((u: LDAPUser) => u.emailVerified === true).length,
+        unverified: users.filter((u: LDAPUser) => u.emailVerified === false).length,
+        unknown: users.filter((u: LDAPUser) => u.emailVerified === undefined).length
       },
-      usersWithPersonalInfo: users.filter(u => u.nombreCompleto || u.nacionalidad || u.telefono).length,
-      usersWithTokens: users.filter(u => u.emailVerificationToken || u.passwordResetToken).length
+      usersWithPersonalInfo: users.filter((u: LDAPUser) => u.nombreCompleto || u.nacionalidad || u.telefono).length,
+      usersWithTokens: users.filter((u: LDAPUser) => u.emailVerificationToken || u.passwordResetToken).length
     };
 
     return NextResponse.json({
@@ -137,14 +140,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let user;
+    let userResult;
     if (uid) {
-      user = await ldapRepository.findUserByUid(uid);
+      userResult = await ldapService.getUserByUid(uid);
     } else {
-      user = await ldapRepository.findUserByEmail(email);
+      userResult = await ldapService.getUserByEmail(email);
     }
 
-    if (!user) {
+    if (!userResult.success || !userResult.data) {
       return NextResponse.json(
         {
           success: false,
@@ -153,6 +156,8 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    const user = userResult.data;
 
     // Análisis detallado del usuario
     const detailedAnalysis = {
@@ -187,7 +192,7 @@ export async function POST(request: NextRequest) {
       descriptionAnalysis: user.description ? {
         raw: user.description,
         parts: user.description.split('|'),
-        parsed: user.description.split('|').map(part => {
+        parsed: user.description.split('|').map((part: string) => {
           const [key, value] = part.split(':');
           return { key, value };
         }),

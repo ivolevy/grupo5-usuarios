@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LDAPRepositoryImpl } from '../../../../infrastructure/repositories/ldap.repository.impl';
+import { LDAPServiceImpl } from '../../../../application/services/ldap.service.impl';
 import { prisma } from '@/lib/db';
-import { LDAPConfig } from '../../../../types/ldap.types';
+import { LDAPConfig, LDAPUser } from '@/types/ldap.types';
 import { hashPassword } from '@/lib/auth';
 
 // Configuración LDAP
@@ -19,7 +20,9 @@ export async function POST(request: NextRequest) {
     console.log('🔄 Iniciando sincronización LDAP → Supabase...');
 
     const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
-    const ldapUsers = await ldapRepository.findAllUsers();
+    const ldapService = new LDAPServiceImpl(ldapRepository);
+    const result = await ldapService.getAllUsers();
+    const ldapUsers = result.data || [];
 
     console.log(`📊 Encontrados ${ldapUsers.length} usuarios en LDAP`);
 
@@ -31,7 +34,7 @@ export async function POST(request: NextRequest) {
       errors_details: [] as string[]
     };
 
-    for (const ldapUser of ldapUsers) {
+    for (const ldapUser of ldapUsers as LDAPUser[]) {
       try {
         results.processed++;
 
@@ -40,38 +43,31 @@ export async function POST(request: NextRequest) {
           id: ldapUser.uid,
           email: ldapUser.mail,
           password: ldapUser.userPassword || await hashPassword('temp_password_123'), // Password temporal
-          rol: ldapUser.objectClass?.includes('admin') ? 'admin' : 
-               ldapUser.objectClass?.includes('moderator') ? 'moderator' : 'usuario',
-          email_verified: true,
-          nombre_completo: ldapUser.cn || ldapUser.givenName || ldapUser.uid,
-          telefono: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          rol: ldapUser.rol || 'usuario',
+          email_verified: ldapUser.emailVerified || true,
+          nombre_completo: ldapUser.nombreCompleto || ldapUser.cn || ldapUser.givenName || ldapUser.uid,
+          telefono: ldapUser.telefono || undefined,
+          created_at: ldapUser.createdAt || new Date().toISOString(),
+          updated_at: ldapUser.updatedAt || new Date().toISOString()
         };
 
         // Verificar si el usuario ya existe en Supabase
         const existingUser = await prisma.usuarios.findUnique({ 
-          where: { id: ldapUser.uid } 
+          id: ldapUser.uid 
         });
 
         if (existingUser) {
           // Actualizar usuario existente
-          await prisma.usuarios.update({
-            where: { id: ldapUser.uid },
-            data: {
-              email: supabaseUserData.email,
-              rol: supabaseUserData.rol,
-              nombre_completo: supabaseUserData.nombre_completo,
-              updated_at: supabaseUserData.updated_at
-            }
+          await prisma.usuarios.updateByEmail(supabaseUserData.email, {
+            email: supabaseUserData.email,
+            rol: supabaseUserData.rol,
+            nombre_completo: supabaseUserData.nombre_completo
           });
           results.updated++;
           console.log(`✅ Usuario ${ldapUser.uid} actualizado en Supabase`);
         } else {
           // Crear nuevo usuario
-          await prisma.usuarios.create({
-            data: supabaseUserData
-          });
+          await prisma.usuarios.create(supabaseUserData);
           results.created++;
           console.log(`➕ Usuario ${ldapUser.uid} creado en Supabase`);
         }
@@ -116,21 +112,23 @@ export async function GET() {
     console.log('🔍 Verificando diferencias entre LDAP y Supabase...');
 
     const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
-    const ldapUsers = await ldapRepository.findAllUsers();
+    const ldapService = new LDAPServiceImpl(ldapRepository);
+    const result = await ldapService.getAllUsers();
+    const ldapUsers = result.data || [];
     const supabaseUsers = await prisma.usuarios.findMany();
 
     console.log(`📊 LDAP: ${ldapUsers.length} usuarios, Supabase: ${supabaseUsers.length} usuarios`);
 
     // Encontrar usuarios en LDAP pero no en Supabase
-    const ldapUserIds = new Set(ldapUsers.map(u => u.uid));
+    const ldapUserIds = new Set(ldapUsers.map((u: LDAPUser) => u.uid));
     const supabaseUserIds = new Set(supabaseUsers.map(u => u.id));
     
-    const onlyInLDAP = ldapUsers.filter(u => !supabaseUserIds.has(u.uid));
+    const onlyInLDAP = ldapUsers.filter((u: LDAPUser) => !supabaseUserIds.has(u.uid));
     const onlyInSupabase = supabaseUsers.filter(u => !ldapUserIds.has(u.id));
 
     // Encontrar usuarios con diferencias
     const differences = [];
-    for (const ldapUser of ldapUsers) {
+    for (const ldapUser of ldapUsers as LDAPUser[]) {
       const supabaseUser = supabaseUsers.find(u => u.id === ldapUser.uid);
       if (supabaseUser) {
         const changes = [];
@@ -139,8 +137,7 @@ export async function GET() {
           changes.push(`email: ${supabaseUser.email} → ${ldapUser.mail}`);
         }
         
-        const ldapRole = ldapUser.objectClass?.includes('admin') ? 'admin' : 
-                        ldapUser.objectClass?.includes('moderator') ? 'moderator' : 'usuario';
+        const ldapRole = ldapUser.rol || 'usuario';
         if (supabaseUser.rol !== ldapRole) {
           changes.push(`rol: ${supabaseUser.rol} → ${ldapRole}`);
         }
@@ -166,7 +163,7 @@ export async function GET() {
           with_differences: differences.length,
           in_sync: ldapUsers.length - onlyInLDAP.length - differences.length
         },
-        only_in_ldap: onlyInLDAP.map(u => ({
+        only_in_ldap: onlyInLDAP.map((u: LDAPUser) => ({
           uid: u.uid,
           email: u.mail,
           cn: u.cn

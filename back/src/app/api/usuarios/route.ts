@@ -1,60 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { LDAPRepositoryImpl } from '../../../infrastructure/repositories/ldap.repository.impl';
+import { LDAPServiceImpl } from '../../../application/services/ldap.service.impl';
+import { LDAPConfig } from '@/types/ldap.types';
 import { createUsuarioSchema, validateData } from '@/lib/validations';
 import { hashPassword, validatePasswordStrength } from '@/lib/auth';
-import { HybridUserServiceImpl } from '../../../infrastructure/services/hybrid-user.service.impl';
 
-// GET /api/usuarios - Obtener todos los usuarios (LDAP + Supabase fallback)
+// Configuración LDAP
+const ldapConfig: LDAPConfig = {
+  url: process.env.LDAP_URL || 'ldap://35.184.48.90:389',
+  baseDN: process.env.LDAP_BASE_DN || 'dc=empresa,dc=local',
+  bindDN: process.env.LDAP_BIND_DN || 'cn=admin,dc=empresa,dc=local',
+  bindPassword: process.env.LDAP_BIND_PASSWORD || 'boca2002',
+  usersOU: process.env.LDAP_USERS_OU || 'ou=users,dc=empresa,dc=local'
+};
+
+// Instanciar servicios LDAP
+const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
+const ldapService = new LDAPServiceImpl(ldapRepository);
+
+// GET /api/usuarios - Obtener todos los usuarios desde LDAP
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const email = searchParams.get('email');
     const search = searchParams.get('search');
-    const rol = searchParams.get('rol') as any;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-
-    const hybridService = new HybridUserServiceImpl();
+    const uid = searchParams.get('uid');
     
-    const result = await hybridService.getAllUsers({
-      page,
-      limit,
-      search: search || undefined,
-      rol: rol || undefined
-    });
-
+    let result;
+    
+    // Si se especifica un email, buscar por email específico
+    if (email) {
+      result = await ldapService.getUserByEmail(email);
+      if (!result.success || !result.data) {
+        return NextResponse.json({
+          success: true,
+          data: [],
+          count: 0,
+          message: 'Usuario no encontrado'
+        });
+      }
+      // Convertir resultado único a array
+      result.data = [result.data];
+    } else {
+      // Obtener todos los usuarios
+      result = await ldapService.getAllUsers();
+    }
+    
     if (!result.success) {
       return NextResponse.json({
         success: false,
-        message: 'Error al obtener usuarios',
+        message: 'Error al obtener usuarios desde LDAP',
         error: result.error
       }, { status: 500 });
     }
 
-    // Sanitizar usuarios (remover password)
-    const usuariosSanitizados = result.data?.map(user => ({
-      id: user.id,
-      nombre_completo: user.nombre_completo,
-      email: user.email,
-      rol: user.rol,
-      email_verified: user.email_verified,
-      created_at: user.created_at,
-      updated_at: user.updated_at,
-      last_login_at: user.last_login_at,
-      telefono: user.telefono
-    })) || [];
+    // Transformar datos de LDAP al formato esperado por el frontend
+    const usuarios = result.data.map((user: any) => ({
+      id: user.supabaseId || user.uid, // Usar supabaseId si existe, sino uid
+      email: user.mail,
+      nombre_completo: user.nombreCompleto || user.cn,
+      rol: user.rol || 'usuario',
+      email_verified: user.emailVerified || false,
+      nacionalidad: user.nacionalidad || null,
+      telefono: user.telefono || null,
+      created_at: user.createdAt || new Date().toISOString(),
+      updated_at: user.updatedAt || new Date().toISOString(),
+      last_login_at: user.lastLoginAt || null,
+      // Campos adicionales de LDAP
+      uid: user.uid,
+      dn: user.dn,
+      description: user.description
+    }));
 
     return NextResponse.json({
       success: true,
-      data: usuariosSanitizados,
-      count: result.pagination?.total || usuariosSanitizados.length,
-      pagination: result.pagination,
-      message: 'Usuarios obtenidos exitosamente'
+      data: usuarios,
+      count: usuarios.length,
+      message: 'Usuarios obtenidos exitosamente desde LDAP'
     });
   } catch (error) {
-    console.error('Error al obtener usuarios:', error);
+    console.error('Error al obtener usuarios desde LDAP:', error);
     return NextResponse.json({
       success: false,
-      message: 'Error al obtener usuarios',
+      message: 'Error al obtener usuarios desde LDAP',
       error: error instanceof Error ? error.message : 'Error desconocido'
     }, { status: 500 });
   }

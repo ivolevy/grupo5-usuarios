@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LDAPRepositoryImpl } from '../../../../infrastructure/repositories/ldap.repository.impl';
 import { LDAPServiceImpl } from '../../../../application/services/ldap.service.impl';
-import { LDAPConfig } from '../../../../types/ldap.types';
-
+import { LDAPConfig } from '@/types/ldap.types';
 // Configuración LDAP
 const ldapConfig: LDAPConfig = {
   url: process.env.LDAP_URL || 'ldap://35.184.48.90:389',

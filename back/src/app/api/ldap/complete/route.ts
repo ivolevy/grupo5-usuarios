@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LDAPRepositoryImpl } from '../../../../infrastructure/repositories/ldap.repository.impl';
-import { LDAPConfig } from '../../../../types/ldap.types';
+import { LDAPServiceImpl } from '../../../../application/services/ldap.service.impl';
+import { LDAPConfig, LDAPUser } from '@/types/ldap.types';
 
 // Configuración LDAP
 const ldapConfig: LDAPConfig = {
@@ -11,8 +12,9 @@ const ldapConfig: LDAPConfig = {
   usersOU: process.env.LDAP_USERS_OU || 'ou=users,dc=empresa,dc=local'
 };
 
-// Instanciar repositorio
+// Instanciar servicios
 const ldapRepository = new LDAPRepositoryImpl(ldapConfig);
+const ldapService = new LDAPServiceImpl(ldapRepository);
 
 // GET /api/ldap/complete - Obtener TODOS los usuarios con TODA la información
 export async function GET(request: NextRequest) {
@@ -20,21 +22,22 @@ export async function GET(request: NextRequest) {
     console.log('🔍 Obteniendo TODOS los usuarios con información completa...');
     
     // Obtener todos los usuarios
-    const users = await ldapRepository.getAllUsers();
+    const result = await ldapService.getAllUsers();
+    const users = result.data || [];
     
     // Estadísticas básicas
     const stats = {
       totalUsers: users.length,
       usersByRole: {
-        admin: users.filter(u => u.rol === 'admin').length,
-        moderador: users.filter(u => u.rol === 'moderador').length,
-        usuario: users.filter(u => u.rol === 'usuario').length,
-        unknown: users.filter(u => !u.rol).length
+        admin: users.filter((u: LDAPUser) => u.rol === 'admin').length,
+        moderador: users.filter((u: LDAPUser) => u.rol === 'moderador').length,
+        usuario: users.filter((u: LDAPUser) => u.rol === 'usuario').length,
+        unknown: users.filter((u: LDAPUser) => !u.rol).length
       },
       usersByVerification: {
-        verified: users.filter(u => u.emailVerified === true).length,
-        unverified: users.filter(u => u.emailVerified === false).length,
-        unknown: users.filter(u => u.emailVerified === undefined).length
+        verified: users.filter((u: LDAPUser) => u.emailVerified === true).length,
+        unverified: users.filter((u: LDAPUser) => u.emailVerified === false).length,
+        unknown: users.filter((u: LDAPUser) => u.emailVerified === undefined).length
       }
     };
 
