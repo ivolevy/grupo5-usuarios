@@ -97,7 +97,7 @@ export function RequirePermission({
   fallback?: ReactNode
 }) {
   return (
-    <PermissionGate permission={permission} fallback={fallback}>
+    <PermissionGate permission={permission} fallback={fallback} showAccessDenied={false}>
       {children}
     </PermissionGate>
   )
@@ -116,7 +116,7 @@ export function RequireRole({
   fallback?: ReactNode
 }) {
   return (
-    <PermissionGate role={role} fallback={fallback}>
+    <PermissionGate role={role} fallback={fallback} showAccessDenied={false}>
       {children}
     </PermissionGate>
   )
@@ -133,7 +133,7 @@ export function RequireAdmin({
   fallback?: ReactNode
 }) {
   return (
-    <PermissionGate role="admin" fallback={fallback}>
+    <PermissionGate role="admin" fallback={fallback} showAccessDenied={false}>
       {children}
     </PermissionGate>
   )
@@ -154,6 +154,7 @@ export function RequireUserManagement({
       permissions={[Permission.USER_READ_ALL, Permission.ADMIN_DASHBOARD]}
       requireAll={false}
       fallback={fallback}
+      showAccessDenied={false}
     >
       {children}
     </PermissionGate>
@@ -174,6 +175,7 @@ export function RequireAdminDashboard({
     <PermissionGate
       permission={Permission.ADMIN_DASHBOARD}
       fallback={fallback}
+      showAccessDenied={false}
     >
       {children}
     </PermissionGate>

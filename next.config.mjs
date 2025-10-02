@@ -10,6 +10,8 @@ const nextConfig = {
     unoptimized: true,
   },
   output: 'standalone',
+  // Ensure Next's output file tracing uses the project root, not parent directories
+  outputFileTracingRoot: process.cwd(),
   trailingSlash: false,
 }
 

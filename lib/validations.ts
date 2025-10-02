@@ -9,8 +9,8 @@ export const createUsuarioSchema = z.object({
     .optional(),
   email: z
     .string()
-    .email('Debe ser un email válido')
     .min(1, 'El email es requerido')
+    .email('Debe ser un email válido')
     .max(255, 'El email es demasiado largo'),
   password: z
     .string()
@@ -106,6 +106,56 @@ export const usuarioParamsSchema = z.object({
   id: z
     .string()
     .uuid('Debe ser un UUID válido'),
+});
+
+// Schemas adicionales usados en pruebas
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'El email es requerido')
+    .email('Debe ser un email válido'),
+  password: z
+    .string()
+    .min(1, 'La contraseña es requerida'),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z
+    .string()
+    .min(1, 'La contraseña actual es requerida'),
+  newPassword: z
+    .string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .max(128, 'La contraseña es demasiado larga'),
+  confirmPassword: z
+    .string()
+    .min(1, 'La confirmación de contraseña es requerida'),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: 'Las contraseñas no coinciden',
+  path: ['confirmPassword'],
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'El email es requerido')
+    .email('Debe ser un email válido'),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z
+    .string()
+    .min(1, 'El token es requerido'),
+  newPassword: z
+    .string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .max(128, 'La contraseña es demasiado larga'),
+  confirmPassword: z
+    .string()
+    .min(1, 'La confirmación de contraseña es requerida'),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: 'Las contraseñas no coinciden',
+  path: ['confirmPassword'],
 });
 
 // Tipos TypeScript derivados de los schemas

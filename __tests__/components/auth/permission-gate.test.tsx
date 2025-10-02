@@ -228,12 +228,32 @@ describe('PermissionGate Component', () => {
 })
 
 describe('RequirePermission Component', () => {
+  const baseHook = {
+    hasPermission: jest.fn(),
+    hasAnyPermission: jest.fn(),
+    hasAllPermissions: jest.fn(),
+    hasRole: jest.fn(),
+    hasAnyRole: jest.fn(),
+    isAuthenticated: true,
+    user: { id: '1', email: 'test@test.com', rol: 'usuario' as const },
+    isAdmin: jest.fn(),
+    isModeratorOrAdmin: jest.fn(),
+    canAccessResource: jest.fn(),
+    canManageUsers: jest.fn(),
+    canCreateUsers: jest.fn(),
+    canUpdateUsers: jest.fn(),
+    canDeleteUsers: jest.fn(),
+    canAccessAdminDashboard: jest.fn(),
+    getUserPermissions: jest.fn(),
+    token: 'test-token',
+  }
+
   beforeEach(() => {
     jest.clearAllMocks()
     mockUsePermissions.mockReturnValue({
-      ...mockPermissionsHook,
+      ...baseHook,
       hasPermission: jest.fn().mockReturnValue(true),
-    })
+    } as any)
   })
 
   it('should render children when user has permission', () => {
@@ -248,9 +268,9 @@ describe('RequirePermission Component', () => {
 
   it('should show fallback when user lacks permission', () => {
     mockUsePermissions.mockReturnValue({
-      ...mockPermissionsHook,
+      ...baseHook,
       hasPermission: jest.fn().mockReturnValue(false),
-    })
+    } as any)
 
     render(
       <RequirePermission 
@@ -267,12 +287,32 @@ describe('RequirePermission Component', () => {
 })
 
 describe('RequireRole Component', () => {
+  const baseHook = {
+    hasPermission: jest.fn(),
+    hasAnyPermission: jest.fn(),
+    hasAllPermissions: jest.fn(),
+    hasRole: jest.fn(),
+    hasAnyRole: jest.fn(),
+    isAuthenticated: true,
+    user: { id: '1', email: 'test@test.com', rol: 'usuario' as const },
+    isAdmin: jest.fn(),
+    isModeratorOrAdmin: jest.fn(),
+    canAccessResource: jest.fn(),
+    canManageUsers: jest.fn(),
+    canCreateUsers: jest.fn(),
+    canUpdateUsers: jest.fn(),
+    canDeleteUsers: jest.fn(),
+    canAccessAdminDashboard: jest.fn(),
+    getUserPermissions: jest.fn(),
+    token: 'test-token',
+  }
+
   beforeEach(() => {
     jest.clearAllMocks()
     mockUsePermissions.mockReturnValue({
-      ...mockPermissionsHook,
+      ...baseHook,
       hasRole: jest.fn().mockReturnValue(true),
-    })
+    } as any)
   })
 
   it('should render children when user has role', () => {
@@ -287,9 +327,9 @@ describe('RequireRole Component', () => {
 
   it('should show fallback when user lacks role', () => {
     mockUsePermissions.mockReturnValue({
-      ...mockPermissionsHook,
+      ...baseHook,
       hasRole: jest.fn().mockReturnValue(false),
-    })
+    } as any)
 
     render(
       <RequireRole 
@@ -306,12 +346,32 @@ describe('RequireRole Component', () => {
 })
 
 describe('RequireAdmin Component', () => {
+  const baseHook = {
+    hasPermission: jest.fn(),
+    hasAnyPermission: jest.fn(),
+    hasAllPermissions: jest.fn(),
+    hasRole: jest.fn(),
+    hasAnyRole: jest.fn(),
+    isAuthenticated: true,
+    user: { id: '1', email: 'test@test.com', rol: 'usuario' as const },
+    isAdmin: jest.fn(),
+    isModeratorOrAdmin: jest.fn(),
+    canAccessResource: jest.fn(),
+    canManageUsers: jest.fn(),
+    canCreateUsers: jest.fn(),
+    canUpdateUsers: jest.fn(),
+    canDeleteUsers: jest.fn(),
+    canAccessAdminDashboard: jest.fn(),
+    getUserPermissions: jest.fn(),
+    token: 'test-token',
+  }
+
   beforeEach(() => {
     jest.clearAllMocks()
     mockUsePermissions.mockReturnValue({
-      ...mockPermissionsHook,
+      ...baseHook,
       hasRole: jest.fn().mockReturnValue(true),
-    })
+    } as any)
   })
 
   it('should render children when user is admin', () => {
@@ -326,12 +386,34 @@ describe('RequireAdmin Component', () => {
 })
 
 describe('RequireUserManagement Component', () => {
+  const baseHook = {
+    hasPermission: jest.fn(),
+    hasAnyPermission: jest.fn(),
+    hasAllPermissions: jest.fn(),
+    hasRole: jest.fn(),
+    hasAnyRole: jest.fn(),
+    isAuthenticated: true,
+    user: { id: '1', email: 'test@test.com', rol: 'usuario' as const },
+    isAdmin: jest.fn(),
+    isModeratorOrAdmin: jest.fn(),
+    canAccessResource: jest.fn(),
+    canManageUsers: jest.fn(),
+    canCreateUsers: jest.fn(),
+    canUpdateUsers: jest.fn(),
+    canDeleteUsers: jest.fn(),
+    canAccessAdminDashboard: jest.fn(),
+    getUserPermissions: jest.fn(),
+    token: 'test-token',
+  }
+
   beforeEach(() => {
     jest.clearAllMocks()
-    mockUsePermissions.mockReturnValue({
-      ...mockPermissionsHook,
+    const hookMock = {
+      ...baseHook,
       hasAnyPermission: jest.fn().mockReturnValue(true),
-    })
+    } as any
+    mockUsePermissions.mockReturnValue(hookMock)
+    ;(global as any).__currentPermissionsHook = hookMock
   })
 
   it('should render children when user can manage users', () => {
@@ -342,7 +424,7 @@ describe('RequireUserManagement Component', () => {
     )
 
     expect(screen.getByTestId('protected-content')).toBeInTheDocument()
-    expect(mockPermissionsHook.hasAnyPermission).toHaveBeenCalledWith([
+    expect((global as any).__currentPermissionsHook.hasAnyPermission).toHaveBeenCalledWith([
       Permission.USER_READ_ALL, 
       Permission.ADMIN_DASHBOARD
     ])
@@ -350,12 +432,34 @@ describe('RequireUserManagement Component', () => {
 })
 
 describe('RequireAdminDashboard Component', () => {
+  const baseHook = {
+    hasPermission: jest.fn(),
+    hasAnyPermission: jest.fn(),
+    hasAllPermissions: jest.fn(),
+    hasRole: jest.fn(),
+    hasAnyRole: jest.fn(),
+    isAuthenticated: true,
+    user: { id: '1', email: 'test@test.com', rol: 'usuario' as const },
+    isAdmin: jest.fn(),
+    isModeratorOrAdmin: jest.fn(),
+    canAccessResource: jest.fn(),
+    canManageUsers: jest.fn(),
+    canCreateUsers: jest.fn(),
+    canUpdateUsers: jest.fn(),
+    canDeleteUsers: jest.fn(),
+    canAccessAdminDashboard: jest.fn(),
+    getUserPermissions: jest.fn(),
+    token: 'test-token',
+  }
+
   beforeEach(() => {
     jest.clearAllMocks()
-    mockUsePermissions.mockReturnValue({
-      ...mockPermissionsHook,
+    const hookMock = {
+      ...baseHook,
       hasPermission: jest.fn().mockReturnValue(true),
-    })
+    } as any
+    mockUsePermissions.mockReturnValue(hookMock)
+    ;(global as any).__currentPermissionsHook = hookMock
   })
 
   it('should render children when user can access admin dashboard', () => {
@@ -366,6 +470,6 @@ describe('RequireAdminDashboard Component', () => {
     )
 
     expect(screen.getByTestId('protected-content')).toBeInTheDocument()
-    expect(mockPermissionsHook.hasPermission).toHaveBeenCalledWith(Permission.ADMIN_DASHBOARD)
+    expect((global as any).__currentPermissionsHook.hasPermission).toHaveBeenCalledWith(Permission.ADMIN_DASHBOARD)
   })
 })

@@ -92,9 +92,9 @@ describe('useIsMobile Hook', () => {
       value: 767,
     })
 
-    const { result, rerender } = renderHook(() => useIsMobile())
+    const { result: result2, rerender } = renderHook(() => useIsMobile())
     rerender()
-    expect(result.current).toBe(true)
+    expect(result2.current).toBe(true)
   })
 
   it('should set up and clean up media query listener', () => {
@@ -149,6 +149,7 @@ describe('useIsMobile Hook', () => {
 
   it('should use correct breakpoint value', () => {
     // The hook should use 768 as the breakpoint
+    renderHook(() => useIsMobile())
     expect(mockMatchMedia).toHaveBeenCalledWith('(max-width: 767px)')
   })
 
