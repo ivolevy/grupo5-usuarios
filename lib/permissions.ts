@@ -30,7 +30,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     Permission.PROFILE_READ,
     Permission.PROFILE_UPDATE,
   ],
-  moderador: [
+  interno: [
     Permission.USER_READ,
     Permission.USER_READ_ALL,
     Permission.PROFILE_READ,

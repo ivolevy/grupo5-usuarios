@@ -9,7 +9,7 @@ export interface User {
   nombre_completo?: string
   telefono?: string
   nacionalidad?: string
-  rol: "admin" | "usuario" | "moderador"
+  rol: "admin" | "usuario" | "interno"
   created_at: string
   last_login_at?: string
   email_verified: boolean
@@ -26,7 +26,7 @@ interface UsersContextType {
   getUserById: (id: string) => User | undefined
   refreshUsers: () => Promise<void>
   getUsersByRole: (role: string) => User[]
-  getAdminModeratorUsers: () => User[]
+  getAdminInternoUsers: () => User[]
   getNormalUsers: () => User[]
 }
 
@@ -152,7 +152,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     return users.filter(user => user.rol === role)
   }
 
-  const getAdminModeratorUsers = () => {
+  const getAdminInternoUsers = () => {
     return users.filter(user => user.rol !== "usuario")
   }
 
@@ -172,7 +172,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
         getUserById,
         refreshUsers,
         getUsersByRole,
-        getAdminModeratorUsers,
+        getAdminInternoUsers,
         getNormalUsers,
       }}
     >

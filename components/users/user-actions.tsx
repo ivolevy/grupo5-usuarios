@@ -45,7 +45,7 @@ export function UserActions({ user }: UserActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {/* Solo mostrar editar para usuarios admin/moderador */}
+          {/* Solo mostrar editar para usuarios admin/interno */}
           {user.rol !== 'usuario' && (
             <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
               <Edit className="mr-2 h-4 w-4" />

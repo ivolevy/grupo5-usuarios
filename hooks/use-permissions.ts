@@ -35,7 +35,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     Permission.PROFILE_READ,
     Permission.PROFILE_UPDATE,
   ],
-  moderador: [
+  interno: [
     Permission.USER_READ,
     Permission.USER_READ_ALL,
     Permission.PROFILE_READ,
@@ -89,10 +89,10 @@ export function usePermissions() {
   }
 
   /**
-   * Verifica si el usuario es moderador o admin
+   * Verifica si el usuario es interno o admin
    */
-  const isModeratorOrAdmin = (): boolean => {
-    return user?.rol === 'admin' || user?.rol === 'moderador'
+  const isInternoOrAdmin = (): boolean => {
+    return user?.rol === 'admin' || user?.rol === 'interno'
   }
 
   /**
@@ -173,7 +173,7 @@ export function usePermissions() {
     
     // Funciones de roles
     isAdmin,
-    isModeratorOrAdmin,
+    isInternoOrAdmin,
     hasRole,
     hasAnyRole,
     

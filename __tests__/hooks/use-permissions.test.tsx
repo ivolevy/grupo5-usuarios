@@ -18,7 +18,7 @@ describe('usePermissions Hook', () => {
   const mockModeratorUser = {
     id: '2',
     email: 'moderator@test.com',
-    rol: 'moderador' as const,
+    rol: 'interno' as const,
     email_verified: true,
     created_at: '2024-01-01T00:00:00Z'
   }
@@ -222,10 +222,10 @@ describe('usePermissions Hook', () => {
       const { result } = renderHook(() => usePermissions())
       
       expect(result.current.isAdmin()).toBe(true)
-      expect(result.current.isModeratorOrAdmin()).toBe(true)
+      expect(result.current.isInternoOrAdmin()).toBe(true)
     })
 
-    it('should correctly identify moderator users', () => {
+    it('should correctly identify interno users', () => {
       mockUseAuth.mockReturnValue({
         user: mockModeratorUser,
         token: 'token',
@@ -241,7 +241,7 @@ describe('usePermissions Hook', () => {
       const { result } = renderHook(() => usePermissions())
       
       expect(result.current.isAdmin()).toBe(false)
-      expect(result.current.isModeratorOrAdmin()).toBe(true)
+      expect(result.current.isInternoOrAdmin()).toBe(true)
     })
 
     it('should correctly identify regular users', () => {
@@ -260,7 +260,7 @@ describe('usePermissions Hook', () => {
       const { result } = renderHook(() => usePermissions())
       
       expect(result.current.isAdmin()).toBe(false)
-      expect(result.current.isModeratorOrAdmin()).toBe(false)
+      expect(result.current.isInternoOrAdmin()).toBe(false)
     })
   })
 

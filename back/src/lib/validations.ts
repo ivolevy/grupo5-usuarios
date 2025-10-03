@@ -12,7 +12,7 @@ export const createUsuarioSchema = z.object({
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
     .max(128, 'La contraseña es demasiado larga'),
   rol: z
-    .enum(['admin', 'usuario', 'moderador'])
+    .enum(['admin', 'usuario', 'interno'])
     .default('usuario')
     .optional(),
 });
@@ -29,7 +29,7 @@ export const updateUsuarioSchema = z.object({
     .max(128, 'La contraseña es demasiado larga')
     .optional(),
   rol: z
-    .enum(['admin', 'usuario', 'moderador'])
+    .enum(['admin', 'usuario', 'interno'])
     .optional(),
 });
 

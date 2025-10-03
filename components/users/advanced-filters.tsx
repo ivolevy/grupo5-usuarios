@@ -153,7 +153,7 @@ export function AdvancedFilters({
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Filtro por rol - Solo para administradores y moderadores */}
+            {/* Filtro por rol - Solo para administradores e internos */}
             {activeTab === "admin-moderator" && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Rol</Label>
@@ -167,7 +167,7 @@ export function AdvancedFilters({
                   <SelectContent>
                     <SelectItem value="all">Todos los roles</SelectItem>
                     <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="moderador">Moderador</SelectItem>
+                    <SelectItem value="interno">Interno</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -27,7 +27,7 @@
  *                 type: string
  *               rol:
  *                 type: string
- *                 enum: [admin, moderador, usuario]
+ *                 enum: [admin, interno, usuario]
  *               nacionalidad:
  *                 type: string
  *               telefono:

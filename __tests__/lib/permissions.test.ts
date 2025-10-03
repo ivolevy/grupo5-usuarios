@@ -14,7 +14,7 @@ describe('permissions library', () => {
   describe('hasAnyPermission', () => {
     it('returns true if any permission matches', () => {
       expect(
-        hasAnyPermission('moderador', [Permission.USER_CREATE, Permission.USER_READ_ALL])
+        hasAnyPermission('interno', [Permission.USER_CREATE, Permission.USER_READ_ALL])
       ).toBe(true)
     })
 
@@ -34,7 +34,7 @@ describe('permissions library', () => {
 
     it('returns false if at least one permission is missing', () => {
       expect(
-        hasAllPermissions('moderador', [Permission.USER_READ_ALL, Permission.ADMIN_DASHBOARD])
+        hasAllPermissions('interno', [Permission.USER_READ_ALL, Permission.ADMIN_DASHBOARD])
       ).toBe(false)
     })
   })

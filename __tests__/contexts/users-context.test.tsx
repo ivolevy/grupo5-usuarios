@@ -9,7 +9,7 @@ describe('UsersContext', () => {
   ]
 
   function Consumer() {
-    const { users, loading, error, refreshUsers, addUser, updateUser, deleteUser, getUserById, getUsersByRole, getAdminModeratorUsers, getNormalUsers } = useUsers()
+    const { users, loading, error, refreshUsers, addUser, updateUser, deleteUser, getUserById, getUsersByRole, getAdminInternoUsers, getNormalUsers } = useUsers()
     return (
       <div>
         <div data-testid="loading">{String(loading)}</div>
@@ -21,7 +21,7 @@ describe('UsersContext', () => {
         <button onClick={() => deleteUser('1')} data-testid="delete" />
         <div data-testid="byid">{getUserById('1')?.email ?? ''}</div>
         <div data-testid="admins">{getUsersByRole('admin').length}</div>
-        <div data-testid="am">{getAdminModeratorUsers().length}</div>
+        <div data-testid="am">{getAdminInternoUsers().length}</div>
         <div data-testid="normal">{getNormalUsers().length}</div>
       </div>
     )

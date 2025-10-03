@@ -198,7 +198,7 @@ describe('PermissionGate Component', () => {
     it('should handle multiple roles with OR logic', () => {
       mockPermissionsHook.hasAnyRole.mockReturnValue(true)
 
-      const roles = ['admin', 'moderador']
+      const roles = ['admin', 'interno']
       
       render(
         <PermissionGate roles={roles} requireAnyRole={true}>
@@ -213,7 +213,7 @@ describe('PermissionGate Component', () => {
     it('should handle multiple roles with AND logic', () => {
       mockPermissionsHook.hasRole.mockReturnValue(true)
 
-      const roles = ['admin', 'moderador']
+      const roles = ['admin', 'interno']
       
       render(
         <PermissionGate roles={roles} requireAnyRole={false}>

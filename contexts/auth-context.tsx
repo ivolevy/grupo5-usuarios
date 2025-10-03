@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 interface User {
   id: string
   email: string
-  rol: "admin" | "usuario" | "moderador"
+  rol: "admin" | "usuario" | "interno"
   email_verified: boolean
   created_at: string
   last_login_at?: string

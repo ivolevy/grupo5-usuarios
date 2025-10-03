@@ -189,10 +189,10 @@ export class UserServiceImpl implements UserService {
     usersCreatedToday: number;
   }> {
     try {
-      const [totalUsers, adminUsers, moderadorUsers, usuarioUsers] = await Promise.all([
+      const [totalUsers, adminUsers, internoUsers, usuarioUsers] = await Promise.all([
         this.userRepository.count(),
         this.userRepository.countByRole('admin'),
-        this.userRepository.countByRole('moderador'),
+        this.userRepository.countByRole('interno'),
         this.userRepository.countByRole('usuario')
       ]);
 
@@ -216,7 +216,7 @@ export class UserServiceImpl implements UserService {
         totalUsers,
         usersByRole: {
           admin: adminUsers,
-          moderador: moderadorUsers,
+          interno: internoUsers,
           usuario: usuarioUsers
         },
         recentUsers: recentUsers.length,

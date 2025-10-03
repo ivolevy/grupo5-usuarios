@@ -16,7 +16,7 @@ import { countries } from "@/lib/countries"
 interface UserProfile {
   id: string
   email: string
-  rol: "admin" | "usuario" | "moderador"
+  rol: "admin" | "usuario" | "interno"
   email_verified: boolean
   created_at: string
   last_login_at?: string
@@ -637,7 +637,7 @@ export default function ProfilePage() {
                   <Badge 
                     variant={
                       profile.rol === "admin" ? "destructive" :
-                      profile.rol === "moderador" ? "secondary" : "default"
+                      profile.rol === "interno" ? "secondary" : "default"
                     }
                   >
                     {profile.rol}

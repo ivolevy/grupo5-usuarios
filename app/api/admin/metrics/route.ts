@@ -40,14 +40,14 @@ export async function GET(request: NextRequest) {
     const [
       totalUsers,
       adminUsers,
-      moderatorUsers,
+      internoUsers,
       regularUsers,
       recentUsers,
       usersCreatedToday
     ] = await Promise.all([
       prisma.usuarios.count(),
       prisma.usuarios.count({ where: { rol: 'admin' } }),
-      prisma.usuarios.count({ where: { rol: 'moderador' } }),
+      prisma.usuarios.count({ where: { rol: 'interno' } }),
       prisma.usuarios.count({ where: { rol: 'usuario' } }),
       prisma.usuarios.count({
         where: {
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     // Distribución por roles
     const roleDistribution = [
       { rol: 'admin', count: adminUsers },
-      { rol: 'moderador', count: moderatorUsers },
+      { rol: 'interno', count: internoUsers },
       { rol: 'usuario', count: regularUsers }
     ];
 

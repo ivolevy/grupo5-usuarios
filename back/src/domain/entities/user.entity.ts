@@ -26,10 +26,10 @@ export class UserEntity {
   }
 
   /**
-   * Verifica si el usuario es moderador o admin
+   * Verifica si el usuario es interno o admin
    */
-  isModeratorOrAdmin(): boolean {
-    return this.rol === 'admin' || this.rol === 'moderador';
+  isInternoOrAdmin(): boolean {
+    return this.rol === 'admin' || this.rol === 'interno';
   }
 
   /**

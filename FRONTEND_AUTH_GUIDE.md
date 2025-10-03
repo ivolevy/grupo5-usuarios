@@ -137,7 +137,7 @@ enum Permission {
 ### Roles y Permisos
 
 - **admin**: Todos los permisos
-- **moderador**: Lectura de usuarios, gestión de perfil propio
+- **interno**: Lectura de usuarios, gestión de perfil propio
 - **usuario**: Solo gestión de perfil propio
 
 ## 🛡️ Protección de Rutas

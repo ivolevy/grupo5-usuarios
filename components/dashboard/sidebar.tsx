@@ -114,7 +114,7 @@ export function Sidebar() {
                       "inline-block px-2 py-1 text-xs rounded-full mt-1 font-roboto-regular",
                       user?.rol === "admin"
                         ? "bg-red-100 text-red-700"
-                        : user?.rol === "moderador"
+                        : user?.rol === "interno"
                           ? "bg-yellow-100 text-yellow-700"
                           : "bg-green-100 text-green-700",
                     )}

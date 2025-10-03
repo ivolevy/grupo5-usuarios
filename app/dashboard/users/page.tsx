@@ -29,7 +29,7 @@ export default function UsersPage() {
     lastLoginRange: { from: undefined, to: undefined },
     searchTerm: ""
   })
-  const { getAdminModeratorUsers, getNormalUsers, loading, error } = useUsers()
+  const { getAdminInternoUsers, getNormalUsers, loading, error } = useUsers()
   const { user } = useAuth()
 
   // Verificar si el usuario tiene permisos de administrador
@@ -43,11 +43,11 @@ export default function UsersPage() {
   }
 
   // Obtener usuarios por tipo
-  const usuariosAdminModerador = getAdminModeratorUsers()
+  const usuariosAdminInterno = getAdminInternoUsers()
   const usuariosNormales = getNormalUsers()
   
   // Filtrar usuarios según la pestaña activa
-  const currentUsers = activeTab === "admin-moderator" ? usuariosAdminModerador : usuariosNormales
+  const currentUsers = activeTab === "admin-moderator" ? usuariosAdminInterno : usuariosNormales
   
   // Función de filtrado avanzado
   const applyAdvancedFilters = (users: typeof currentUsers) => {
@@ -98,19 +98,19 @@ export default function UsersPage() {
 
   // Estadísticas generales
   const totalStats = {
-    total: usuariosAdminModerador.length + usuariosNormales.length,
-    adminModerator: usuariosAdminModerador.length,
+    total: usuariosAdminInterno.length + usuariosNormales.length,
+    adminInterno: usuariosAdminInterno.length,
     normal: usuariosNormales.length,
-    verified: [...usuariosAdminModerador, ...usuariosNormales].filter((u) => u.email_verified).length,
-    unverified: [...usuariosAdminModerador, ...usuariosNormales].filter((u) => !u.email_verified).length,
-    admins: usuariosAdminModerador.filter((u) => u.rol === "admin").length,
-    moderadores: usuariosAdminModerador.filter((u) => u.rol === "moderador").length,
+    verified: [...usuariosAdminInterno, ...usuariosNormales].filter((u) => u.email_verified).length,
+    unverified: [...usuariosAdminInterno, ...usuariosNormales].filter((u) => !u.email_verified).length,
+    admins: usuariosAdminInterno.filter((u) => u.rol === "admin").length,
+    internos: usuariosAdminInterno.filter((u) => u.rol === "interno").length,
   }
 
   const getRoleBadge = (rol: string) => {
     const variants = {
       admin: "bg-red-100 text-red-700 border-red-200",
-      moderador: "bg-yellow-100 text-yellow-700 border-yellow-200",
+      interno: "bg-yellow-100 text-yellow-700 border-yellow-200",
       usuario: "bg-green-100 text-green-700 border-green-200",
     }
     return variants[rol as keyof typeof variants] || variants.usuario
@@ -317,7 +317,7 @@ export default function UsersPage() {
               className="flex items-center gap-2"
             >
               <Shield className="w-4 h-4" />
-              Administradores y Moderadores
+              Administradores e Internos
             </TabsTrigger>
             <TabsTrigger 
               value="normal-users" 
@@ -354,9 +354,9 @@ export default function UsersPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="font-roboto-bold">Administradores y Moderadores</CardTitle>
+                  <CardTitle className="font-roboto-bold">Administradores e Internos</CardTitle>
                   <CardDescription className="font-roboto-regular">
-                    {filteredUsers.length} de {usuariosAdminModerador.length} usuarios con permisos especiales
+                    {filteredUsers.length} de {usuariosAdminInterno.length} usuarios con permisos especiales
                     {Object.values(filters).some(value => 
                       typeof value === 'string' ? value !== '' && value !== 'all' : 
                       typeof value === 'object' && value !== null ? 

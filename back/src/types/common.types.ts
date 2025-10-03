@@ -51,7 +51,7 @@ export interface UpdateUserDto {
   telefono?: string;
 }
 
-export type UserRole = 'admin' | 'moderador' | 'usuario';
+export type UserRole = 'admin' | 'interno' | 'usuario';
 
 // Tipos de autenticación
 export interface LoginDto {
