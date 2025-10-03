@@ -9,76 +9,10 @@
  *     responses:
  *       200:
  *         description: Token refreshed
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "Token refrescado exitosamente"
- *                 data:
- *                   type: object
- *                   properties:
- *                     user:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: string
- *                         email:
- *                           type: string
- *                           format: email
- *                         rol:
- *                           type: string
- *                           enum: [admin, interno, usuario]
- *                         email_verified:
- *                           type: boolean
- *                         created_at:
- *                           type: string
- *                           format: date-time
- *                         last_login_at:
- *                           type: string
- *                           format: date-time
- *                     token:
- *                       type: string
- *                       description: New JWT token
- *                     tokenType:
- *                       type: string
- *                       example: "Bearer"
- *                     expiresIn:
- *                       type: string
- *                       example: "24h"
  *       401:
  *         description: Invalid token
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Token inválido para refrescar"
  *       404:
  *         description: User not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Usuario no encontrado"
- *       500:
- *         description: Internal server error
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';

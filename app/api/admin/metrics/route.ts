@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     const [
       totalUsers,
       adminUsers,
-      internoUsers,
+      moderatorUsers,
       regularUsers,
       recentUsers,
       usersCreatedToday
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     // Distribución por roles
     const roleDistribution = [
       { rol: 'admin', count: adminUsers },
-      { rol: 'interno', count: internoUsers },
+      { rol: 'interno', count: moderatorUsers },
       { rol: 'usuario', count: regularUsers }
     ];
 

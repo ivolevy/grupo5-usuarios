@@ -20,54 +20,10 @@ import { NextRequest, NextResponse } from 'next/server';
  *     responses:
  *       200:
  *         description: Password updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "Contraseña actualizada exitosamente"
- *                 data:
- *                   type: object
- *                   properties:
- *                     userId:
- *                       type: string
- *                     email:
- *                       type: string
- *                       format: email
  *       400:
  *         description: Invalid token or weak password
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Token inválido o contraseña débil"
- *                 error:
- *                   type: object
- *                   description: "Detalles del error de validación"
  *       429:
  *         description: Rate limit exceeded
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Demasiados intentos. Intenta más tarde"
  *       500:
  *         description: Internal server error
  */

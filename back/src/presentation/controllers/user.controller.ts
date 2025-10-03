@@ -14,7 +14,7 @@ const createUserSchema = z.object({
   nombre_completo: z.string().min(1, 'El nombre completo es requerido'),
   email: z.string().email('Debe ser un email válido'),
   password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
-  rol: z.enum(['admin', 'interno', 'usuario']).optional(),
+  rol: z.enum(['admin', 'moderador', 'usuario']).optional(),
   telefono: z.string().optional(),
 });
 
@@ -22,7 +22,7 @@ const updateUserSchema = z.object({
   nombre_completo: z.string().min(1, 'El nombre completo es requerido').optional(),
   email: z.string().email('Debe ser un email válido').optional(),
   password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres').optional(),
-  rol: z.enum(['admin', 'interno', 'usuario']).optional(),
+  rol: z.enum(['admin', 'moderador', 'usuario']).optional(),
   email_verified: z.boolean().optional(),
   telefono: z.string().optional(),
 });

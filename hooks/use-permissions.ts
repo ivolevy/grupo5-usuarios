@@ -91,7 +91,7 @@ export function usePermissions() {
   /**
    * Verifica si el usuario es interno o admin
    */
-  const isInternoOrAdmin = (): boolean => {
+  const isModeratorOrAdmin = (): boolean => {
     return user?.rol === 'admin' || user?.rol === 'interno'
   }
 
@@ -173,7 +173,7 @@ export function usePermissions() {
     
     // Funciones de roles
     isAdmin,
-    isInternoOrAdmin,
+    isModeratorOrAdmin,
     hasRole,
     hasAnyRole,
     

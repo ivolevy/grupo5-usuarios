@@ -101,7 +101,7 @@ enum Permission {
 ### Roles y Permisos:
 
 - **admin**: Todos los permisos
-- **interno**: Lectura de usuarios, gestión de perfil propio
+- **moderador**: Lectura de usuarios, gestión de perfil propio
 - **usuario**: Solo gestión de perfil propio
 
 ## 📝 Ejemplos de Uso

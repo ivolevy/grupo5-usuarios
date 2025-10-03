@@ -310,7 +310,7 @@ export default function Home() {
                   className="select"
                 >
                   <option value="usuario">Usuario</option>
-                  <option value="interno">Interno</option>
+                  <option value="moderador">Moderador</option>
                   <option value="admin">Admin</option>
                 </select>
                 <button onClick={handleCreateUsuario} disabled={loading} className="button success" style={{ width: '100%' }}>

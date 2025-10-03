@@ -9,80 +9,10 @@
  *     responses:
  *       200:
  *         description: User info
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "Información del usuario obtenida exitosamente"
- *                 data:
- *                   type: object
- *                   properties:
- *                     user:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: string
- *                         email:
- *                           type: string
- *                           format: email
- *                         rol:
- *                           type: string
- *                           enum: [admin, interno, usuario]
- *                         email_verified:
- *                           type: boolean
- *                         created_at:
- *                           type: string
- *                           format: date-time
- *                         last_login_at:
- *                           type: string
- *                           format: date-time
- *                     tokenInfo:
- *                       type: object
- *                       properties:
- *                         userId:
- *                           type: string
- *                         email:
- *                           type: string
- *                         rol:
- *                           type: string
- *                         iat:
- *                           type: number
- *                         exp:
- *                           type: number
  *       401:
  *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Token inválido o expirado"
  *       404:
  *         description: User not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Usuario no encontrado"
- *       500:
- *         description: Internal server error
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';

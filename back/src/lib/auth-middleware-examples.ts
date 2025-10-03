@@ -119,7 +119,7 @@ export const PUT_USER = withAuth(updateUserHandler, {
 async function manageUsersHandler(request: NextRequest) {
   const user = (request as any).user;
   
-  // Solo admin o interno pueden gestionar usuarios
+  // Solo admin o moderador pueden gestionar usuarios
   const users = await prisma.usuarios.findMany({
     select: {
       id: true,

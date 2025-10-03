@@ -22,53 +22,10 @@ import { NextRequest, NextResponse } from 'next/server';
  *     responses:
  *       200:
  *         description: Code verified
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "Código verificado exitosamente"
- *                 data:
- *                   type: object
- *                   properties:
- *                     resetToken:
- *                       type: string
- *                       description: "Token para resetear contraseña"
- *                     expiresIn:
- *                       type: number
- *                       description: "Tiempo de expiración en minutos"
- *                       example: 15
  *       400:
  *         description: Invalid email or code
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Código inválido o expirado"
  *       429:
  *         description: Rate limit exceeded
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Demasiados intentos. Intenta más tarde"
  *       500:
  *         description: Internal server error
  */

@@ -125,7 +125,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">Administrador</SelectItem>
-                <SelectItem value="interno">Interno</SelectItem>
+                <SelectItem value="interno">Moderador</SelectItem>
                 <SelectItem value="usuario">Usuario</SelectItem>
               </SelectContent>
             </Select>

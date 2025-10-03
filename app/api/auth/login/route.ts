@@ -20,78 +20,10 @@
  *     responses:
  *       200:
  *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "Login exitoso"
- *                 data:
- *                   type: object
- *                   properties:
- *                     user:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: string
- *                         email:
- *                           type: string
- *                           format: email
- *                         rol:
- *                           type: string
- *                           enum: [admin, interno, usuario]
- *                         email_verified:
- *                           type: boolean
- *                         created_at:
- *                           type: string
- *                           format: date-time
- *                         last_login_at:
- *                           type: string
- *                           format: date-time
- *                     token:
- *                       type: string
- *                       description: JWT token
- *                     tokenType:
- *                       type: string
- *                       example: "Bearer"
- *                     expiresIn:
- *                       type: string
- *                       example: "24h"
  *       400:
  *         description: Validation error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Datos de entrada inválidos"
- *                 error:
- *                   type: object
  *       401:
  *         description: Invalid credentials
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Credenciales inválidas"
- *       500:
- *         description: Internal server error
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';

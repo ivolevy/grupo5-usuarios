@@ -19,53 +19,10 @@ import { NextRequest, NextResponse } from 'next/server';
  *     responses:
  *       200:
  *         description: Verification code sent
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "Código de verificación enviado al email"
- *                 data:
- *                   type: object
- *                   properties:
- *                     email:
- *                       type: string
- *                       format: email
- *                     expiresIn:
- *                       type: number
- *                       description: "Tiempo de expiración en minutos"
- *                       example: 15
  *       400:
  *         description: Invalid request
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Email inválido o usuario no encontrado"
  *       429:
  *         description: Rate limit exceeded
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Demasiados intentos. Intenta más tarde"
  *       500:
  *         description: Internal server error
  */

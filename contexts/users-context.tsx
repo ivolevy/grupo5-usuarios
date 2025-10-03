@@ -26,7 +26,7 @@ interface UsersContextType {
   getUserById: (id: string) => User | undefined
   refreshUsers: () => Promise<void>
   getUsersByRole: (role: string) => User[]
-  getAdminInternoUsers: () => User[]
+  getAdminModeratorUsers: () => User[]
   getNormalUsers: () => User[]
 }
 
@@ -152,7 +152,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     return users.filter(user => user.rol === role)
   }
 
-  const getAdminInternoUsers = () => {
+  const getAdminModeratorUsers = () => {
     return users.filter(user => user.rol !== "usuario")
   }
 
@@ -172,7 +172,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
         getUserById,
         refreshUsers,
         getUsersByRole,
-        getAdminInternoUsers,
+        getAdminModeratorUsers,
         getNormalUsers,
       }}
     >
