@@ -48,9 +48,49 @@ async function saveOpenApiSpec(spec) {
   }
 }
 
+// Función para verificar el archivo OpenAPI existente
+function verifyExistingOpenApi() {
+  const openApiPath = path.join(__dirname, '../public/openapi.json');
+  
+  if (fs.existsSync(openApiPath)) {
+    console.log('📄 Usando archivo OpenAPI existente...');
+    
+    try {
+      const openApiContent = fs.readFileSync(openApiPath, 'utf8');
+      const openApiData = JSON.parse(openApiContent);
+      
+      console.log('📊 Total de endpoints documentados:', Object.keys(openApiData.paths).length);
+      console.log('🏷️  Tags disponibles:', openApiData.tags?.map(tag => tag.name).join(', ') || 'N/A');
+      
+      // Verificar que el rol "interno" esté en los enums
+      const hasInternoRole = JSON.stringify(openApiContent).includes('"interno"');
+      if (hasInternoRole) {
+        console.log('✅ Rol "interno" encontrado en la documentación');
+      } else {
+        console.log('⚠️  Rol "interno" no encontrado en la documentación');
+      }
+      
+      return true;
+    } catch (parseError) {
+      console.error('❌ Error al leer archivo existente:', parseError.message);
+      return false;
+    }
+  }
+  
+  return false;
+}
+
 // Función principal
 async function main() {
   console.log('🔄 Regenerando documentación OpenAPI...');
+  
+  // Durante el build, el servidor no está disponible, así que usamos el archivo existente
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    console.log('🏗️  Modo build detectado, usando archivo OpenAPI existente...');
+    verifyExistingOpenApi();
+    console.log('✅ Proceso completado');
+    return;
+  }
   
   try {
     // Intentar descargar la documentación desde el servidor
@@ -95,29 +135,7 @@ async function main() {
     console.log('💡 Asegúrate de que el servidor esté ejecutándose con "npm run dev"');
     
     // Verificar si existe el archivo actual
-    const openApiPath = path.join(__dirname, '../public/openapi.json');
-    if (fs.existsSync(openApiPath)) {
-      console.log('📄 Usando archivo OpenAPI existente...');
-      
-      try {
-        const openApiContent = fs.readFileSync(openApiPath, 'utf8');
-        const openApiData = JSON.parse(openApiContent);
-        
-        console.log('📊 Total de endpoints documentados:', Object.keys(openApiData.paths).length);
-        console.log('🏷️  Tags disponibles:', openApiData.tags?.map(tag => tag.name).join(', ') || 'N/A');
-        
-        // Verificar que el rol "interno" esté en los enums
-        const hasInternoRole = JSON.stringify(openApiContent).includes('"interno"');
-        if (hasInternoRole) {
-          console.log('✅ Rol "interno" encontrado en la documentación');
-        } else {
-          console.log('⚠️  Rol "interno" no encontrado en la documentación');
-        }
-        
-      } catch (parseError) {
-        console.error('❌ Error al leer archivo existente:', parseError.message);
-      }
-    }
+    verifyExistingOpenApi();
   }
   
   console.log('✅ Proceso completado');
