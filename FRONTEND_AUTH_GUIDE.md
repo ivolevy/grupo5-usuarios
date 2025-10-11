@@ -1,4 +1,4 @@
-# Guía de Autenticación Frontend - Grupo5 Usuarios aaaaaaaaaaa
+# Guía de Autenticación Frontend - Grupo5 Usuarios aaaaaaaaaaaaaaa
 
 ## 📋 Descripción
 
