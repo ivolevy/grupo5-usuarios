@@ -20,7 +20,7 @@ interface UsersContextType {
   users: User[]
   loading: boolean
   error: string | null
-  addUser: (user: { nombre_completo?: string; email: string; password: string; rol?: string; nacionalidad?: string }) => Promise<void>
+  addUser: (user: { nombre_completo?: string; email: string; password: string; rol?: string; nacionalidad?: string; telefono?: string }) => Promise<void>
   updateUser: (id: string, updates: Partial<User>) => Promise<void>
   deleteUser: (id: string) => Promise<void>
   getUserById: (id: string) => User | undefined

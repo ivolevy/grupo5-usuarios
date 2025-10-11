@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { codeStorageService } from '@/lib/code-storage';
+import { getServices } from '@/lib/database-config';
+import { initializeCodeStorageService } from '@/lib/code-storage';
 import { validateData, verifyCodeSchema } from '@/lib/validations';
 import { logger } from '@/lib/logger';
 import { getClientIp } from '@/lib/rate-limiter';
@@ -23,8 +23,11 @@ export async function POST(request: NextRequest) {
 
     const { email, code } = validation.data;
 
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { userRepository } = await getServices();
+
     // Buscar el usuario por email
-    const user = await prisma.usuarios.findFirst({ email });
+    const user = await userRepository.findByEmail(email);
 
     if (!user) {
       return NextResponse.json({
@@ -33,6 +36,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Inicializar y usar el servicio de códigos
+    const codeStorageService = await initializeCodeStorageService();
+    
     // Validar el código usando el servicio de almacenamiento
     console.log(`🔍 [CODE VERIFICATION] Validando código para ${email}...`);
     const validationResult = await codeStorageService.validateCode(email, code);
@@ -51,7 +57,8 @@ export async function POST(request: NextRequest) {
     const { token, expiresAt } = await codeStorageService.generateResetToken(email);
     console.log(`🔑 [CODE VERIFICATION] Token de reset generado para ${email}`);
 
-    logger.userAction('password_reset_code_verified', user.id, clientIp, {
+    const userData = user.toPlainObject();
+    logger.userAction('password_reset_code_verified', userData.id, clientIp, {
       email,
       code: '***' // No logear el código real por seguridad
     });

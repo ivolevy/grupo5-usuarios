@@ -48,12 +48,7 @@ import { hashPassword } from '@/lib/auth';
 // GET /api/usuarios - Obtener todos los usuarios
 export async function GET() {
   try {
-    const usuarios = await prisma.usuarios.findMany({
-      where: {},
-      orderBy: {
-        created_at: 'desc'
-      }
-    });
+    const usuarios = await prisma.usuarios.findMany();
 
     return NextResponse.json({
       success: true,

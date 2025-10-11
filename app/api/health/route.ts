@@ -29,15 +29,13 @@ export async function GET() {
 
 
   // Obtener información de la base de datos
-  const databaseUrl = process.env.DATABASE_URL;
-  const dbInfo = databaseUrl ? {
-    host: databaseUrl.includes('supabase') ? 'Supabase' : 'Local/Other',
-    provider: 'PostgreSQL',
-    url: databaseUrl.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') // Ocultar credenciales
-  } : {
-    host: 'Not configured',
-    provider: 'Unknown',
-    url: 'DATABASE_URL not found'
+  const databaseType = 'ldap'; // Solo LDAP disponible
+  const dbInfo = {
+    type: databaseType,
+    provider: databaseType === 'ldap' ? 'LDAP' : 'PostgreSQL',
+    url: databaseType === 'ldap' 
+      ? process.env.LDAP_URL?.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') || 'Not configured'
+      : 'LDAP Server'
   };
 
   // Check 1: Database connection
@@ -51,7 +49,7 @@ export async function GET() {
       details: { 
         ...dbInfo,
         connection: 'successful',
-        method: 'Supabase REST API'
+        method: 'LDAP Server'
       }
     });
   } catch (error) {
@@ -77,7 +75,7 @@ export async function GET() {
       responseTime: Date.now() - tableStart,
       details: { 
         userCount: count,
-        method: 'Supabase REST API'
+        method: 'LDAP Server'
       }
     });
   } catch (error) {

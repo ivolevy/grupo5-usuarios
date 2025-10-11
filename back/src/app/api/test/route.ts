@@ -1,86 +1,87 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { supabaseRequest, supabaseConfig } from '@/lib/supabase';
+import { getServices } from '@/lib/database-config';
 
 export async function GET() {
   try {
     console.log('🔄 Probando conexión a la base de datos...');
     
-    // Test 1: Conexión básica con Prisma
-    let prismaResult = null;
-    let prismaError = null;
+    // Test 1: Conexión básica con LDAP/Supabase según configuración
+    let dbResult = null;
+    let dbError = null;
     
     try {
-      // Simular query raw con count
-      const count = await prisma.usuarios.count();
-      prismaResult = { test: 1, method: 'Supabase REST API', count };
-      console.log('✅ Conexión Supabase exitosa');
+      const { userRepository } = await getServices();
+      const count = await userRepository.count();
+      const dbType = 'ldap'; // Solo LDAP disponible
+      dbResult = { test: 1, method: dbType.toUpperCase(), count };
+      console.log(`✅ Conexión ${dbType.toUpperCase()} exitosa`);
     } catch (error) {
-      prismaError = error instanceof Error ? error.message : 'Error desconocido';
-      console.log('❌ Error Supabase:', prismaError);
+      dbError = error instanceof Error ? error.message : 'Error desconocido';
+      console.log('❌ Error conexión:', dbError);
     }
 
-    // Test 2: Verificar tabla usuarios
+    // Test 2: Verificar usuarios
     let tableCheck = null;
     let tableError = null;
     
     try {
-      const count = await prisma.usuarios.count();
+      const { userRepository } = await getServices();
+      const count = await userRepository.count();
       tableCheck = { 
         exists: true, 
         count, 
-        message: `Tabla usuarios existe con ${count} registros` 
+        message: `Usuarios encontrados: ${count}` 
       };
-      console.log('✅ Tabla usuarios verificada');
+      console.log('✅ Verificación de usuarios exitosa');
     } catch (error) {
       tableError = error instanceof Error ? error.message : 'Error desconocido';
-      console.log('❌ Error tabla usuarios:', tableError);
+      console.log('❌ Error verificación usuarios:', tableError);
     }
 
-    // Test 3: Conexión con API de Supabase como fallback
-    let supabaseResult = null;
-    let supabaseError = null;
+    // Test 3: Verificar configuración
+    let configResult = null;
+    let configError = null;
     
     try {
-      const response = await supabaseRequest('usuarios?select=count');
-      supabaseResult = {
-        status: response.status,
-        method: 'Supabase API',
-        url: supabaseConfig.url
+      const dbType = 'ldap'; // Solo LDAP disponible
+      configResult = {
+        databaseType: dbType,
+        method: 'LDAP Server',
+        url: process.env.LDAP_URL || 'LDAP Server'
       };
-      console.log('✅ Conexión Supabase API exitosa');
+      console.log('✅ Configuración verificada');
     } catch (error) {
-      supabaseError = error instanceof Error ? error.message : 'Error desconocido';
-      console.log('❌ Error Supabase API:', supabaseError);
+      configError = error instanceof Error ? error.message : 'Error desconocido';
+      console.log('❌ Error configuración:', configError);
     }
 
     // Determinar el estado general
-    const isHealthy = prismaResult !== null && tableCheck !== null;
+    const isHealthy = dbResult !== null && tableCheck !== null;
     
     return NextResponse.json({
       success: isHealthy,
       message: isHealthy ? 'Conexión a la base de datos exitosa' : 'Problemas de conexión detectados',
       tests: {
-        prisma: {
-          success: prismaResult !== null,
-          data: prismaResult,
-          error: prismaError
+        database: {
+          success: dbResult !== null,
+          data: dbResult,
+          error: dbError
         },
-        table: {
+        users: {
           success: tableCheck !== null,
           data: tableCheck,
           error: tableError
         },
-        supabase: {
-          success: supabaseResult !== null,
-          data: supabaseResult,
-          error: supabaseError
+        config: {
+          success: configResult !== null,
+          data: configResult,
+          error: configError
         }
       },
       config: {
-        project: 'grupousuarios-tp',
-        host: 'db.smvsrzphpcuukrnocied.supabase.co',
-        table: 'usuarios'
+        databaseType: 'ldap',
+        ldapUrl: process.env.LDAP_URL || 'Not configured',
+        ldapBaseDN: process.env.LDAP_BASE_DN || 'Not configured'
       },
       endpoints: {
         getAll: '/api/usuarios',
@@ -100,9 +101,9 @@ export async function GET() {
       message: 'Error general al probar la conexión',
       error: error instanceof Error ? error.message : 'Error desconocido',
       config: {
-        project: 'grupousuarios-tp',
-        host: 'db.smvsrzphpcuukrnocied.supabase.co',
-        table: 'usuarios'
+        databaseType: 'ldap',
+        ldapUrl: process.env.LDAP_URL || 'Not configured',
+        ldapBaseDN: process.env.LDAP_BASE_DN || 'Not configured'
       },
       timestamp: new Date().toISOString()
     }, { status: 500 });

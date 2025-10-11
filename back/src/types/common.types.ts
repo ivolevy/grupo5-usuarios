@@ -26,20 +26,24 @@ export interface User {
   id: string;
   nombre_completo: string;
   email: string;
+  password?: string; // Campo opcional para evitar exponerlo
   rol: UserRole;
   email_verified: boolean;
   created_at: string;
   updated_at?: string;
   last_login_at?: string;
   telefono?: string;
+  nacionalidad?: string;
 }
 
 export interface CreateUserDto {
-  nombre_completo: string;
+  nombre_completo?: string;
   email: string;
   password: string;
   rol?: UserRole;
   telefono?: string;
+  nacionalidad?: string;
+  email_verified?: boolean;
 }
 
 export interface UpdateUserDto {
@@ -49,6 +53,9 @@ export interface UpdateUserDto {
   rol?: UserRole;
   email_verified?: boolean;
   telefono?: string;
+  nacionalidad?: string;
+  updated_at?: string;
+  last_login_at?: string;
 }
 
 export type UserRole = 'admin' | 'moderador' | 'usuario';

@@ -37,7 +37,7 @@ import { rateLimiter } from '@/lib/rate-limiter';
 export async function POST(request: NextRequest) {
   try {
     // Logging de la petición entrante
-    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     logger.info('Petición de verificación de código recibida', {
       action: 'verify_code_request',
       ip: clientIP,
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     
     logger.error('Error interno en verificación de código', {
       action: 'verify_code_internal_error',

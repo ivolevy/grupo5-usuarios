@@ -31,6 +31,19 @@ export const updateUsuarioSchema = z.object({
   rol: z
     .enum(['admin', 'usuario', 'moderador'])
     .optional(),
+  nombre_completo: z
+    .string()
+    .min(1, 'El nombre completo es requerido')
+    .max(255, 'El nombre completo es demasiado largo')
+    .optional(),
+  telefono: z
+    .string()
+    .max(20, 'El teléfono es demasiado largo')
+    .optional(),
+  nacionalidad: z
+    .string()
+    .max(100, 'La nacionalidad es demasiado larga')
+    .optional(),
 });
 
 export const usuarioParamsSchema = z.object({

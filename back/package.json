@@ -16,6 +16,7 @@
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.2",
     "jsonwebtoken": "^9.0.2",
+    "ldapts": "^8.0.9",
     "next": "15.5.2",
     "nodemailer": "^7.0.3",
     "react": "19.1.0",

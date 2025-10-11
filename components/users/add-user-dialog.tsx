@@ -191,7 +191,7 @@ export function AddUserDialog() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="usuario">Usuario</SelectItem>
-                <SelectItem value="interno">Moderador</SelectItem>
+                <SelectItem value="interno">Interno</SelectItem>
                 <SelectItem value="admin">Administrador</SelectItem>
               </SelectContent>
             </Select>

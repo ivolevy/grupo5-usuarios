@@ -29,8 +29,8 @@ import { NextRequest, NextResponse } from 'next/server'
  *       500:
  *         description: Internal server error
  */
-import { supabaseRequest } from '@/lib/supabase'
-import bcrypt from 'bcryptjs'
+import { prisma } from '@/lib/db'
+import { hashPassword } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,13 +51,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Primero verificar que el usuario existe
-    const encodedEmail = encodeURIComponent(email)
-    const checkUrl = `usuarios?email=eq.${encodedEmail}&select=id,email`
+    const existingUser = await prisma.usuarios.findFirst({ email })
     
-    const checkResponse = await supabaseRequest(checkUrl)
-    const users = await checkResponse.json()
-    
-    if (users.length === 0) {
+    if (!existingUser) {
       return NextResponse.json({
         success: false,
         message: 'Usuario no encontrado'
@@ -65,24 +61,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Hashear la nueva contraseña
-    const saltRounds = 10
-    const hashedPassword = await bcrypt.hash(newPassword, saltRounds)
+    const hashedPassword = await hashPassword(newPassword)
 
     // Actualizar la contraseña en la base de datos
-    const updateUrl = `usuarios?email=eq.${encodedEmail}`
-    
-    const updateResponse = await supabaseRequest(updateUrl, {
-      method: 'PATCH',
-      body: JSON.stringify({
+    await prisma.usuarios.update(
+      { id: existingUser.id },
+      {
         password: hashedPassword,
         updated_at: new Date().toISOString()
-      }),
-      headers: {
-        'Prefer': 'return=representation'
       }
-    })
-
-    await updateResponse.json()
+    )
 
     return NextResponse.json({
       success: true,

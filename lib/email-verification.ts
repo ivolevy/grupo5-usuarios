@@ -1,4 +1,4 @@
-import { prisma } from './supabase-client';
+import { prisma } from './db';
 import { logger } from './logger';
 
 // Configuración para códigos de verificación
@@ -53,7 +53,7 @@ export async function storeVerificationCode(email: string): Promise<string | fal
     
     if (existingUser) {
       // Actualizar el usuario existente con el nuevo código
-      await prisma.usuarios.updateByEmail(email, {
+      await prisma.usuarios.update({ id: existingUser.id }, {
         password_reset_token: code,
         password_reset_expires: expiresAt.toISOString()
       });
@@ -99,6 +99,19 @@ export async function verifyCode(email: string, code: string): Promise<{
     // Buscar el usuario
     const user = await prisma.usuarios.findFirst({ email });
     
+    // Debug: Log detallado del usuario encontrado
+    logger.info(`Usuario encontrado para ${email}`, {
+      action: 'verify_code_user_found',
+      data: { 
+        email,
+        userId: user?.id,
+        hasPasswordResetToken: !!user?.password_reset_token,
+        passwordResetToken: user?.password_reset_token,
+        passwordResetExpires: user?.password_reset_expires,
+        userKeys: user ? Object.keys(user) : []
+      }
+    });
+    
     if (!user) {
       logger.warn(`Intento de verificar código para email no registrado: ${email}`, {
         action: 'verify_code_invalid_email',
@@ -114,7 +127,12 @@ export async function verifyCode(email: string, code: string): Promise<{
     if (user.password_reset_token !== code) {
       logger.warn(`Código incorrecto para ${email}`, {
         action: 'verify_code_incorrect',
-        data: { email }
+        data: { 
+          email, 
+          storedCode: user.password_reset_token, 
+          providedCode: code,
+          codesMatch: user.password_reset_token === code
+        }
       });
       return {
         isValid: false,
@@ -138,7 +156,7 @@ export async function verifyCode(email: string, code: string): Promise<{
     const resetToken = generateResetToken();
     
     // Limpiar el código de verificación y guardar el token de reset
-    await prisma.usuarios.updateByEmail(email, {
+    await prisma.usuarios.update({ id: user.id }, {
       password_reset_token: resetToken,
       password_reset_expires: getCodeExpiration().toISOString()
     });

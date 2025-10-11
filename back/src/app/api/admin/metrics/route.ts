@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { getServices } from '@/lib/database-config';
 import { verifyJWTMiddleware } from '@/lib/middleware';
 import { hasPermission, Permission } from '@/lib/permissions';
 import { AuthorizationError, handleError } from '@/lib/errors';
@@ -20,34 +20,31 @@ export async function GET(request: NextRequest) {
       throw new AuthorizationError('Admin access required');
     }
 
-    // Métricas de usuarios
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { userRepository } = await getServices();
+
+    // Métricas de usuarios usando LDAP
     const [
       totalUsers,
       adminUsers,
       moderatorUsers,
-      regularUsers,
-      recentUsers,
-      usersCreatedToday
+      regularUsers
     ] = await Promise.all([
-      prisma.usuarios.count(),
-      prisma.usuarios.count({ where: { rol: 'admin' } }),
-      prisma.usuarios.count({ where: { rol: 'moderador' } }),
-      prisma.usuarios.count({ where: { rol: 'usuario' } }),
-      prisma.usuarios.count({
-        where: {
-          created_at: {
-            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // Últimos 7 días
-          }
-        }
-      }),
-      prisma.usuarios.count({
-        where: {
-          created_at: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)).toISOString() // Hoy
-          }
-        }
-      })
+      userRepository.count(),
+      userRepository.countByRole('admin'),
+      userRepository.countByRole('moderador'),
+      userRepository.countByRole('usuario')
     ]);
+
+    // Obtener usuarios recientes (últimos 7 días) y de hoy
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const today = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+    
+    const recentUsersData = await userRepository.findByDateRange(sevenDaysAgo, new Date().toISOString());
+    const usersCreatedToday = await userRepository.findByDateRange(today, new Date().toISOString());
+    
+    const recentUsers = recentUsersData.length;
+    const usersCreatedTodayCount = usersCreatedToday.length;
 
     // Distribución por roles
     const roleDistribution = [
@@ -56,25 +53,19 @@ export async function GET(request: NextRequest) {
       { rol: 'usuario', count: regularUsers }
     ];
 
-    // Usuarios por mes (últimos 6 meses) - Simplificado para REST API
+    // Usuarios por mes (últimos 6 meses) - Simplificado para LDAP
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-    // Obtener todos los usuarios de los últimos 6 meses y agrupar por mes
-    const recentUsersData = await prisma.usuarios.findMany({
-      where: {
-        created_at: {
-          gte: sixMonthsAgo.toISOString()
-        }
-      },
-      select: {
-        created_at: true
-      }
-    });
+    
+    const usersByMonthData = await userRepository.findByDateRange(
+      sixMonthsAgo.toISOString(), 
+      new Date().toISOString()
+    );
 
     // Agrupar por mes manualmente
-    const usersByMonth = recentUsersData.reduce((acc: { [key: string]: number }, user) => {
-      const month = user.created_at.substring(0, 7); // YYYY-MM
+    const usersByMonth = usersByMonthData.reduce((acc: { [key: string]: number }, user) => {
+      const userData = user.toPlainObject();
+      const month = userData.created_at.substring(0, 7); // YYYY-MM
       acc[month] = (acc[month] || 0) + 1;
       return acc;
     }, {});
@@ -89,7 +80,7 @@ export async function GET(request: NextRequest) {
         overview: {
           totalUsers,
           recentUsers,
-          usersCreatedToday,
+          usersCreatedToday: usersCreatedTodayCount,
           growthRate: totalUsers > 0 ? ((recentUsers / totalUsers) * 100).toFixed(2) : '0'
         },
         roleDistribution,

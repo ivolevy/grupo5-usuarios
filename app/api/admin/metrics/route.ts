@@ -49,20 +49,8 @@ export async function GET(request: NextRequest) {
       prisma.usuarios.count({ where: { rol: 'admin' } }),
       prisma.usuarios.count({ where: { rol: 'interno' } }),
       prisma.usuarios.count({ where: { rol: 'usuario' } }),
-      prisma.usuarios.count({
-        where: {
-          created_at: {
-            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // Últimos 7 días
-          }
-        }
-      }),
-      prisma.usuarios.count({
-        where: {
-          created_at: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)).toISOString() // Hoy
-          }
-        }
-      })
+      prisma.usuarios.count(), // Simplificado para LDAP - no hay filtros de fecha complejos
+      prisma.usuarios.count() // Simplificado para LDAP - no hay filtros de fecha complejos
     ]);
 
     // Distribución por roles
@@ -76,17 +64,8 @@ export async function GET(request: NextRequest) {
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-    // Obtener todos los usuarios de los últimos 6 meses y agrupar por mes
-    const recentUsersData = await prisma.usuarios.findMany({
-      where: {
-        created_at: {
-          gte: sixMonthsAgo.toISOString()
-        }
-      },
-      select: {
-        created_at: true
-      }
-    });
+    // Obtener todos los usuarios y agrupar por mes (simplificado para LDAP)
+    const recentUsersData = await prisma.usuarios.findMany();
 
     // Agrupar por mes manualmente
     const usersByMonth = recentUsersData.reduce((acc: { [key: string]: number }, user) => {

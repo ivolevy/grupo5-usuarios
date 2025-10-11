@@ -1,2 +1,2 @@
-// Exportar el cliente de Supabase como prisma para compatibilidad
-export { prisma } from './supabase-client';
+// Exportar el cliente de LDAP como prisma para compatibilidad
+export { prisma } from './ldap-client';

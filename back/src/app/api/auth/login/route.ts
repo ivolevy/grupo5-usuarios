@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { verifyPassword, generateJWT } from '@/lib/auth';
 import { z } from 'zod';
 import { validateData } from '@/lib/validations';
+import { getServices } from '@/lib/database-config';
 
 // Schema para login
 const loginSchema = z.object({
@@ -32,61 +31,23 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = validation.data;
 
-    // Buscar el usuario por email (incluyendo password para verificación)
-    const user = await prisma.usuarios.findFirst({ email });
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { authService } = await getServices();
 
-    if (!user) {
-      return NextResponse.json({
-        success: false,
-        message: 'Credenciales inválidas'
-      }, { status: 401 });
-    }
-
-    // Verificar la contraseña
-    const isPasswordValid = await verifyPassword(password, user.password);
-
-    if (!isPasswordValid) {
-      return NextResponse.json({
-        success: false,
-        message: 'Credenciales inválidas'
-      }, { status: 401 });
-    }
-
-    // Actualizar último login
-    await prisma.usuarios.update(
-      { id: user.id },
-      {
-        last_login_at: new Date().toISOString()
-      }
-    );
-
-    // Generar JWT
-    const token = generateJWT({
-      userId: user.id,
-      email: user.email,
-      rol: user.rol
-    });
-
-    // Retornar datos del usuario y token (sin password)
-    const { password: _, ...userWithoutPassword } = user;
+    // Autenticar usuario
+    const authResponse = await authService.authenticate({ email, password });
 
     return NextResponse.json({
       success: true,
       message: 'Login exitoso',
-      data: {
-        user: userWithoutPassword,
-        token,
-        tokenType: 'Bearer',
-        expiresIn: '24h'
-      }
+      data: authResponse
     });
 
   } catch (error) {
     console.error('Error en login:', error);
     return NextResponse.json({
       success: false,
-      message: 'Error interno del servidor',
-      error: error instanceof Error ? error.message : 'Error desconocido'
+      message: error instanceof Error ? error.message : 'Error interno del servidor'
     }, { status: 500 });
   }
 }

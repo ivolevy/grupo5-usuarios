@@ -1,5 +1,6 @@
 // Sistema de auditoría para rastrear cambios
-import { prisma } from './db';
+// Nota: Sistema de auditoría simplificado para LDAP
+// En producción, se podría implementar un sistema de auditoría más robusto
 
 export interface AuditEntry {
   id: string;
@@ -35,7 +36,8 @@ export async function createAuditEntry(
   newValues?: any
 ) {
   try {
-    // En una implementación real, esto iría a una tabla de auditoría
+    // Sistema de auditoría simplificado para LDAP
+    // En producción, esto se podría almacenar en un sistema de logs externo
     const auditEntry = {
       id: crypto.randomUUID(),
       userId,

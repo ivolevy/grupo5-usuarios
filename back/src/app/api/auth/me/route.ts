@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
 import { verifyJWTMiddleware } from '@/lib/middleware';
+import { getServices } from '@/lib/database-config';
 
 // GET /api/auth/me - Obtener información del usuario autenticado
 export async function GET(request: NextRequest) {
@@ -24,8 +24,11 @@ export async function GET(request: NextRequest) {
       }, { status: 401 });
     }
 
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { userRepository } = await getServices();
+
     // Obtener información actualizada del usuario
-    const currentUser = await prisma.usuarios.findUnique({ id: user.userId });
+    const currentUser = await userRepository.findById(user.userId);
 
     if (!currentUser) {
       return NextResponse.json({
@@ -38,7 +41,7 @@ export async function GET(request: NextRequest) {
       success: true,
       message: 'Información del usuario obtenida exitosamente',
       data: {
-        user: currentUser,
+        user: currentUser.toPlainObject(),
         tokenInfo: {
           userId: user.userId,
           email: user.email,

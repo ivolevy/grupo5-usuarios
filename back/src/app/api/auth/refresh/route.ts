@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { generateJWT } from '@/lib/auth';
+import { getServices } from '@/lib/database-config';
 import { verifyJWTMiddleware } from '@/lib/middleware';
 
 // POST /api/auth/refresh - Refrescar token JWT
@@ -25,32 +24,27 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
-    // Verificar que el usuario siga existiendo en la base de datos
-    const currentUser = await prisma.usuarios.findUnique({ id: user.userId });
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { authService } = await getServices();
 
-    if (!currentUser) {
+    // Extraer token del header Authorization
+    const authHeader = request.headers.get('authorization');
+    const token = authService.extractTokenFromHeader(authHeader);
+
+    if (!token) {
       return NextResponse.json({
         success: false,
-        message: 'Usuario no encontrado'
-      }, { status: 404 });
+        message: 'Token no encontrado en el header'
+      }, { status: 401 });
     }
 
-    // Generar nuevo JWT con información actualizada
-    const newToken = generateJWT({
-      userId: currentUser.id,
-      email: currentUser.email,
-      rol: currentUser.rol
-    });
+    // Refrescar token usando el servicio de autenticación
+    const authResponse = await authService.refreshToken(token);
 
     return NextResponse.json({
       success: true,
       message: 'Token refrescado exitosamente',
-      data: {
-        user: currentUser,
-        token: newToken,
-        tokenType: 'Bearer',
-        expiresIn: '24h'
-      }
+      data: authResponse
     });
 
   } catch (error) {

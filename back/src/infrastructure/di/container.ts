@@ -7,10 +7,10 @@ import { UserRepository } from '../../domain/repositories/user.repository.interf
 import { UserService } from '../../domain/services/user.service.interface';
 import { AuthService } from '../../domain/services/auth.service.interface';
 
-// Implementaciones
-import { UserRepositoryImpl } from '../repositories/user.repository.impl';
+// Implementaciones LDAP
+import { LDAPUserRepositoryImpl } from '../repositories/ldap-user.repository.impl';
 import { UserServiceImpl } from '../../application/services/user.service.impl';
-import { AuthServiceImpl } from '../../application/services/auth.service.impl';
+import { LDAPAuthServiceImpl } from '../services/ldap-auth.service.impl';
 
 // Controladores
 import { UserController } from '../../presentation/controllers/user.controller';
@@ -38,15 +38,15 @@ export class DIContainer {
    * Inicializa todas las dependencias
    */
   private initializeDependencies(): void {
-    // Repositorios
-    this.dependencies.set('UserRepository', new UserRepositoryImpl());
+    // Repositorios LDAP
+    this.dependencies.set('UserRepository', new LDAPUserRepositoryImpl());
 
     // Servicios
     this.dependencies.set('UserService', new UserServiceImpl(
       this.dependencies.get('UserRepository')
     ));
 
-    this.dependencies.set('AuthService', new AuthServiceImpl(
+    this.dependencies.set('AuthService', new LDAPAuthServiceImpl(
       this.dependencies.get('UserRepository')
     ));
 

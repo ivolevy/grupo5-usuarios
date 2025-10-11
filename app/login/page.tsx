@@ -25,7 +25,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams()
 
   // Obtener la URL de redirección desde los parámetros de búsqueda
-  const redirectTo = searchParams.get('redirect') || '/dashboard'
+  const redirectTo = searchParams.get('redirect') || '/'
 
   // Limpiar errores cuando el componente se monta
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function LoginPage() {
     console.log('Resultado del login:', success)
     
     if (success) {
-      // Redirigir a la URL especificada o al dashboard por defecto
+      // Redirigir a la URL especificada o al inicio por defecto
       router.push(redirectTo)
     } else {
       // Mostrar error del contexto de autenticación o un mensaje genérico

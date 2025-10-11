@@ -56,6 +56,9 @@ export default function ProfilePage() {
       if (user) {
         console.log('Usuario actual:', user) // Debug para ver qué datos tiene
         console.log('Nacionalidad del usuario:', user.nacionalidad) // Debug específico para nacionalidad
+        console.log('Teléfono del usuario:', user.telefono) // Debug específico para teléfono
+        console.log('Campos del usuario:', Object.keys(user)) // Debug para ver todos los campos disponibles
+        console.log('¿Tiene telefono?', 'telefono' in user) // Debug para verificar si existe la propiedad
         
         // Si el usuario no tiene nombre_completo, refrescar desde el servidor
         if (!user.nombre_completo) {
@@ -125,8 +128,16 @@ export default function ProfilePage() {
 
       if (data.success) {
         toast.success("Perfil actualizado correctamente")
-        // Actualizar el perfil local
-        setProfile(prev => prev ? { ...prev, ...formData } : null)
+        // Actualizar el perfil local con los datos del servidor
+        setProfile(prev => prev ? { ...prev, ...data.data } : null)
+        // Actualizar el formData con los datos del servidor
+        setFormData(prev => ({
+          ...prev,
+          nombre_completo: data.data.nombre_completo || "",
+          email: data.data.email || "",
+          nacionalidad: data.data.nacionalidad || "",
+          telefono: data.data.telefono || "",
+        }))
         // Actualizar el contexto de autenticación
         await refreshUser()
         setIsEditing(false) // Salir del modo edición
@@ -620,15 +631,6 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-gray-500" />
-                <div>
-                  <p className="text-sm font-medium">Email verificado</p>
-                  <Badge variant={profile.email_verified ? "default" : "destructive"}>
-                    {profile.email_verified ? "Verificado" : "No verificado"}
-                  </Badge>
-                </div>
-              </div>
 
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-gray-500" />

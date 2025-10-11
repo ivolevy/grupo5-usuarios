@@ -27,7 +27,7 @@ import { NextRequest, NextResponse } from 'next/server';
  *       500:
  *         description: Internal server error
  */
-import { prisma } from '@/lib/supabase-client';
+import { prisma } from '@/lib/db';
 import { hashPassword, validatePasswordStrength } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { rateLimiter } from '@/lib/rate-limiter';
@@ -35,7 +35,7 @@ import { rateLimiter } from '@/lib/rate-limiter';
 export async function POST(request: NextRequest) {
   try {
     // Logging de la petición entrante
-    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     logger.info('Petición de reset de contraseña recibida', {
       action: 'reset_password_request',
       ip: clientIP,
@@ -109,9 +109,10 @@ export async function POST(request: NextRequest) {
     });
 
     // Buscar usuario por token de reset
-    const user = await prisma.usuarios.findFirst({ 
+    const users = await prisma.usuarios.findMany({
       where: { password_reset_token: token }
     });
+    const user = users.length > 0 ? users[0] : null;
 
     if (!user) {
       logger.warn('Token de reset inválido', {
@@ -145,9 +146,9 @@ export async function POST(request: NextRequest) {
     
     if (now > expiresAt) {
       // Limpiar token expirado
-      await prisma.usuarios.updateByEmail(user.email, {
-        password_reset_token: null,
-        password_reset_expires: null
+      await prisma.usuarios.update({ id: user.id }, {
+        password_reset_token: undefined,
+        password_reset_expires: undefined
       });
 
       logger.warn('Token de reset expirado', {
@@ -197,10 +198,10 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(password);
 
     // Actualizar contraseña y limpiar token de reset
-    await prisma.usuarios.updateByEmail(user.email, {
+    await prisma.usuarios.update({ id: user.id }, {
       password: hashedPassword,
-      password_reset_token: null,
-      password_reset_expires: null,
+      password_reset_token: undefined,
+      password_reset_expires: undefined,
       updated_at: new Date().toISOString()
     });
 
@@ -216,7 +217,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     
     logger.error('Error interno en reset de contraseña', {
       action: 'reset_password_internal_error',

@@ -1,5 +1,5 @@
 // Servicio para almacenar y validar códigos de verificación
-// Usa la base de datos para almacenar códigos temporalmente
+// Usa LDAP para almacenar códigos temporalmente
 
 export interface VerificationCode {
   id: string;
@@ -11,10 +11,10 @@ export interface VerificationCode {
 }
 
 export class CodeStorageService {
-  private prisma: any;
+  private userRepository: any;
 
-  constructor(prisma: any) {
-    this.prisma = prisma;
+  constructor(userRepository: any) {
+    this.userRepository = userRepository;
   }
 
   // Generar código de 6 dígitos
@@ -31,20 +31,18 @@ export class CodeStorageService {
       // Primero, invalidar cualquier código existente para este email
       await this.invalidateExistingCodes(email);
 
-      // Crear nuevo código en la base de datos
-      // Como no tenemos una tabla específica para códigos, usaremos la tabla usuarios
+      // Crear nuevo código en LDAP
+      // Como no tenemos una tabla específica para códigos, usaremos el usuario
       // y almacenaremos el código en un campo temporal
-      const user = await this.prisma.usuarios.findFirst({ email });
+      const user = await this.userRepository.findByEmail(email);
       
       if (user) {
+        const userData = user.toPlainObject();
         // Actualizar usuario con código temporal
-        await this.prisma.usuarios.update(
-          { id: user.id },
-          {
-            password_reset_token: code, // Usamos este campo para el código
-            password_reset_expires: expiresAt
-          }
-        );
+        await this.userRepository.update(userData.id, {
+          password_reset_token: code, // Usamos este campo para el código
+          password_reset_expires: expiresAt
+        });
       }
 
       return { code, expiresAt };
@@ -56,34 +54,32 @@ export class CodeStorageService {
   // Validar código de verificación
   async validateCode(email: string, code: string): Promise<{ valid: boolean; message: string }> {
     try {
-      const user = await this.prisma.usuarios.findFirst({ email });
+      const user = await this.userRepository.findByEmail(email);
       
       if (!user) {
         return { valid: false, message: 'Usuario no encontrado' };
       }
 
-      if (!user.password_reset_token || !user.password_reset_expires) {
+      const userData = user.toPlainObject();
+      if (!userData.password_reset_token || !userData.password_reset_expires) {
         return { valid: false, message: 'Código no encontrado o expirado' };
       }
 
       // Verificar que el código coincida
-      if (user.password_reset_token !== code) {
+      if (userData.password_reset_token !== code) {
         return { valid: false, message: 'Código incorrecto' };
       }
 
       // Verificar que no haya expirado
       const now = new Date();
-      const expiresAt = new Date(user.password_reset_expires);
+      const expiresAt = new Date(userData.password_reset_expires);
       
       if (now > expiresAt) {
         // Limpiar código expirado
-        await this.prisma.usuarios.update(
-          { id: user.id },
-          {
-            password_reset_token: null,
-            password_reset_expires: null
-          }
-        );
+        await this.userRepository.update(userData.id, {
+          password_reset_token: null,
+          password_reset_expires: null
+        });
         return { valid: false, message: 'Código expirado' };
       }
 
@@ -96,16 +92,14 @@ export class CodeStorageService {
   // Invalidar códigos existentes para un email
   async invalidateExistingCodes(email: string): Promise<void> {
     try {
-      const user = await this.prisma.usuarios.findFirst({ email });
+      const user = await this.userRepository.findByEmail(email);
       
       if (user) {
-        await this.prisma.usuarios.update(
-          { id: user.id },
-          {
-            password_reset_token: null,
-            password_reset_expires: null
-          }
-        );
+        const userData = user.toPlainObject();
+        await this.userRepository.update(userData.id, {
+          password_reset_token: null,
+          password_reset_expires: null
+        });
       }
     } catch (error) {
       // No lanzar error aquí, es solo limpieza
@@ -118,31 +112,11 @@ export class CodeStorageService {
     try {
       const now = new Date().toISOString();
       
-      // Buscar usuarios con códigos expirados
-      const users = await this.prisma.usuarios.findMany({
-        where: {
-          password_reset_expires: {
-            lt: now
-          },
-          password_reset_token: {
-            not: null
-          }
-        }
-      });
-
-      let cleaned = 0;
-      for (const user of users) {
-        await this.prisma.usuarios.update(
-          { id: user.id },
-          {
-            password_reset_token: null,
-            password_reset_expires: null
-          }
-        );
-        cleaned++;
-      }
-
-      return cleaned;
+      // Buscar usuarios con códigos expirados usando LDAP
+      // Nota: Esta funcionalidad sería compleja de implementar en LDAP
+      // Por ahora, retornamos 0 y manejamos la limpieza en el momento de validación
+      console.log('Cleanup de códigos expirados no implementado para LDAP');
+      return 0;
     } catch (error) {
       console.error('Error limpiando códigos expirados:', error);
       return 0;
@@ -155,17 +129,15 @@ export class CodeStorageService {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 minutos
 
     try {
-      const user = await this.prisma.usuarios.findFirst({ email });
+      const user = await this.userRepository.findByEmail(email);
       
       if (user) {
+        const userData = user.toPlainObject();
         // Actualizar con token de reset (reemplazando el código)
-        await this.prisma.usuarios.update(
-          { id: user.id },
-          {
-            password_reset_token: token,
-            password_reset_expires: expiresAt
-          }
-        );
+        await this.userRepository.update(userData.id, {
+          password_reset_token: token,
+          password_reset_expires: expiresAt
+        });
       }
 
       return { token, expiresAt };
@@ -185,5 +157,14 @@ export class CodeStorageService {
   }
 }
 
-// Instancia singleton
-export const codeStorageService = new CodeStorageService(require('./db').prisma);
+// Instancia singleton - será inicializada con el userRepository de LDAP
+// Esto se manejará dinámicamente en los endpoints que lo necesiten
+export let codeStorageService: CodeStorageService;
+
+// Función para inicializar el servicio con el repositorio correcto
+export const initializeCodeStorageService = async () => {
+  const { getServices } = await import('./database-config');
+  const { userRepository } = await getServices();
+  codeStorageService = new CodeStorageService(userRepository);
+  return codeStorageService;
+};

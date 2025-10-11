@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { getServices } from '@/lib/database-config';
 import { updateUsuarioSchema, usuarioParamsSchema, validateData } from '@/lib/validations';
 import { hashPassword, validatePasswordStrength } from '@/lib/auth';
 
@@ -22,7 +22,10 @@ export async function GET(
 
     const { id } = paramValidation.data;
 
-    const usuario = await prisma.usuarios.findUnique({ id });
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { userRepository } = await getServices();
+
+    const usuario = await userRepository.findById(id);
 
     if (!usuario) {
       return NextResponse.json({
@@ -31,7 +34,8 @@ export async function GET(
       }, { status: 404 });
     }
 
-    const { password: _pwd, ...usuarioSinPassword } = usuario as any;
+    const usuarioData = usuario.toPlainObject();
+    const { password: _pwd, ...usuarioSinPassword } = usuarioData as any;
 
     return NextResponse.json({
       success: true,
@@ -79,7 +83,10 @@ export async function PUT(
       }, { status: 400 });
     }
 
-    const { email, password, rol } = validation.data;
+    const { email, password, rol, nombre_completo, telefono, nacionalidad } = validation.data;
+
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { userRepository } = await getServices();
 
     // Si se proporciona una nueva contraseña, validar su fortaleza
     if (password) {
@@ -99,7 +106,7 @@ export async function PUT(
     }
 
     // Verificar si el usuario existe
-    const existingUser = await prisma.usuarios.findUnique({ id });
+    const existingUser = await userRepository.findById(id);
 
     if (!existingUser) {
       return NextResponse.json({
@@ -109,8 +116,9 @@ export async function PUT(
     }
 
     // Si se proporciona un nuevo email, verificar que no esté en uso
-    if (email && email !== existingUser.email) {
-      const emailInUse = await prisma.usuarios.findFirst({ email });
+    const existingUserData = existingUser.toPlainObject();
+    if (email && email !== existingUserData.email) {
+      const emailInUse = await userRepository.findByEmail(email);
 
       if (emailInUse) {
         return NextResponse.json({
@@ -125,14 +133,22 @@ export async function PUT(
     if (email) updateData.email = email;
     if (password) updateData.password = await hashPassword(password);
     if (rol) updateData.rol = rol;
+    if (nombre_completo) updateData.nombre_completo = nombre_completo;
+    if (telefono && telefono.trim() !== '') updateData.telefono = telefono;
+    if (nacionalidad) updateData.nacionalidad = nacionalidad;
 
     // Actualizar el usuario
-    const updatedUser = await prisma.usuarios.update(
-      { id },
-      updateData
-    );
+    const updatedUser = await userRepository.update(id, updateData);
 
-    const { password: _pwd2, ...usuarioActualizadoSinPassword } = updatedUser as any;
+    if (!updatedUser) {
+      return NextResponse.json({
+        success: false,
+        message: 'Error al actualizar usuario'
+      }, { status: 500 });
+    }
+
+    const updatedUserData = updatedUser.toPlainObject();
+    const { password: _pwd2, ...usuarioActualizadoSinPassword } = updatedUserData as any;
 
     return NextResponse.json({
       success: true,
@@ -169,8 +185,11 @@ export async function DELETE(
 
     const { id } = paramValidation.data;
 
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { userRepository } = await getServices();
+
     // Verificar si el usuario existe
-    const existingUser = await prisma.usuarios.findUnique({ id });
+    const existingUser = await userRepository.findById(id);
 
     if (!existingUser) {
       return NextResponse.json({
@@ -180,7 +199,14 @@ export async function DELETE(
     }
 
     // Eliminar el usuario
-    await prisma.usuarios.delete({ id });
+    const deleted = await userRepository.delete(id);
+
+    if (!deleted) {
+      return NextResponse.json({
+        success: false,
+        message: 'Error al eliminar usuario'
+      }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,

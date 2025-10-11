@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { getServices } from '@/lib/database-config';
 import { verifyJWTMiddleware } from '@/lib/middleware';
 import { z } from 'zod';
 import { validateData } from '@/lib/validations';
@@ -22,6 +22,19 @@ const updateProfileSchema = z.object({
     .string()
     .min(8, 'La nueva contraseña debe tener al menos 8 caracteres')
     .max(128, 'La nueva contraseña es demasiado larga')
+    .optional(),
+  nombre_completo: z
+    .string()
+    .min(1, 'El nombre completo es requerido')
+    .max(255, 'El nombre completo es demasiado largo')
+    .optional(),
+  telefono: z
+    .string()
+    .max(20, 'El teléfono es demasiado largo')
+    .optional(),
+  nacionalidad: z
+    .string()
+    .max(100, 'La nacionalidad es demasiado larga')
     .optional(),
 }).refine((data) => {
   // Si se proporciona nueva contraseña, la actual es requerida
@@ -48,8 +61,11 @@ export async function GET(request: NextRequest) {
 
     const { user } = authResult;
 
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { userRepository } = await getServices();
+
     // Obtener información del perfil
-    const profile = await prisma.usuarios.findUnique({ id: user.userId });
+    const profile = await userRepository.findById(user.userId);
 
     if (!profile) {
       return NextResponse.json({
@@ -58,7 +74,8 @@ export async function GET(request: NextRequest) {
       }, { status: 404 });
     }
 
-    const { password: _pwd, ...profileSinPassword } = profile as any;
+    const profileData = profile.toPlainObject();
+    const { password: _pwd, ...profileSinPassword } = profileData as any;
 
     return NextResponse.json({
       success: true,
@@ -108,10 +125,22 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { email, currentPassword, newPassword } = validation.data;
+    const { email, currentPassword, newPassword, nombre_completo, telefono, nacionalidad } = validation.data;
+    
+    // Debug: Log de los datos recibidos
+    console.log('🔍 [PROFILE UPDATE] Datos recibidos:', {
+      nombre_completo,
+      telefono,
+      nacionalidad,
+      telefonoType: typeof telefono,
+      telefonoLength: telefono?.length
+    });
+
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { userRepository } = await getServices();
 
     // Obtener usuario actual
-    const currentUser = await prisma.usuarios.findUnique({ id: user.userId });
+    const currentUser = await userRepository.findById(user.userId);
 
     if (!currentUser) {
       return NextResponse.json({
@@ -124,9 +153,10 @@ export async function PUT(request: NextRequest) {
     let emailChanged = false;
 
     // Cambio de email
-    if (email && email !== currentUser.email) {
+    const currentUserData = currentUser.toPlainObject();
+    if (email && email !== currentUserData.email) {
       // Verificar que el nuevo email no esté en uso
-      const emailInUse = await prisma.usuarios.findFirst({ email });
+      const emailInUse = await userRepository.findByEmail(email);
 
       if (emailInUse) {
         return NextResponse.json({
@@ -137,7 +167,6 @@ export async function PUT(request: NextRequest) {
 
       updateData.email = email;
       updateData.email_verified = false; // Requerir nueva verificación
-      updateData.email_verification_token = null; // Limpiar token anterior
       emailChanged = true;
     }
 
@@ -145,12 +174,12 @@ export async function PUT(request: NextRequest) {
     if (newPassword && currentPassword) {
       // Verificar contraseña actual
       const { verifyPassword } = await import('@/lib/auth');
-      const isCurrentPasswordValid = await verifyPassword(currentPassword, currentUser.password);
+      const isCurrentPasswordValid = await verifyPassword(currentPassword, (currentUserData as any).password);
 
       if (!isCurrentPasswordValid) {
         logger.security('Invalid current password provided for profile update', clientIp, {
           userId: user.userId,
-          email: currentUser.email
+          email: currentUserData.email
         });
 
         return NextResponse.json({
@@ -178,6 +207,14 @@ export async function PUT(request: NextRequest) {
       updateData.password = await hashPassword(newPassword);
     }
 
+    // Actualizar campos de perfil
+    if (nombre_completo) updateData.nombre_completo = nombre_completo;
+    if (telefono && telefono.trim() !== '') updateData.telefono = telefono;
+    if (nacionalidad) updateData.nacionalidad = nacionalidad;
+    
+    // Debug: Log de los datos a actualizar
+    console.log('🔄 [PROFILE UPDATE] Datos a actualizar:', updateData);
+
     // Si no hay cambios, devolver error
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({
@@ -187,10 +224,14 @@ export async function PUT(request: NextRequest) {
     }
 
     // Actualizar usuario
-    const updatedUser = await prisma.usuarios.update(
-      { id: user.userId },
-      updateData
-    );
+    const updatedUser = await userRepository.update(user.userId, updateData);
+
+    if (!updatedUser) {
+      return NextResponse.json({
+        success: false,
+        message: 'Error al actualizar el perfil'
+      }, { status: 500 });
+    }
 
     logger.userAction('profile_updated', user.userId, clientIp, {
       changes: Object.keys(updateData),
@@ -198,7 +239,8 @@ export async function PUT(request: NextRequest) {
       passwordChanged: !!newPassword
     });
 
-    const { password: _pwd2, ...usuarioActualizadoSinPassword } = updatedUser as any;
+    const updatedUserData = updatedUser.toPlainObject();
+    const { password: _pwd2, ...usuarioActualizadoSinPassword } = updatedUserData as any;
 
     return NextResponse.json({
       success: true,

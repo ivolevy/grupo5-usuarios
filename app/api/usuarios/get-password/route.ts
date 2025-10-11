@@ -26,8 +26,8 @@ import { NextRequest, NextResponse } from 'next/server'
  *       500:
  *         description: Internal server error
  */
-import { supabaseRequest } from '@/lib/supabase'
-import bcrypt from 'bcryptjs'
+import { prisma } from '@/lib/db'
+import { verifyPassword } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,24 +41,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener la contraseña actual del usuario
-    const encodedEmail = encodeURIComponent(email)
-    const url = `usuarios?email=eq.${encodedEmail}&select=password`
-    
-    const response = await supabaseRequest(url)
-    const users = await response.json()
+    const user = await prisma.usuarios.findFirst({ email })
 
-    if (users.length === 0) {
+    if (!user) {
       return NextResponse.json({
         success: false,
         message: 'Usuario no encontrado'
       })
     }
 
-    const user = users[0]
-
     // Si se proporciona una nueva contraseña, compararla con la actual
     if (newPassword) {
-      const isSamePassword = await bcrypt.compare(newPassword, user.password)
+      const isSamePassword = await verifyPassword(newPassword, user.password)
       
       return NextResponse.json({
         success: true,

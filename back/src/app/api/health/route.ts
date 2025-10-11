@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { getServices } from '@/lib/database-config';
 
 interface HealthCheck {
   service: string;
@@ -14,21 +14,20 @@ export async function GET() {
 
 
   // Obtener información de la base de datos
-  const databaseUrl = process.env.DATABASE_URL;
-  const dbInfo = databaseUrl ? {
-    host: databaseUrl.includes('supabase') ? 'Supabase' : 'Local/Other',
-    provider: 'PostgreSQL',
-    url: databaseUrl.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') // Ocultar credenciales
-  } : {
-    host: 'Not configured',
-    provider: 'Unknown',
-    url: 'DATABASE_URL not found'
+  const databaseType = 'ldap'; // Solo LDAP disponible
+  const dbInfo = {
+    type: databaseType,
+    provider: databaseType === 'ldap' ? 'LDAP' : 'PostgreSQL',
+    url: databaseType === 'ldap' 
+      ? process.env.LDAP_URL?.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') || 'Not configured'
+      : 'LDAP Server'
   };
 
   // Check 1: Database connection
   try {
     const dbStart = Date.now();
-    await prisma.usuarios.count();
+    const { userRepository } = await getServices();
+    await userRepository.count();
     checks.push({
       service: 'database',
       status: 'healthy',
@@ -36,7 +35,7 @@ export async function GET() {
       details: { 
         ...dbInfo,
         connection: 'successful',
-        method: 'Supabase REST API'
+        method: 'LDAP Server'
       }
     });
   } catch (error) {
@@ -55,14 +54,15 @@ export async function GET() {
   // Check 2: Users table
   try {
     const tableStart = Date.now();
-    const count = await prisma.usuarios.count();
+    const { userRepository } = await getServices();
+    const count = await userRepository.count();
     checks.push({
       service: 'users_table',
       status: 'healthy',
       responseTime: Date.now() - tableStart,
       details: { 
         userCount: count,
-        method: 'Supabase REST API'
+        method: 'LDAP Server'
       }
     });
   } catch (error) {

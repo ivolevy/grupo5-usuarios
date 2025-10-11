@@ -70,6 +70,10 @@ const updateProfileSchema = z.object({
     .string()
     .max(100, 'La nacionalidad es demasiado larga')
     .optional(),
+  telefono: z
+    .string()
+    .max(20, 'El teléfono es demasiado largo')
+    .optional(),
   currentPassword: z
     .string()
     .min(1, 'La contraseña actual es requerida para cambios de seguridad')
@@ -164,6 +168,15 @@ export async function PUT(request: NextRequest) {
 
     const { email, nombre_completo, nacionalidad, telefono, currentPassword, newPassword } = validation.data;
 
+    // Debug: Log de los datos recibidos
+    console.log('🔍 [PROFILE UPDATE] Datos recibidos:', {
+      nombre_completo,
+      telefono,
+      nacionalidad,
+      telefonoType: typeof telefono,
+      telefonoLength: telefono?.length
+    });
+
     // Obtener usuario actual
     const currentUser = await prisma.usuarios.findUnique({ id: user.userId });
 
@@ -180,7 +193,13 @@ export async function PUT(request: NextRequest) {
     // Actualizar campos básicos
     if (nombre_completo !== undefined) updateData.nombre_completo = nombre_completo;
     if (nacionalidad !== undefined) updateData.nacionalidad = nacionalidad;
-    if (telefono !== undefined) updateData.telefono = telefono;
+    if (telefono && telefono.trim() !== '') updateData.telefono = telefono;
+    
+    // Debug: Log de los datos a actualizar
+    console.log('🔄 [PROFILE UPDATE] Datos a actualizar:', {
+      ...updateData,
+      password: updateData.password ? '[HASHED]' : 'undefined'
+    });
 
     // Cambio de email
     if (email && email !== currentUser.email) {

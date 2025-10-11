@@ -24,7 +24,7 @@ import { NextRequest, NextResponse } from 'next/server'
  *       500:
  *         description: Internal server error
  */
-import { supabaseRequest } from '@/lib/supabase'
+import { prisma } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,14 +37,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar si el email existe en la base de datos usando Supabase directamente
-    const encodedEmail = encodeURIComponent(email)
-    const url = `usuarios?email=eq.${encodedEmail}&select=*`
-    
-    const response = await supabaseRequest(url)
-    const users = await response.json()
-
-    const user = users.length > 0 ? users[0] : null
+    // Verificar si el email existe en la base de datos usando LDAP
+    const user = await prisma.usuarios.findFirst({ email })
 
     return NextResponse.json({
       success: true,

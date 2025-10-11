@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { getServices } from '@/lib/database-config';
 import { emailServiceResend } from '@/lib/email-service-resend';
-import { codeStorageService } from '@/lib/code-storage';
+import { initializeCodeStorageService } from '@/lib/code-storage';
 import { validateData, forgotPasswordSchema } from '@/lib/validations';
 import { logger } from '@/lib/logger';
 import { getClientIp } from '@/lib/rate-limiter';
@@ -24,14 +24,18 @@ export async function POST(request: NextRequest) {
 
     const { email } = validation.data;
 
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { userRepository } = await getServices();
+
     // Buscar el usuario por email
-    const user = await prisma.usuarios.findFirst({ email });
+    const user = await userRepository.findByEmail(email);
 
     // Siempre devolver éxito para no revelar si el email existe
     // Pero solo procesar si el usuario existe
     if (user) {
       try {
-        // Generar y almacenar código de verificación
+        // Inicializar y usar el servicio de códigos
+        const codeStorageService = await initializeCodeStorageService();
         const { code, expiresAt } = await codeStorageService.createCode(email);
 
         console.log(`🔐 [PASSWORD RESET] Generando código para ${email}: ${code}`);
@@ -42,7 +46,8 @@ export async function POST(request: NextRequest) {
         
         console.log(`✅ [PASSWORD RESET] Email de recupero enviado exitosamente a ${email}`);
         
-        logger.userAction('password_reset_requested', user.id, clientIp, {
+        const userData = user.toPlainObject();
+        logger.userAction('password_reset_requested', userData.id, clientIp, {
           email,
           code: '***', // No logear el código real por seguridad
           expiresAt
@@ -50,10 +55,11 @@ export async function POST(request: NextRequest) {
       } catch (emailError) {
         console.error(`❌ [PASSWORD RESET] Error enviando email a ${email}:`, emailError);
         
+        const userData = user.toPlainObject();
         logger.error('Error sending password reset email', {
           action: 'email_send_error',
           ip: clientIp,
-          userId: user.id,
+          userId: userData.id,
           data: {
             email,
             error: emailError instanceof Error ? emailError.message : 'Unknown error'

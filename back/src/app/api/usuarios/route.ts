@@ -1,20 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
 import { createUsuarioSchema, validateData } from '@/lib/validations';
 import { hashPassword, validatePasswordStrength } from '@/lib/auth';
+import { getServices } from '@/lib/database-config';
 
 // GET /api/usuarios - Obtener todos los usuarios
 export async function GET() {
   try {
-    const usuarios = await prisma.usuarios.findMany({
-      where: {},
-      orderBy: {
-        created_at: 'desc'
-      }
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { userRepository } = await getServices();
+
+    // Obtener todos los usuarios
+    const result = await userRepository.findAll({
+      page: 1,
+      limit: 1000 // Obtener todos los usuarios
     });
 
-    const usuariosSanitizados = usuarios.map((u: any) => {
-      const { password: _pwd, ...rest } = u || {};
+    const usuariosSanitizados = result.users.map(user => {
+      const userData = user.toPlainObject();
+      // Remover password si existe
+      const { password, ...rest } = userData as any;
       return rest;
     });
 
@@ -66,8 +70,11 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Obtener servicios (LDAP o Supabase según configuración)
+    const { userRepository } = await getServices();
+
     // Verificar si el usuario ya existe
-    const existingUser = await prisma.usuarios.findFirst({ email });
+    const existingUser = await userRepository.findByEmail(email);
 
     if (existingUser) {
       return NextResponse.json({
@@ -80,7 +87,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(password);
 
     // Crear el usuario
-    const newUser = await prisma.usuarios.create({
+    const newUser = await userRepository.create({
       email,
       password: hashedPassword,
       rol: rol || 'usuario',
@@ -88,7 +95,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Remover password de la respuesta
-    const { password: _, ...userWithoutPassword } = newUser;
+    const userData = newUser.toPlainObject();
+    const { password: _, ...userWithoutPassword } = userData as any;
 
     return NextResponse.json({
       success: true,
