@@ -1,728 +1,728 @@
 {
-  "openapi": "3.0.3",
-  "info": {
-    "title": "Grupo5 Usuarios API",
-    "version": "1.0.0",
-    "description": "OpenAPI specification for the Grupo5 Usuarios service."
-  },
-  "servers": [
-    {
-      "url": "http://localhost:3000"
-    }
-  ],
-  "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
-      }
-    }
-  },
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ],
-  "tags": [
-    {
-      "name": "auth",
-      "description": "Authentication endpoints"
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Grupo5 Usuarios API",
+        "version": "1.0.0",
+        "description": "OpenAPI specification for the Grupo5 Usuarios service."
     },
-    {
-      "name": "usuarios",
-      "description": "Users management endpoints"
+    "servers": [
+        {
+            "url": "http://localhost:3000"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
     },
-    {
-      "name": "admin",
-      "description": "Admin/metrics endpoints"
-    },
-    {
-      "name": "health",
-      "description": "Health checks"
-    },
-    {
-      "name": "config",
-      "description": "Configuration"
-    }
-  ],
-  "paths": {
-    "/api/admin/metrics": {
-      "get": {
-        "tags": [
-          "admin"
-        ],
-        "summary": "Get admin metrics",
-        "security": [
-          {
+    "security": [
+        {
             "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Metrics data"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
         }
-      }
-    },
-    "/api/auth/forgot": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Request password recovery code",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "email"
+    ],
+    "tags": [
+        {
+            "name": "auth",
+            "description": "Authentication endpoints"
+        },
+        {
+            "name": "usuarios",
+            "description": "Users management endpoints"
+        },
+        {
+            "name": "admin",
+            "description": "Admin/metrics endpoints"
+        },
+        {
+            "name": "health",
+            "description": "Health checks"
+        },
+        {
+            "name": "config",
+            "description": "Configuration"
+        }
+    ],
+    "paths": {
+        "/api/admin/metrics": {
+            "get": {
+                "tags": [
+                    "admin"
                 ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Verification code sent"
-          },
-          "400": {
-            "description": "Invalid request"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/api/auth/login": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "User login with email and password",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "email",
-                  "password"
+                "summary": "Get admin metrics",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
                 ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string"
-                  }
+                "responses": {
+                    "200": {
+                        "description": "Metrics data"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
                 }
-              }
             }
-          }
         },
-        "responses": {
-          "200": {
-            "description": "Login successful"
-          },
-          "400": {
-            "description": "Validation error"
-          },
-          "401": {
-            "description": "Invalid credentials"
-          }
-        }
-      }
-    },
-    "/api/auth/me": {
-      "get": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Get authenticated user info",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User info"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "User not found"
-          }
-        }
-      }
-    },
-    "/api/auth/refresh": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Refresh JWT token",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Token refreshed"
-          },
-          "401": {
-            "description": "Invalid token"
-          },
-          "404": {
-            "description": "User not found"
-          }
-        }
-      }
-    },
-    "/api/auth/reset": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Reset password using token",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "token",
-                  "password"
+        "/api/auth/forgot": {
+            "post": {
+                "tags": [
+                    "auth"
                 ],
-                "properties": {
-                  "token": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  }
+                "summary": "Request password recovery code",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Recovery code sent (if email exists)"
+                    },
+                    "400": {
+                        "description": "Invalid email format"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
                 }
-              }
             }
-          }
         },
-        "responses": {
-          "200": {
-            "description": "Password updated successfully"
-          },
-          "400": {
-            "description": "Invalid token or weak password"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/api/auth/verify-code": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Verify email code and issue reset token",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "email",
-                  "code"
+        "/api/auth/login": {
+            "post": {
+                "tags": [
+                    "auth"
                 ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "code": {
-                    "type": "string",
-                    "pattern": "^\\d{6}$"
-                  }
+                "summary": "User login with email and password",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
                 }
-              }
             }
-          }
         },
-        "responses": {
-          "200": {
-            "description": "Code verified"
-          },
-          "400": {
-            "description": "Invalid email or code"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/api/config": {
-      "get": {
-        "tags": [
-          "config"
-        ],
-        "summary": "Get public configuration",
-        "responses": {
-          "200": {
-            "description": "Configuration payload"
-          }
-        }
-      }
-    },
-    "/api/health": {
-      "get": {
-        "tags": [
-          "health"
-        ],
-        "summary": "Health check",
-        "description": "Returns overall service health and checks for dependencies.",
-        "responses": {
-          "200": {
-            "description": "Service healthy"
-          },
-          "207": {
-            "description": "Service degraded"
-          },
-          "503": {
-            "description": "Service unhealthy"
-          }
-        }
-      }
-    },
-    "/api/test": {
-      "get": {
-        "tags": [
-          "test"
-        ],
-        "summary": "Test DB connectivity and Supabase API",
-        "responses": {
-          "200": {
-            "description": "All tests passed"
-          },
-          "500": {
-            "description": "Some tests failed"
-          }
-        }
-      }
-    },
-    "/api/usuarios/{id}": {
-      "get": {
-        "tags": [
-          "usuarios"
-        ],
-        "summary": "Get user by ID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User found"
-          },
-          "400": {
-            "description": "Invalid ID"
-          },
-          "404": {
-            "description": "User not found"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "usuarios"
-        ],
-        "summary": "Update user by ID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "nombre_completo": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  },
-                  "rol": {
-                    "type": "string"
-                  },
-                  "nacionalidad": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "User updated"
-          },
-          "400": {
-            "description": "Validation error or invalid ID"
-          },
-          "404": {
-            "description": "User not found"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "usuarios"
-        ],
-        "summary": "Delete user by ID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User deleted"
-          },
-          "400": {
-            "description": "Invalid ID"
-          },
-          "404": {
-            "description": "User not found"
-          }
-        }
-      }
-    },
-    "/api/usuarios/change-password": {
-      "post": {
-        "tags": [
-          "usuarios"
-        ],
-        "summary": "Change user password by email",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "email",
-                  "newPassword"
+        "/api/auth/me": {
+            "get": {
+                "tags": [
+                    "auth"
                 ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "newPassword": {
-                    "type": "string",
-                    "minLength": 8
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Password updated"
-          },
-          "400": {
-            "description": "Validation error"
-          },
-          "404": {
-            "description": "User not found"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/api/usuarios/check-email": {
-      "post": {
-        "tags": [
-          "usuarios"
-        ],
-        "summary": "Check if user email exists",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "email"
+                "summary": "Get authenticated user info",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
                 ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  }
+                "responses": {
+                    "200": {
+                        "description": "User info"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
                 }
-              }
             }
-          }
         },
-        "responses": {
-          "200": {
-            "description": "Email existence status"
-          },
-          "400": {
-            "description": "Validation error"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/api/usuarios/get-password": {
-      "post": {
-        "tags": [
-          "usuarios"
-        ],
-        "summary": "Check if newPassword equals current password or exists",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "email"
+        "/api/auth/refresh": {
+            "post": {
+                "tags": [
+                    "auth"
                 ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "newPassword": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Password comparison or presence"
-          },
-          "400": {
-            "description": "Validation error"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/api/usuarios/profile": {
-      "get": {
-        "tags": [
-          "usuarios"
-        ],
-        "summary": "Get current user profile",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Profile data"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "User not found"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "usuarios"
-        ],
-        "summary": "Update current user profile",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string"
-                  },
-                  "nombre_completo": {
-                    "type": "string"
-                  },
-                  "nacionalidad": {
-                    "type": "string"
-                  },
-                  "currentPassword": {
-                    "type": "string"
-                  },
-                  "newPassword": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Profile updated"
-          },
-          "400": {
-            "description": "Validation error"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "User not found"
-          }
-        }
-      }
-    },
-    "/api/usuarios": {
-      "get": {
-        "tags": [
-          "usuarios"
-        ],
-        "summary": "List users",
-        "responses": {
-          "200": {
-            "description": "Users list"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "usuarios"
-        ],
-        "summary": "Create user",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "nombre_completo",
-                  "email",
-                  "password",
-                  "nacionalidad"
+                "summary": "Refresh JWT token",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
                 ],
-                "properties": {
-                  "nombre_completo": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string"
-                  },
-                  "rol": {
-                    "type": "string",
-                    "enum": [
-                      "admin",
-                      "interno",
-                      "usuario"
-                    ]
-                  },
-                  "nacionalidad": {
-                    "type": "string"
-                  },
-                  "telefono": {
-                    "type": "string"
-                  }
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed"
+                    },
+                    "401": {
+                        "description": "Invalid token"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
                 }
-              }
             }
-          }
         },
-        "responses": {
-          "201": {
-            "description": "User created"
-          },
-          "400": {
-            "description": "Validation error"
-          },
-          "409": {
-            "description": "Email already in use"
-          }
+        "/api/auth/reset": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Reset password using token",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "token",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password updated successfully"
+                    },
+                    "400": {
+                        "description": "Invalid token or weak password"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/api/auth/verify-code": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Verify email code and issue reset token",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "email",
+                                    "code"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "pattern": "^\\d{6}$"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Code verified"
+                    },
+                    "400": {
+                        "description": "Invalid email or code"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/api/config": {
+            "get": {
+                "tags": [
+                    "config"
+                ],
+                "summary": "Get public configuration",
+                "responses": {
+                    "200": {
+                        "description": "Configuration payload"
+                    }
+                }
+            }
+        },
+        "/api/health": {
+            "get": {
+                "tags": [
+                    "health"
+                ],
+                "summary": "Health check",
+                "description": "Returns overall service health and checks for dependencies.",
+                "responses": {
+                    "200": {
+                        "description": "Service healthy"
+                    },
+                    "207": {
+                        "description": "Service degraded"
+                    },
+                    "503": {
+                        "description": "Service unhealthy"
+                    }
+                }
+            }
+        },
+        "/api/test": {
+            "get": {
+                "tags": [
+                    "test"
+                ],
+                "summary": "Test DB connectivity and Supabase API",
+                "responses": {
+                    "200": {
+                        "description": "All tests passed"
+                    },
+                    "500": {
+                        "description": "Some tests failed"
+                    }
+                }
+            }
+        },
+        "/api/usuarios/{id}": {
+            "get": {
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Get user by ID",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User found"
+                    },
+                    "400": {
+                        "description": "Invalid ID"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Update user by ID",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nombre_completo": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "rol": {
+                                        "type": "string"
+                                    },
+                                    "nacionalidad": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated"
+                    },
+                    "400": {
+                        "description": "Validation error or invalid ID"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Delete user by ID",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted"
+                    },
+                    "400": {
+                        "description": "Invalid ID"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                }
+            }
+        },
+        "/api/usuarios/change-password": {
+            "post": {
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Change user password by email",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "email",
+                                    "newPassword"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "newPassword": {
+                                        "type": "string",
+                                        "minLength": 8
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password updated"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/api/usuarios/check-email": {
+            "post": {
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Check if user email exists",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Email existence status"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/api/usuarios/get-password": {
+            "post": {
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Check if newPassword equals current password or exists",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "newPassword": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password comparison or presence"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/api/usuarios/profile": {
+            "get": {
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Get current user profile",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Profile data"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Update current user profile",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "nombre_completo": {
+                                        "type": "string"
+                                    },
+                                    "nacionalidad": {
+                                        "type": "string"
+                                    },
+                                    "currentPassword": {
+                                        "type": "string"
+                                    },
+                                    "newPassword": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                }
+            }
+        },
+        "/api/usuarios": {
+            "get": {
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "List users",
+                "responses": {
+                    "200": {
+                        "description": "Users list"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Create user",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "nombre_completo",
+                                    "email",
+                                    "password",
+                                    "nacionalidad"
+                                ],
+                                "properties": {
+                                    "nombre_completo": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "rol": {
+                                        "type": "string",
+                                        "enum": [
+                                            "admin",
+                                            "interno",
+                                            "usuario"
+                                        ]
+                                    },
+                                    "nacionalidad": {
+                                        "type": "string"
+                                    },
+                                    "telefono": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "409": {
+                        "description": "Email already in use"
+                    }
+                }
+            }
         }
-      }
     }
-  }
 }

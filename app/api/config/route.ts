@@ -39,7 +39,7 @@ export async function GET() {
       },
       features: {
         userRegistration: true,
-        passwordReset: false, // Aún no implementado
+        passwordReset: true, // Implementado con Nodemailer
         emailVerification: false, // Aún no implementado
         fileUpload: false, // Aún no implementado
         twoFactorAuth: false // Aún no implementado
@@ -48,7 +48,10 @@ export async function GET() {
         auth: {
           login: '/api/auth/login',
           refresh: '/api/auth/refresh',
-          me: '/api/auth/me'
+          me: '/api/auth/me',
+          forgot: '/api/auth/forgot',
+          verifyCode: '/api/auth/verify-code',
+          reset: '/api/auth/reset'
         },
         users: {
           list: '/api/usuarios',
