@@ -44,6 +44,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { createUsuarioSchema, validateData } from '@/lib/validations';
 import { hashPassword } from '@/lib/auth';
+import { sendUserCreatedEvent } from '@/lib/kafka-producer';
+import { logger } from '@/lib/logger';
 
 // GET /api/usuarios - Obtener todos los usuarios
 export async function GET() {
@@ -116,6 +118,25 @@ export async function POST(request: NextRequest) {
       nacionalidad,
       telefono
     });
+
+    // Enviar evento a Kafka (no bloquear la respuesta si falla)
+    try {
+      await sendUserCreatedEvent({
+        id: newUser.id,
+        nacionalidad: newUser.nacionalidad || 'No especificada',
+        rol: newUser.rol,
+        created_at: newUser.created_at,
+      });
+
+      logger.info('Evento de usuario creado enviado a Kafka', {
+        action: 'user_created_kafka_success',
+      });
+    } catch (kafkaError) {
+      // Log el error pero no fallar la creación del usuario
+      logger.error('Error enviando evento a Kafka (no crítico)', {
+        action: 'user_created_kafka_error',
+      });
+    }
 
     // Remover password de la respuesta
     const { password: _, ...userWithoutPassword } = newUser;
