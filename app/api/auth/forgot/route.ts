@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     const { email } = validation.data;
 
     // Buscar el usuario por email
-    const user = await prisma.usuarios.findFirst({ email });
+    const user = await prisma.usuarios.findFirst({ email: email });
 
     // Siempre devolver éxito para no revelar si el email existe
     if (user) {

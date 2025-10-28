@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = validation.data;
 
     // Buscar el usuario por email (incluyendo password para verificación)
-    const user = await prisma.usuarios.findFirst({ email });
+    const user = await prisma.usuarios.findFirst({ email: email });
 
     if (!user) {
       return NextResponse.json({
@@ -79,13 +79,19 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
-    // Actualizar último login
-    await prisma.usuarios.update(
-      { id: user.id },
-      {
-        last_login_at: new Date().toISOString()
-      }
-    );
+    // Actualizar último login (comentado temporalmente por problemas con findUnique)
+    // try {
+    //   await prisma.usuarios.update(
+    //     { id: user.id },
+    //     {
+    //       last_login_at: new Date().toISOString(),
+    //       updated_at: new Date().toISOString()
+    //     }
+    //   );
+    // } catch (updateError) {
+    //   console.warn('No se pudo actualizar last_login_at:', updateError);
+    //   // No fallar el login por esto
+    // }
 
     // Generar JWT
     const token = generateJWT({

@@ -23,10 +23,25 @@ class LDAPClient {
   private async connect(): Promise<void> {
     if (!this.client.isConnected) {
       try {
+        console.log('🔗 Conectando a LDAP:', {
+          url: ldapConfig.url,
+          bindDN: ldapConfig.bindDN
+        });
         await this.client.bind(ldapConfig.bindDN, ldapConfig.bindPassword);
+        console.log('✅ Conexión LDAP exitosa');
       } catch (error) {
-        console.error('❌ Error conectando a LDAP:', error instanceof Error ? error.message : String(error));
-        throw new Error(`Error de conexión LDAP: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorDetails = error instanceof Error ? error.stack : JSON.stringify(error);
+        console.error('❌ Error conectando a LDAP:', {
+          message: errorMessage,
+          details: errorDetails,
+          config: {
+            url: ldapConfig.url,
+            bindDN: ldapConfig.bindDN,
+            hasPassword: !!ldapConfig.bindPassword
+          }
+        });
+        throw new Error(`Error de conexión LDAP: ${errorMessage}. Verifica que el servidor LDAP esté corriendo en ${ldapConfig.url}`);
       }
     }
   }
@@ -81,18 +96,6 @@ class LDAPClient {
       finalNacionalidad: metadata.nacionalidad || ldapUser.st || undefined
     });
     
-    console.log('🔍 [DEBUG] Leyendo nombre_completo:', {
-      metadataNombreCompleto: metadata.nombre_completo,
-      ldapCn: ldapUser.cn,
-      finalNombreCompleto: metadata.nombre_completo || ldapUser.cn
-    });
-    
-    console.log('🔍 [DEBUG] Leyendo password:', {
-      metadataPassword: metadata.password ? '[HASHED]' : 'undefined',
-      ldapUserPassword: ldapUser.userPassword ? '[HASHED]' : 'undefined',
-      finalPassword: (metadata.password || ldapUser.userPassword) ? '[HASHED]' : 'undefined'
-    });
-    
     return {
       id: metadata.supabase_id || ldapUser.uid,
       email: ldapUser.mail,
@@ -107,7 +110,9 @@ class LDAPClient {
       last_login_at: metadata.last_login_at,
       password_reset_token: metadata.password_reset_token,
       password_reset_expires: metadata.password_reset_expires,
-      email_verification_token: metadata.email_verification_token
+      email_verification_token: metadata.email_verification_token,
+      created_by_admin: metadata.created_by_admin,
+      initial_password_changed: metadata.initial_password_changed
     };
   }
 
@@ -274,7 +279,9 @@ class LDAPClient {
             password: data.password, // Incluir contraseña en metadatos si existe
             password_reset_token: data.password_reset_token,
             password_reset_expires: data.password_reset_expires,
-            email_verification_token: data.email_verification_token
+            email_verification_token: data.email_verification_token,
+            created_by_admin: data.created_by_admin,
+            initial_password_changed: data.initial_password_changed ?? false
           };
 
           const description = `Migrado desde Supabase - ${JSON.stringify(metadata)}`;
@@ -372,7 +379,9 @@ class LDAPClient {
             password: updatedData.password, // Incluir contraseña en metadatos si existe
             password_reset_token: updatedData.password_reset_token,
             password_reset_expires: updatedData.password_reset_expires,
-            email_verification_token: updatedData.email_verification_token
+            email_verification_token: updatedData.email_verification_token,
+            created_by_admin: updatedData.created_by_admin,
+            initial_password_changed: updatedData.initial_password_changed
           };
 
           // Debug: Log del campo telefono

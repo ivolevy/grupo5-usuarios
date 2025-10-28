@@ -91,6 +91,7 @@ export function AddUserDialog() {
         rol: formData.rol,
         nacionalidad: formData.nacionalidad,
         telefono: formData.telefono || undefined,
+        created_by_admin: true, // Este usuario fue creado por un admin
       })
       
       setFormData({ nombre_completo: "", email: "", password: "", confirmPassword: "", rol: "usuario", nacionalidad: "", telefono: "" })

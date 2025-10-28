@@ -256,6 +256,9 @@ export default function ProfilePage() {
       
       toast.success("Contraseña cambiada exitosamente")
       
+      // Actualizar el contexto de usuario para reflejar el cambio
+      await refreshUser()
+      
       // Limpiar formulario y cerrar sección
       setPasswordData({
         currentPassword: "",

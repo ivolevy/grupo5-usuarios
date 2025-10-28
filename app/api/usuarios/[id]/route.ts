@@ -176,7 +176,7 @@ export async function PUT(
 
     // Si se proporciona un nuevo email, verificar que no esté en uso
     if (email && email !== existingUser.email) {
-      const emailInUse = await prisma.usuarios.findFirst({ email });
+      const emailInUse = await prisma.usuarios.findFirst({ email: email });
 
       if (emailInUse) {
         return NextResponse.json({

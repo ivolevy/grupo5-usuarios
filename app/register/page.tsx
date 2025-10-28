@@ -100,7 +100,8 @@ export default function RegisterPage() {
           password: formData.password,
           rol: formData.rol,
           nacionalidad: formData.nacionalidad,
-          telefono: formData.telefono || undefined
+          telefono: formData.telefono || undefined,
+          created_by_admin: false // Usuario se registró por sí mismo
         })
       })
 

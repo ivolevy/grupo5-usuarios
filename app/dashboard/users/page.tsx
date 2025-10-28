@@ -12,7 +12,7 @@ import { AddUserDialog } from "@/components/users/add-user-dialog"
 import { UserActions } from "@/components/users/user-actions"
 import { AdvancedFilters, type FilterOptions } from "@/components/users/advanced-filters"
 import { AccessDenied } from "@/components/ui/access-denied"
-import { Search, Users, UserCheck, UserX, Shield, Settings } from "lucide-react"
+import { Search, Users, UserCheck, UserX, Shield, Settings, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { hasPermission, Permission } from "@/lib/permissions"
 
@@ -151,6 +151,7 @@ export default function UsersPage() {
           <TableHead>Nacionalidad</TableHead>
           <TableHead>Teléfono</TableHead>
           <TableHead>Fecha Creación</TableHead>
+          <TableHead>Creado por Admin</TableHead>
           <TableHead>Último Login</TableHead>
           {showActions && <TableHead className="text-center">Acciones</TableHead>}
         </TableRow>
@@ -158,19 +159,19 @@ export default function UsersPage() {
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8">
+            <TableCell colSpan={showActions ? 10 : 9} className="text-center py-8">
               Cargando usuarios...
             </TableCell>
           </TableRow>
         ) : error ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8 text-red-600">
+            <TableCell colSpan={showActions ? 10 : 9} className="text-center py-8 text-red-600">
               Error: {error}
             </TableCell>
           </TableRow>
         ) : filteredUsers.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8">
+            <TableCell colSpan={showActions ? 10 : 9} className="text-center py-8">
               No se encontraron usuarios
             </TableCell>
           </TableRow>
@@ -199,6 +200,13 @@ export default function UsersPage() {
               </TableCell>
               <TableCell className="text-gray-600 font-roboto-regular">
                 {new Date(user.created_at).toLocaleDateString('es-ES')}
+              </TableCell>
+              <TableCell className="text-center">
+                {user.created_by_admin ? (
+                  <Check className="w-5 h-5 text-gray-700 mx-auto" />
+                ) : (
+                  <X className="w-5 h-5 text-gray-400 mx-auto" />
+                )}
               </TableCell>
               <TableCell className="text-gray-600 font-roboto-regular">
                 {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString('es-ES') : "Nunca"}

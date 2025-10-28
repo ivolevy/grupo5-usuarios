@@ -204,7 +204,7 @@ export async function PUT(request: NextRequest) {
     // Cambio de email
     if (email && email !== currentUser.email) {
       // Verificar que el nuevo email no esté en uso
-      const emailInUse = await prisma.usuarios.findFirst({ email });
+      const emailInUse = await prisma.usuarios.findFirst({ email: email });
 
       if (emailInUse) {
         return NextResponse.json({
@@ -254,6 +254,9 @@ export async function PUT(request: NextRequest) {
 
       // Hashear nueva contraseña
       updateData.password = await hashPassword(newPassword);
+      
+      // Marcar que el usuario cambió su contraseña inicial
+      updateData.initial_password_changed = true;
     }
 
     // Si no hay cambios, devolver error

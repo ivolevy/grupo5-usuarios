@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener la contraseña actual del usuario
-    const user = await prisma.usuarios.findFirst({ email })
+    const user = await prisma.usuarios.findFirst({ email: email })
 
     if (!user) {
       return NextResponse.json({

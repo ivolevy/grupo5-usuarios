@@ -30,6 +30,9 @@ export const createUsuarioSchema = z.object({
     .regex(/^[\+]?[0-9\s\-\(\)]*$/, 'El teléfono debe contener solo números, espacios, guiones y paréntesis')
     .optional()
     .transform(val => val === '' ? undefined : val),
+  created_by_admin: z
+    .boolean()
+    .optional(),
 });
 
 export const updateUsuarioSchema = z.object({
@@ -67,6 +70,9 @@ export const updateUsuarioSchema = z.object({
     .regex(/^[\+]?[0-9\s\-\(\)]*$/, 'El teléfono debe contener solo números, espacios, guiones y paréntesis')
     .optional()
     .transform(val => val === '' ? undefined : val),
+  initial_password_changed: z
+    .boolean()
+    .optional(),
 });
 
 export const updateProfileSchema = z.object({

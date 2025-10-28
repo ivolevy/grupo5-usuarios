@@ -13,6 +13,8 @@ interface User {
   nombre_completo?: string
   telefono?: string
   nacionalidad?: string
+  created_by_admin?: boolean
+  initial_password_changed?: boolean
 }
 
 interface AuthContextType {

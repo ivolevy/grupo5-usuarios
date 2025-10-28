@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar si el email existe en la base de datos usando LDAP
-    const user = await prisma.usuarios.findFirst({ email })
+    const user = await prisma.usuarios.findFirst({ email: email })
 
     return NextResponse.json({
       success: true,

@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { nombre_completo, email, password, rol, nacionalidad, telefono } = validation.data;
+    const { nombre_completo, email, password, rol, nacionalidad, telefono, created_by_admin } = validation.data;
 
     // Validación simple de contraseña (solo longitud mínima)
     if (password.length < 8) {
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar si el usuario ya existe
-    const existingUser = await prisma.usuarios.findFirst({ email });
+    const existingUser = await prisma.usuarios.findFirst({ email: email });
 
     if (existingUser) {
       return NextResponse.json({
@@ -116,7 +116,8 @@ export async function POST(request: NextRequest) {
       rol: rol || 'usuario',
       email_verified: true, // Sin verificación por email
       nacionalidad,
-      telefono
+      telefono,
+      created_by_admin: created_by_admin ?? false // Por defecto false si no se especifica
     });
 
     // Enviar evento a Kafka (no bloquear la respuesta si falla)

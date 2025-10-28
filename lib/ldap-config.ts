@@ -48,4 +48,6 @@ export interface Usuario {
   nombre_completo?: string;
   nacionalidad?: string;
   telefono?: string;
+  created_by_admin?: boolean;
+  initial_password_changed?: boolean;
 }

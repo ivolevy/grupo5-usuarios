@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/auth-context"
 import { UsersProvider } from "@/contexts/users-context"
 import { Suspense } from "react"
 import { Toaster } from "sonner"
+import { PasswordReminderWrapper } from "@/components/users/password-reminder-wrapper"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -28,7 +29,10 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <Suspense fallback={null}>
           <AuthProvider>
-            <UsersProvider>{children}</UsersProvider>
+            <UsersProvider>
+              {children}
+              <PasswordReminderWrapper />
+            </UsersProvider>
           </AuthProvider>
         </Suspense>
         <Toaster position="top-right" richColors />

@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Primero verificar que el usuario existe
-    const existingUser = await prisma.usuarios.findFirst({ email })
+    const existingUser = await prisma.usuarios.findFirst({ email: email })
     
     if (!existingUser) {
       return NextResponse.json({
