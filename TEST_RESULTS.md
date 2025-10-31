@@ -1,4 +1,4 @@
-# Resultados de Pruebas - Sistema de AutenticaciónAAAAAAAAAAAAAAAAAAAAA
+# Resultados de Pruebas - Sistema de AutenticaciónAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 ## 📊 Resumen Ejecutivo
 
