@@ -71,6 +71,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { updateUsuarioSchema, usuarioParamsSchema, validateData } from '@/lib/validations';
 import { hashPassword, validatePasswordStrength } from '@/lib/auth';
+import { sendUserDeletedEvent, sendUserUpdatedEvent } from '@/lib/kafka-api-sender';
+import { logger } from '@/lib/logger';
 
 // GET /api/usuarios/[id] - Obtener usuario por ID
 export async function GET(
@@ -201,6 +203,32 @@ export async function PUT(
       updateData
     );
 
+    // Enviar evento a Kafka (no bloquear la respuesta si falla)
+    try {
+      const kafkaSuccess = await sendUserUpdatedEvent({
+        userId: updatedUser.id,
+        nationalityOrOrigin: updatedUser.nacionalidad || 'No especificada',
+        roles: [updatedUser.rol],
+        updatedAt: new Date().toISOString(),
+        previousData: {
+          nationalityOrOrigin: existingUser.nacionalidad || 'No especificada',
+          roles: [existingUser.rol]
+        }
+      });
+
+      if (kafkaSuccess) {
+        logger.info('Evento de usuario actualizado enviado a Kafka', {
+          action: 'user_updated_kafka_success',
+          userId: updatedUser.id
+        });
+      }
+    } catch (kafkaError) {
+      logger.error('Error enviando evento de actualización a Kafka (no crítico)', {
+        action: 'user_updated_kafka_error',
+        userId: updatedUser.id
+      });
+    }
+
     // Remover la contraseña de la respuesta
     const { password: _, ...userWithoutPassword } = updatedUser;
 
@@ -249,6 +277,30 @@ export async function DELETE(
 
     // Eliminar el usuario
     await prisma.usuarios.delete({ id });
+
+    // Enviar evento a Kafka (no bloquear la respuesta si falla)
+    try {
+      const kafkaSuccess = await sendUserDeletedEvent({
+        userId: existingUser.id,
+        nationalityOrOrigin: existingUser.nacionalidad || 'No especificada',
+        roles: [existingUser.rol],
+        createdAt: existingUser.created_at,
+        deletedAt: new Date().toISOString(),
+        deletionReason: 'admin_action'
+      });
+
+      if (kafkaSuccess) {
+        logger.info('Evento de usuario eliminado enviado a Kafka', {
+          action: 'user_deleted_kafka_success',
+          userId: existingUser.id
+        });
+      }
+    } catch (kafkaError) {
+      logger.error('Error enviando evento de eliminación a Kafka (no crítico)', {
+        action: 'user_deleted_kafka_error',
+        userId: existingUser.id
+      });
+    }
 
     return NextResponse.json({
       success: true,
