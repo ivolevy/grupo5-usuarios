@@ -130,15 +130,15 @@ export async function POST(request: NextRequest) {
       });
 
       if (kafkaSuccess) {
-        logger.info('Evento de usuario creado enviado a Kafka', {
-          action: 'user_created_kafka_success',
+      logger.info('Evento de usuario creado enviado a Kafka', {
+        action: 'user_created_kafka_success',
           userId: newUser.id
         });
       } else {
         logger.warn('Evento de usuario creado no pudo ser enviado a Kafka', {
           action: 'user_created_kafka_failed',
           userId: newUser.id
-        });
+      });
       }
     } catch (kafkaError) {
       // Log el error pero no fallar la creación del usuario

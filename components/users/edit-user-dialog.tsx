@@ -54,6 +54,12 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
     e.preventDefault()
     setIsLoading(true)
 
+    console.log('🔵 [FRONTEND] Datos enviados al backend para actualizar usuario:', {
+      userId: user.id,
+      formData: formData,
+      endpoint: `/api/usuarios/${user.id}`
+    })
+
     try {
       await updateUser(user.id, formData)
       toast({
@@ -62,6 +68,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
       })
       onOpenChange(false)
     } catch (error) {
+      console.error('❌ [FRONTEND] Error al actualizar usuario:', error)
       toast({
         title: "Error",
         description: "No se pudo actualizar el usuario. Inténtalo de nuevo.",

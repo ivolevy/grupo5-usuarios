@@ -95,6 +95,15 @@ export function UsersProvider({ children }: { children: ReactNode }) {
   const updateUser = async (id: string, updates: Partial<User>) => {
     setLoading(true)
     setError(null)
+    
+    console.log('🟢 [CONTEXT] Llamando API para actualizar usuario:', {
+      userId: id,
+      endpoint: `/api/usuarios/${id}`,
+      method: 'PUT',
+      body: updates,
+      bodyJSON: JSON.stringify(updates)
+    })
+    
     try {
       const response = await fetch(`/api/usuarios/${id}`, {
         method: 'PUT',
@@ -104,7 +113,15 @@ export function UsersProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify(updates),
       })
       
+      console.log('🟢 [CONTEXT] Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      })
+      
       const data = await response.json()
+      
+      console.log('🟢 [CONTEXT] Datos parseados de la respuesta:', data)
       
       if (data.success) {
         await refreshUsers() // Refresh the list
@@ -113,6 +130,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
         throw new Error(data.message)
       }
     } catch (err) {
+      console.error('🔴 [CONTEXT] Error en updateUser:', err)
       const errorMessage = err instanceof Error ? err.message : 'Error de conexión al actualizar usuario'
       setError(errorMessage)
       throw err
