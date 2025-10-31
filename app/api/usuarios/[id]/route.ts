@@ -147,7 +147,7 @@ export async function PUT(
       }, { status: 400 });
     }
 
-    const { nombre_completo, email, password, rol, email_verified, nacionalidad } = validation.data;
+    const { nombre_completo, email, password, rol, email_verified, nacionalidad, telefono } = validation.data;
 
     // Si se proporciona una nueva contraseña, validar su fortaleza
     if (password) {
@@ -196,6 +196,7 @@ export async function PUT(
     if (rol) updateData.rol = rol;
     if (email_verified !== undefined) updateData.email_verified = email_verified;
     if (nacionalidad !== undefined) updateData.nacionalidad = nacionalidad;
+    if (telefono !== undefined) updateData.telefono = telefono;
 
     // Actualizar el usuario
     const updatedUser = await prisma.usuarios.update(

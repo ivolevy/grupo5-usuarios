@@ -5,9 +5,6 @@
 
 import { Client } from 'ldapts';
 import { ldapConfig, Usuario, LDAPUserEntry } from './ldap-config';
-import { execSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
 
 class LDAPClient {
   private client: Client;
@@ -75,26 +72,8 @@ class LDAPClient {
   private ldapUserToUsuario(ldapUser: any): Usuario {
     const metadata = this.parseMetadataFromDescription(ldapUser.description || '');
     
-    // Debug: Log completo de la entrada LDAP
-    console.log('🔍 [DEBUG] Entrada LDAP completa:', {
-      dn: ldapUser.dn,
-      description: ldapUser.description,
-      telephoneNumber: ldapUser.telephoneNumber,
-      metadata: metadata
-    });
-    
-    // Debug: Log de lectura de telefono y nacionalidad
-    console.log('🔍 [DEBUG] Leyendo telefono:', {
-      metadataTelefono: metadata.telefono,
-      ldapTelephoneNumber: ldapUser.telephoneNumber,
-      finalTelefono: metadata.telefono || ldapUser.telephoneNumber || undefined
-    });
-    
-    console.log('🔍 [DEBUG] Leyendo nacionalidad:', {
-      metadataNacionalidad: metadata.nacionalidad,
-      ldapSt: ldapUser.st,
-      finalNacionalidad: metadata.nacionalidad || ldapUser.st || undefined
-    });
+
+
     
     return {
       id: metadata.supabase_id || ldapUser.uid,
@@ -425,19 +404,10 @@ class LDAPClient {
             initial_password_changed: updatedData.initial_password_changed
           };
 
-          // Debug: Log del campo telefono
-          console.log('🔍 [DEBUG] Campo telefono en metadatos:', {
-            telefono: updatedData.telefono,
-            tipo: typeof updatedData.telefono,
-            metadataTelefono: metadata.telefono
-          });
+
           
           // Debug: Log del campo password
-          console.log('🔍 [DEBUG] Campo password en metadatos:', {
-            password: updatedData.password ? '[HASHED]' : 'undefined',
-            tipo: typeof updatedData.password,
-            hasPassword: !!updatedData.password
-          });
+
 
           const description = `Migrado desde Supabase - ${JSON.stringify(metadata)}`;
 
@@ -544,70 +514,101 @@ class LDAPClient {
             break;
           }
 
-          // Estrategia alternativa: Solo actualizar campos básicos de LDAP
-          // Los campos problemáticos como 'telefono' se manejan solo en metadatos
-          const basicLdapChanges: any[] = [];
-          const basicFields = ['cn', 'sn', 'givenName', 'mail', 'title', 'description'];
+          // Estrategia: Actualizar campos en dos fases
+          // Fase 1: Campos básicos (siempre funcionan)
+          const { Change, Attribute } = await import('ldapts');
+          const basicChanges: any[] = [];
           
-          basicFields.forEach(key => {
+          // Campos requeridos (siempre deben tener valor)
+          const requiredFields = ['cn', 'sn', 'givenName', 'mail', 'title'];
+          // Campos opcionales (pueden estar vacíos o eliminarse)
+          const optionalFields = ['telephoneNumber', 'st'];
+          
+          // Actualizar campos requeridos
+          requiredFields.forEach(key => {
             const value = (ldapEntry as any)[key];
             if (value !== undefined && value !== null && value !== '') {
-              // Usar formato correcto para ldapts
-              basicLdapChanges.push({
+              const attr = new Attribute({
+                type: key,
+                values: Array.isArray(value) ? value.map(String) : [String(value)]
+              });
+              const change = new Change({
                 operation: 'replace',
-                modification: {
+                modification: attr
+              });
+              basicChanges.push(change);
+            }
+          });
+          
+          // Actualizar campos opcionales (si están vacíos, borrarlos)
+          optionalFields.forEach(key => {
+            const value = (ldapEntry as any)[key];
+            if (value !== undefined && value !== null) {
+              if (value === '') {
+                // Si está vacío, borrar el atributo
+                const attr = new Attribute({
+                  type: key,
+                  values: []
+                });
+                const change = new Change({
+                  operation: 'delete',
+                  modification: attr
+                });
+                basicChanges.push(change);
+              } else {
+                // Si tiene valor, actualizarlo
+                const attr = new Attribute({
                   type: key,
                   values: Array.isArray(value) ? value.map(String) : [String(value)]
-                }
-              });
+                });
+                const change = new Change({
+                  operation: 'replace',
+                  modification: attr
+                });
+                basicChanges.push(change);
+              }
             }
           });
 
-          // Log de los cambios para debugging
-          console.log('🔍 [DEBUG] Cambios LDAP preparados:', basicLdapChanges);
+          // Aplicar cambios básicos
+          try {
+            if (!this.client.isConnected) {
+              console.log('🔗 Reconectando a LDAP antes de aplicar cambios...');
+              await this.connect();
+            }
+            
+            if (basicChanges.length > 0) {
+              console.log('🔄 Aplicando cambios básicos LDAP...');
+              await this.client.modify(oldDn, basicChanges);
+              console.log('✅ Cambios básicos aplicados exitosamente');
+            }
+          } catch (error) {
+            console.error('❌ Error aplicando cambios básicos:', error instanceof Error ? error.message : String(error));
+          }
 
-          // SOLUCIÓN REAL: Usar ldapmodify por línea de comandos (como en el script exitoso)
+          // Fase 2: Actualizar description con metadatos (puede fallar, no es crítico)
           try {
             const descriptionValue = ldapEntry.description;
             if (descriptionValue) {
-              console.log('🔄 Actualizando campo description con metadatos usando ldapmodify...');
-              
-              // Verificar conexión antes de ldapmodify
               if (!this.client.isConnected) {
-                console.log('🔗 Reconectando a LDAP antes de ldapmodify...');
                 await this.connect();
               }
               
-              // Crear archivo LDIF temporal
-              const ldifContent = `dn: ${oldDn}
-changetype: modify
-replace: description
-description: ${descriptionValue}
-`;
-              
-              const tempFile = path.join('/tmp', `update_${Date.now()}.ldif`);
-              
-              fs.writeFileSync(tempFile, ldifContent);
-              
-              // Ejecutar ldapmodify
-              const ldapHost = ldapConfig.url.replace('ldap://', '').replace(':389', '');
-              const command = `ldapmodify -h ${ldapHost} -D "${ldapConfig.bindDN}" -w "${ldapConfig.bindPassword}" -f "${tempFile}"`;
-              
-              console.log('Ejecutando ldapmodify...');
-              execSync(command, { stdio: 'pipe' });
-              
-              console.log('✅ Campo description actualizado exitosamente con ldapmodify');
-              
-              // Limpiar archivo temporal
-              try {
-                fs.unlinkSync(tempFile);
-              } catch (e) {
-                // Ignorar error de limpieza
-              }
+              console.log('🔄 Actualizando description con metadatos...');
+              const descAttr = new Attribute({
+                type: 'description',
+                values: [String(descriptionValue)]
+              });
+              const descChange = new Change({
+                operation: 'replace',
+                modification: descAttr
+              });
+              await this.client.modify(oldDn, [descChange]);
+              console.log('✅ Description actualizado exitosamente');
             }
           } catch (error) {
-            console.error('❌ Error actualizando description con ldapmodify:', error instanceof Error ? error.message : String(error));
-            console.log('⚠️  Continuando sin actualizar LDAP - los metadatos se perderán');
+            console.error('⚠️  Error actualizando description (no crítico):', error instanceof Error ? error.message : String(error));
+            console.log('ℹ️  Los campos básicos se actualizaron correctamente');
           }
 
           // Leer los datos actualizados desde LDAP para asegurar que reflejan lo que se guardó
