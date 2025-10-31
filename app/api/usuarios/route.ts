@@ -44,7 +44,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { createUsuarioSchema, validateData } from '@/lib/validations';
 import { hashPassword } from '@/lib/auth';
-import { sendUserCreatedEvent } from '@/lib/kafka-producer';
+import { sendUserCreatedEvent } from '@/lib/kafka-api-sender';
 import { logger } from '@/lib/logger';
 
 // GET /api/usuarios - Obtener todos los usuarios
@@ -121,20 +121,30 @@ export async function POST(request: NextRequest) {
 
     // Enviar evento a Kafka (no bloquear la respuesta si falla)
     try {
-      await sendUserCreatedEvent({
-        id: newUser.id,
-        nacionalidad: newUser.nacionalidad || 'No especificada',
-        rol: newUser.rol,
-        created_at: newUser.created_at,
+      const kafkaSuccess = await sendUserCreatedEvent({
+        userId: newUser.id,
+        nationalityOrOrigin: newUser.nacionalidad || 'No especificada',
+        roles: [newUser.rol],
+        createdAt: newUser.created_at,
       });
 
-      logger.info('Evento de usuario creado enviado a Kafka', {
-        action: 'user_created_kafka_success',
-      });
+      if (kafkaSuccess) {
+        logger.info('Evento de usuario creado enviado a Kafka', {
+          action: 'user_created_kafka_success',
+          userId: newUser.id
+        });
+      } else {
+        logger.warn('Evento de usuario creado no pudo ser enviado a Kafka', {
+          action: 'user_created_kafka_failed',
+          userId: newUser.id
+        });
+      }
     } catch (kafkaError) {
       // Log el error pero no fallar la creación del usuario
       logger.error('Error enviando evento a Kafka (no crítico)', {
         action: 'user_created_kafka_error',
+        userId: newUser.id,
+        message: kafkaError instanceof Error ? kafkaError.message : 'Error desconocido'
       });
     }
 

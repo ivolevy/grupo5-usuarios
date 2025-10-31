@@ -1,11 +1,24 @@
-import { Producer } from 'kafkajs';
-import { kafka, KAFKA_TOPICS } from './kafka-config';
 import { createKafkaUserMessage, KafkaUserMessage, validateUserCreatedEvent } from './kafka-schemas';
+import { sendUserCreatedEvent as sendUserCreatedEventAPI } from './kafka-api-sender';
 import { logger } from './logger';
+import { Kafka } from 'kafkajs';
 
 class KafkaProducerService {
-  private producer: Producer | null = null;
+  private kafka: Kafka;
+  private producer: any = null;
   private isConnected = false;
+
+  constructor() {
+    // Silenciar warnings de KafkaJS
+    process.env.KAFKAJS_NO_PARTITIONER_WARNING = '1';
+    
+    // Configurar Kafka directo
+    this.kafka = new Kafka({
+      clientId: 'grupo5-usuarios-app',
+      brokers: ['34.172.179.60:9094'],
+      // No SSL/SASL - usando PLAINTEXT
+    });
+  }
 
   /**
    * Conecta el producer a Kafka
@@ -16,11 +29,7 @@ class KafkaProducerService {
         return;
       }
 
-      this.producer = kafka.producer({
-        maxInFlightRequests: 1,
-        idempotent: true,
-        transactionTimeout: 30000,
-      });
+      this.producer = this.kafka.producer();
 
       await this.producer.connect();
       this.isConnected = true;
@@ -37,28 +46,7 @@ class KafkaProducerService {
   }
 
   /**
-   * Desconecta el producer de Kafka
-   */
-  async disconnect(): Promise<void> {
-    try {
-      if (this.producer && this.isConnected) {
-        await this.producer.disconnect();
-        this.isConnected = false;
-        this.producer = null;
-
-        logger.info('Kafka producer desconectado', {
-          action: 'kafka_producer_disconnected',
-        });
-      }
-    } catch (error) {
-      logger.error('Error desconectando Kafka producer', {
-        action: 'kafka_producer_disconnection_error',
-      });
-    }
-  }
-
-  /**
-   * Envía un evento de usuario creado a Kafka
+   * Envía un evento de usuario creado usando la API REST de Kafka
    */
   async sendUserCreatedEvent(userData: {
     id: string;
@@ -67,52 +55,39 @@ class KafkaProducerService {
     created_at: string;
   }): Promise<void> {
     try {
-      if (!this.producer || !this.isConnected) {
-        await this.connect();
+      // Usar la nueva API REST de Kafka
+      const success = await sendUserCreatedEventAPI({
+        userId: userData.id,
+        nationalityOrOrigin: userData.nacionalidad,
+        roles: [userData.rol],
+        createdAt: userData.created_at,
+      });
+
+      if (success) {
+        logger.info('Evento de usuario creado enviado exitosamente a Kafka via API REST', {
+          action: 'kafka_user_created_sent_api',
+          userId: userData.id
+        });
+      } else {
+        logger.warn('Evento de usuario creado no pudo ser enviado a Kafka via API REST', {
+          action: 'kafka_user_created_failed_api',
+          userId: userData.id
+        });
+        throw new Error('Error enviando evento a Kafka via API REST');
       }
-
-      // Validar y crear el mensaje
-      const message = createKafkaUserMessage(userData);
-      
-      // Validar el payload antes de enviar
-      validateUserCreatedEvent(message.payload);
-
-      const key = `user-${userData.id}`;
-      const value = JSON.stringify(message);
-
-      logger.info('Enviando evento de usuario creado a Kafka', {
-        action: 'kafka_send_user_created',
-      });
-
-      if (!this.producer) {
-        throw new Error('Producer no está inicializado');
-      }
-
-      const result = await this.producer.send({
-        topic: KAFKA_TOPICS.USERS_EVENTS,
-        messages: [
-          {
-            key,
-            value,
-            partition: 0, // Usar partición 0 para mantener orden
-          },
-        ],
-      });
-
-      logger.info('Evento de usuario creado enviado exitosamente', {
-        action: 'kafka_user_created_sent',
-      });
 
     } catch (error) {
-      logger.error('Error enviando evento de usuario creado a Kafka', {
-        action: 'kafka_send_user_created_error',
+      logger.error('Error enviando evento de usuario creado a Kafka via API REST', {
+        action: 'kafka_send_user_created_error_api',
+        userId: userData.id,
+        message: error instanceof Error ? error.message : 'Error desconocido'
       });
-      throw new Error('Error enviando evento a Kafka');
+      throw new Error('Error enviando evento a Kafka via API REST');
     }
   }
 
   /**
-   * Envía un mensaje personalizado a cualquier topic
+   * Envía un mensaje personalizado a cualquier topic directamente a Kafka
    */
   async sendMessage(
     topic: string,
@@ -120,21 +95,23 @@ class KafkaProducerService {
     message: any
   ): Promise<void> {
     try {
+      const value = typeof message === 'string' ? message : JSON.stringify(message);
+
+      // Conectar si no está conectado
       if (!this.producer || !this.isConnected) {
         await this.connect();
       }
-
-      const value = typeof message === 'string' ? message : JSON.stringify(message);
-
-      logger.info('Enviando mensaje a Kafka', {
-        action: 'kafka_send_message',
-      });
 
       if (!this.producer) {
         throw new Error('Producer no está inicializado');
       }
 
-      const result = await this.producer.send({
+      logger.info('Enviando mensaje a Kafka', {
+        action: 'kafka_send_message',
+      });
+
+      // Enviar directamente a Kafka
+      await this.producer.send({
         topic,
         messages: [
           {
@@ -157,10 +134,38 @@ class KafkaProducerService {
   }
 
   /**
-   * Verifica si el producer está conectado
+   * Verifica si el servicio está configurado correctamente
    */
-  isProducerConnected(): boolean {
+  isConfigured(): boolean {
+    return !!(this.kafka && this.kafka);
+  }
+
+  /**
+   * Verifica si Kafka está conectado
+   */
+  isKafkaConnected(): boolean {
     return this.isConnected && this.producer !== null;
+  }
+
+  /**
+   * Desconecta el producer
+   */
+  async disconnect(): Promise<void> {
+    try {
+      if (this.producer && this.isConnected) {
+        await this.producer.disconnect();
+        this.isConnected = false;
+        this.producer = null;
+
+        logger.info('Kafka producer desconectado', {
+          action: 'kafka_producer_disconnected',
+        });
+      }
+    } catch (error) {
+      logger.error('Error desconectando Kafka producer', {
+        action: 'kafka_producer_disconnection_error',
+      });
+    }
   }
 }
 
@@ -175,4 +180,14 @@ export async function sendUserCreatedEvent(userData: {
   created_at: string;
 }): Promise<void> {
   return kafkaProducer.sendUserCreatedEvent(userData);
+}
+
+// Función de conveniencia que usa directamente la API REST (recomendada)
+export async function sendUserCreatedEventDirect(userData: {
+  userId: string;
+  nationalityOrOrigin: string;
+  roles: string[];
+  createdAt: string;
+}): Promise<boolean> {
+  return sendUserCreatedEventAPI(userData);
 }

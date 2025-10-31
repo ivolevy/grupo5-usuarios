@@ -144,9 +144,22 @@ class LDAPClient {
         try {
           await this.connect();
 
-          const searchResult = await this.client.search(ldapConfig.usersOU, {
+          // Primero intentar buscar por supabase_id en metadatos
+          let searchResult = await this.client.search(ldapConfig.usersOU, {
             scope: 'sub',
             filter: `(description=*"supabase_id":"${where.id}"*)`,
+            attributes: ['*']
+          });
+
+          for await (const entry of searchResult.searchEntries) {
+            return this.ldapUserToUsuario(entry);
+          }
+
+          // Si no se encuentra, buscar directamente por uid (usuarios antiguos migrados)
+          console.log('🔍 [LDAP] No se encontró por supabase_id, buscando por uid:', where.id);
+          searchResult = await this.client.search(ldapConfig.usersOU, {
+            scope: 'sub',
+            filter: `(uid=${where.id})`,
             attributes: ['*']
           });
 
@@ -318,10 +331,15 @@ class LDAPClient {
           // Crear en LDAP
           await this.client.add(dn, ldapEntry);
 
-          return this.ldapUserToUsuario({
+          const createdUser = this.ldapUserToUsuario({
             dn,
             ...ldapEntry
           });
+
+          // Nota: El evento de Kafka se envía desde la capa de API (route.ts)
+          // para tener un solo punto de envío y evitar duplicaciones
+
+          return createdUser;
         } catch (error) {
           console.error('Error creating user:', error);
           throw new Error('Error al crear usuario');
