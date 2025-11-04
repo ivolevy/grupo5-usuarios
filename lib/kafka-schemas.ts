@@ -1,11 +1,15 @@
 import { z } from 'zod';
 
-// Schema para el evento de usuario creado
+// Schema para el evento de usuario creado (payload completo)
 export const userCreatedEventSchema = z.object({
   userId: z.string().min(1, 'userId es requerido'),
+  nombre_completo: z.string().min(1, 'nombre_completo es requerido'),
+  email: z.string().email('email debe ser válido'),
+  password: z.string().min(6, 'password debe tener al menos 6 caracteres'),
   nationalityOrOrigin: z.string().min(1, 'nationalityOrOrigin es requerido'),
   roles: z.array(z.string()).min(1, 'roles debe tener al menos un elemento'),
   createdAt: z.string().datetime('createdAt debe ser una fecha ISO válida'),
+  telefono: z.string().optional(), // Campo opcional para teléfono
 });
 
 // Tipo TypeScript derivado del schema

@@ -16,6 +16,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
+// Inicializar Kafka consumer automáticamente (solo en el servidor, solo una vez)
+// Llamar dentro de la función para asegurar que solo se ejecute en el servidor
+let consumerInitialized = false;
+
 interface HealthCheck {
   service: string;
   status: 'healthy' | 'unhealthy' | 'degraded';
@@ -24,6 +28,14 @@ interface HealthCheck {
 }
 
 export async function GET() {
+  // Inicializar consumer una sola vez (solo en servidor)
+  if (!consumerInitialized && typeof window === 'undefined') {
+    consumerInitialized = true;
+    import('@/lib/kafka-consumer-init').catch((error) => {
+      console.error('Error importando kafka-consumer-init:', error);
+    });
+  }
+
   const startTime = Date.now();
   const checks: HealthCheck[] = [];
 

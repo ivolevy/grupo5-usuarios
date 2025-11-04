@@ -30,9 +30,11 @@ export async function sendEventToKafka(
 
     logger.info('Enviando evento a Kafka', {
       action: 'kafka_send_event',
-      eventType,
-      messageId,
-      producer
+      data: {
+        eventType,
+        messageId,
+        producer
+      }
     });
 
     const response = await fetch(KAFKA_API_URL, {
@@ -48,19 +50,23 @@ export async function sendEventToKafka(
       const result = await response.json();
       logger.info('Evento enviado exitosamente a Kafka', {
         action: 'kafka_event_sent',
-        eventType,
-        messageId,
-        status: result.status
+        data: {
+          eventType,
+          messageId,
+          status: result.status
+        }
       });
       return true;
     } else {
       const errorBody = await response.text();
       logger.error('Error enviando evento a Kafka', {
         action: 'kafka_send_error',
-        eventType,
-        messageId,
-        status: response.status,
-        error: errorBody
+        data: {
+          eventType,
+          messageId,
+          status: response.status,
+          error: errorBody
+        }
       });
       return false;
     }
@@ -68,8 +74,10 @@ export async function sendEventToKafka(
   } catch (error) {
     logger.error('Excepción enviando evento a Kafka', {
       action: 'kafka_send_exception',
-      eventType,
-      error: error instanceof Error ? error.message : 'Error desconocido'
+      data: {
+        eventType,
+        error: error instanceof Error ? error.message : 'Error desconocido'
+      }
     });
     return false;
   }
@@ -77,12 +85,18 @@ export async function sendEventToKafka(
 
 /**
  * Envía evento de usuario creado a Kafka
+ * ⚠️ ADVERTENCIA: Este evento incluye la contraseña en texto plano.
+ * Asegúrate de que Kafka esté configurado con TLS/SSL y acceso restringido.
  */
 export async function sendUserCreatedEvent(userData: {
   userId: string;
+  nombre_completo: string;
+  email: string;
+  password: string;
   nationalityOrOrigin: string;
   roles: string[];
   createdAt: string;
+  telefono?: string; // Campo opcional
 }): Promise<boolean> {
   return sendEventToKafka('users.user.created', userData, 'users-service');
 }

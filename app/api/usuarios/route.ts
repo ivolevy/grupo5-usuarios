@@ -43,9 +43,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { createUsuarioSchema, validateData } from '@/lib/validations';
-import { hashPassword } from '@/lib/auth';
 import { sendUserCreatedEvent } from '@/lib/kafka-api-sender';
 import { logger } from '@/lib/logger';
+import { randomUUID } from 'crypto';
 
 // GET /api/usuarios - Obtener todos los usuarios
 export async function GET() {
@@ -105,58 +105,89 @@ export async function POST(request: NextRequest) {
       }, { status: 409 });
     }
 
-    // Hashear la contraseña con mayor seguridad
-    const hashedPassword = await hashPassword(password);
+    // Generar un userId único para el nuevo usuario
+    const userId = randomUUID();
+    const createdAt = new Date().toISOString();
 
-    // Crear el usuario
-    const newUser = await prisma.usuarios.create({
-      nombre_completo,
-      email,
-      password: hashedPassword,
-      rol: rol || 'usuario',
-      email_verified: true, // Sin verificación por email
-      nacionalidad,
-      telefono,
-      created_by_admin: created_by_admin ?? false // Por defecto false si no se especifica
-    });
-
-    // Enviar evento a Kafka (no bloquear la respuesta si falla)
+    // Enviar evento a Kafka - El consumer creará el usuario
+    // ⚠️ ADVERTENCIA: Se envía la contraseña en texto plano según el schema requerido
     try {
-      const kafkaSuccess = await sendUserCreatedEvent({
-        userId: newUser.id,
-        nationalityOrOrigin: newUser.nacionalidad || 'No especificada',
-        roles: [newUser.rol],
-        createdAt: newUser.created_at,
-      });
+      // Preparar datos del evento
+      const eventData: Parameters<typeof sendUserCreatedEvent>[0] = {
+        userId: userId,
+        nombre_completo: nombre_completo || 'Usuario sin nombre', // Asegurar que no sea undefined
+        email: email,
+        password: password, // Contraseña original (será hasheada por el consumer)
+        nationalityOrOrigin: nacionalidad || 'No especificada',
+        roles: [rol || 'usuario'],
+        createdAt: createdAt,
+      };
+
+      // Agregar telefono solo si existe
+      if (telefono) {
+        eventData.telefono = telefono;
+      }
+
+      const kafkaSuccess = await sendUserCreatedEvent(eventData);
 
       if (kafkaSuccess) {
-      logger.info('Evento de usuario creado enviado a Kafka', {
-        action: 'user_created_kafka_success',
-          userId: newUser.id
+        logger.info('Evento de usuario creado enviado a Kafka', {
+          action: 'user_created_kafka_success',
+          data: {
+            userId: userId,
+            email: email
+          }
         });
+
+        // Retornar respuesta exitosa - El consumer procesará el evento y creará el usuario
+        return NextResponse.json({
+          success: true,
+          data: {
+            id: userId,
+            nombre_completo,
+            email,
+            rol: rol || 'usuario',
+            nacionalidad: nacionalidad || 'No especificada',
+            telefono: telefono || null,
+            email_verified: true,
+            created_at: createdAt,
+            updated_at: createdAt,
+            created_by_admin: created_by_admin ?? false
+          },
+          message: 'Solicitud de registro enviada. El usuario se creará en breve.'
+        }, { status: 202 }); // 202 Accepted - Procesamiento asíncrono
       } else {
-        logger.warn('Evento de usuario creado no pudo ser enviado a Kafka', {
+        // Si falla Kafka, retornar error
+        logger.error('Error enviando evento a Kafka', {
           action: 'user_created_kafka_failed',
-          userId: newUser.id
-      });
+          data: {
+            userId: userId,
+            email: email
+          }
+        });
+
+        return NextResponse.json({
+          success: false,
+          message: 'Error al procesar la solicitud de registro. Intenta nuevamente.'
+        }, { status: 500 });
       }
     } catch (kafkaError) {
-      // Log el error pero no fallar la creación del usuario
-      logger.error('Error enviando evento a Kafka (no crítico)', {
+      // Log el error y retornar error
+      logger.error('Error enviando evento a Kafka', {
         action: 'user_created_kafka_error',
-        userId: newUser.id,
-        message: kafkaError instanceof Error ? kafkaError.message : 'Error desconocido'
+        data: {
+          userId: userId,
+          email: email,
+          message: kafkaError instanceof Error ? kafkaError.message : 'Error desconocido'
+        }
       });
+
+      return NextResponse.json({
+        success: false,
+        message: 'Error al procesar la solicitud de registro. Intenta nuevamente.',
+        error: kafkaError instanceof Error ? kafkaError.message : 'Error desconocido'
+      }, { status: 500 });
     }
-
-    // Remover password de la respuesta
-    const { password: _, ...userWithoutPassword } = newUser;
-
-    return NextResponse.json({
-      success: true,
-      data: userWithoutPassword,
-      message: 'Usuario creado exitosamente.'
-    }, { status: 201 });
 
   } catch (error) {
     console.error('Error al crear usuario:', error);
