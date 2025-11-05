@@ -28,11 +28,18 @@ export async function initializeKafkaConsumer(): Promise<void> {
   }
 
   // Verificar si el consumer está habilitado
-  const enabled = process.env.KAFKA_CONSUMER_ENABLED !== 'false';
+  // Por defecto, deshabilitar en entornos serverless (Vercel)
+  const isVercel = process.env.VERCEL === '1';
+  const enabled = process.env.KAFKA_CONSUMER_ENABLED === 'true' && !isVercel;
   
   if (!enabled) {
-    logger.info('Kafka consumer está deshabilitado (KAFKA_CONSUMER_ENABLED=false)', {
+    const reason = isVercel 
+      ? 'Vercel (serverless) - use un servicio separado para el consumer'
+      : 'KAFKA_CONSUMER_ENABLED=false';
+    
+    logger.info(`Kafka consumer está deshabilitado: ${reason}`, {
       action: 'kafka_consumer_disabled',
+      data: { reason, isVercel }
     });
     isInitialized = true;
     return;
