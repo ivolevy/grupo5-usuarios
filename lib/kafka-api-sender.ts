@@ -1,4 +1,5 @@
 import { logger } from './logger';
+import { userCreatedEventSchema } from './kafka-schemas';
 
 // Configuración de la API REST de Kafka
 const KAFKA_API_URL = process.env.KAFKA_API_URL || 'http://34.172.179.60/events';
@@ -59,13 +60,37 @@ export async function sendEventToKafka(
       return true;
     } else {
       const errorBody = await response.text();
+      let errorDetails = errorBody;
+      
+      // Intentar parsear como JSON para obtener más detalles
+      try {
+        const errorJson = JSON.parse(errorBody);
+        errorDetails = JSON.stringify(errorJson, null, 2);
+        
+        // Log adicional si es un error de validación de schema
+        if (errorJson.message?.includes('schema') || errorJson.error?.includes('schema')) {
+          logger.error('Error de validación de schema en Kafka', {
+            action: 'kafka_schema_validation_error',
+            data: {
+              eventType,
+              messageId,
+              status: response.status,
+              error: errorDetails,
+              payload: typeof payload === 'string' ? JSON.parse(payload) : payload
+            }
+          });
+        }
+      } catch {
+        // Si no es JSON, usar el texto tal cual
+      }
+      
       logger.error('Error enviando evento a Kafka', {
         action: 'kafka_send_error',
         data: {
           eventType,
           messageId,
           status: response.status,
-          error: errorBody
+          error: errorDetails
         }
       });
       return false;
@@ -98,7 +123,34 @@ export async function sendUserCreatedEvent(userData: {
   createdAt: string;
   telefono?: string; // Campo opcional
 }): Promise<boolean> {
-  return sendEventToKafka('users.user.created', userData, 'users-service');
+  try {
+    // Validar el payload antes de enviarlo
+    const validatedPayload = userCreatedEventSchema.parse(userData);
+    
+    // Construir payload con SOLO los campos requeridos por el schema del servidor
+    // El schema del servidor NO incluye telefono, así que lo omitimos
+    const payload = {
+      userId: validatedPayload.userId,
+      nombre_completo: validatedPayload.nombre_completo,
+      email: validatedPayload.email,
+      password: validatedPayload.password,
+      nationalityOrOrigin: validatedPayload.nationalityOrOrigin,
+      roles: validatedPayload.roles,
+      createdAt: new Date(validatedPayload.createdAt).toISOString(),
+      // NO incluir telefono - el schema del servidor no lo acepta
+    };
+
+    return sendEventToKafka('users.user.created', payload, 'users-service');
+  } catch (validationError) {
+    logger.error('Error validando payload antes de enviar a Kafka', {
+      action: 'kafka_payload_validation_error',
+      data: {
+        error: validationError instanceof Error ? validationError.message : 'Error desconocido',
+        userData
+      }
+    });
+    return false;
+  }
 }
 
 /**

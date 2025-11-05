@@ -131,8 +131,8 @@ export async function POST(request: NextRequest) {
       const kafkaSuccess = await sendUserCreatedEvent(eventData);
 
       if (kafkaSuccess) {
-        logger.info('Evento de usuario creado enviado a Kafka', {
-          action: 'user_created_kafka_success',
+      logger.info('Evento de usuario creado enviado a Kafka', {
+        action: 'user_created_kafka_success',
           data: {
             userId: userId,
             email: email
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      return NextResponse.json({
+    return NextResponse.json({
         success: false,
         message: 'Error al procesar la solicitud de registro. Intenta nuevamente.',
         error: kafkaError instanceof Error ? kafkaError.message : 'Error desconocido'
