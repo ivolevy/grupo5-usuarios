@@ -5,9 +5,6 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-env:
-  NODE_VERSION: '18'
-
 jobs:
   deploy:
     name: Deploy to Production
@@ -21,7 +18,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ env.NODE_VERSION }}
+        node-version: '18'
         cache: 'npm'
 
     - name: Install dependencies
@@ -30,44 +27,20 @@ jobs:
     - name: Validate Vercel secrets
       run: |
         if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
-          echo "❌ Error: VERCEL_TOKEN secret is not configured in GitHub"
-          echo "Please configure it in: Settings > Secrets and variables > Actions"
+          echo "❌ Error: VERCEL_TOKEN secret is not configured"
           exit 1
         fi
         if [ -z "${{ secrets.VERCEL_ORG_ID }}" ]; then
-          echo "❌ Error: VERCEL_ORG_ID secret is not configured in GitHub"
-          echo "Please configure it in: Settings > Secrets and variables > Actions"
+          echo "❌ Error: VERCEL_ORG_ID secret is not configured"
           exit 1
         fi
         if [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
-          echo "❌ Error: VERCEL_PROJECT_ID secret is not configured in GitHub"
-          echo "Please configure it in: Settings > Secrets and variables > Actions"
+          echo "❌ Error: VERCEL_PROJECT_ID secret is not configured"
           exit 1
         fi
         echo "✅ All Vercel secrets are configured"
 
-    - name: Build application
-      run: npm run build
-      env:
-        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
-        EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
-        EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
-        EMAIL_USER: ${{ secrets.EMAIL_USER }}
-        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-        NODE_ENV: production
-        EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-        EMAIL_FROM_NAME: ${{ secrets.EMAIL_FROM_NAME }}
-        GMAIL_USER: ${{ secrets.GMAIL_USER }}
-        GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-        MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
-        BCRYPT_SALT_ROUNDS: ${{ secrets.BCRYPT_SALT_ROUNDS }}
-
-    - name: Deploy to Vercel (Production)
-      id: vercel-deploy
+    - name: Deploy to Vercel
       uses: amondnet/vercel-action@v25
       with:
         vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -75,15 +48,3 @@ jobs:
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
         vercel-args: '--prod'
         working-directory: ./
-      continue-on-error: false
-
-    - name: Deployment status
-      if: always()
-      run: |
-        if [ "${{ steps.vercel-deploy.outcome }}" == "success" ]; then
-          echo "✅ Deployment successful"
-          echo "Preview URL: ${{ steps.vercel-deploy.outputs.preview-url }}"
-        else
-          echo "❌ Deployment failed"
-          exit 1
-        fi
