@@ -1,7 +1,7 @@
 /** @type {import('jest').Config} */
 const config = {
   coverageProvider: 'v8',
-  testEnvironment: 'node', // Usar Node environment para tests de API
+  testEnvironment: 'node', // Usar Node environment para tests de APIAAAAAAAAAA
   setupFilesAfterEnv: ['<rootDir>/__tests__/api/jest.setup.api.js'],
   moduleDirectories: ['node_modules', '<rootDir>/'],
   testPathIgnorePatterns: [
