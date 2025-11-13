@@ -53,6 +53,7 @@ import { validateData } from '@/lib/validations';
 import { hashPassword, validatePasswordStrength } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { getClientIp } from '@/lib/rate-limiter';
+import { sendUserUpdatedEvent } from '@/lib/kafka-api-sender';
 
 // Schema para actualización de perfil
 const updateProfileSchema = z.object({
@@ -267,11 +268,40 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Guardar datos anteriores para el evento de Kafka
+    const previousData = {
+      nationalityOrOrigin: currentUser.nacionalidad || 'No especificada',
+      roles: [currentUser.rol]
+    };
+
     // Actualizar usuario
     const updatedUser = await prisma.usuarios.update(
       { id: user.userId },
       updateData
     );
+
+    // Enviar evento a Kafka (no bloquear la respuesta si falla)
+    try {
+      const kafkaSuccess = await sendUserUpdatedEvent({
+        userId: updatedUser.id,
+        nationalityOrOrigin: updatedUser.nacionalidad || 'No especificada',
+        roles: [updatedUser.rol],
+        updatedAt: new Date().toISOString(),
+        previousData: previousData
+      });
+
+      if (kafkaSuccess) {
+        logger.info('Evento de usuario actualizado enviado a Kafka (perfil)', {
+          action: 'user_updated_kafka_success_profile',
+          userId: updatedUser.id
+        });
+      }
+    } catch (kafkaError) {
+      logger.error('Error enviando evento de actualización a Kafka (no crítico)', {
+        action: 'user_updated_kafka_error_profile',
+        userId: updatedUser.id
+      });
+    }
 
     logger.userAction('profile_updated', user.userId, clientIp, {
       changes: Object.keys(updateData),
