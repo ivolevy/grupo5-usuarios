@@ -1,5 +1,8 @@
 "use client"
 
+// Force dynamic rendering to avoid build errors
+export const dynamic = 'force-dynamic'
+
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { AccessDenied } from "@/components/ui/access-denied"

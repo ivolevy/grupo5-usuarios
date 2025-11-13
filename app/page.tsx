@@ -1,5 +1,8 @@
 "use client"
 
+// Force dynamic rendering to avoid build errors
+export const dynamic = 'force-dynamic'
+
 import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plane, Users, Shield, TrendingUp, Settings, BarChart3 } from "lucide-react"

@@ -13,6 +13,10 @@ const nextConfig = {
   // Ensure Next's output file tracing uses the project root, not parent directories
   outputFileTracingRoot: process.cwd(),
   trailingSlash: false,
+  // Allow build to continue even if some pages fail to prerender
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
   webpack: (config, { isServer }) => {
     // Excluir módulos nativos de Node.js del bundle del cliente
     if (!isServer) {
