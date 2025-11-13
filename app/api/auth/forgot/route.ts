@@ -27,7 +27,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { sendEmail } from '@/lib/email-service';
+import { sendVerificationCode } from '@/lib/email-service';
+import { storeVerificationCode } from '@/lib/email-verification';
 import { logger } from '@/lib/logger';
 import { rateLimiter } from '@/lib/rate-limiter';
 import { z } from 'zod';
@@ -68,36 +69,30 @@ export async function POST(request: NextRequest) {
     const { email } = validation.data;
 
     // Buscar el usuario por email
-    const user = await prisma.usuarios.findFirst({ email });
+    const user = await prisma.usuarios.findFirst({ email: email });
 
     // Siempre devolver éxito para no revelar si el email existe
     if (user) {
       try {
-        // Generar código de 6 dígitos
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        // Generar y almacenar código de verificación en la base de datos
+        const code = await storeVerificationCode(email);
         
-        // Guardar código en base de datos (implementar según necesidad)
-        // Por ahora, solo logueamos el código
-        logger.info('Código de recupero generado', {
-          action: 'password_recovery_code_generated',
-          email: email,
-          code: code,
-          timestamp: new Date().toISOString()
-        });
-
-        // Enviar email con código
-        await sendEmail(email, code);
-        
-        logger.info('Email de recupero enviado', {
-          action: 'password_recovery_email_sent',
-          email: email,
-          timestamp: new Date().toISOString()
-        });
+        if (code) {
+          // Enviar email con código
+          await sendVerificationCode(email, code);
+          
+          logger.info('Email de recupero enviado', {
+            action: 'password_recovery_email_sent',
+            data: { email, timestamp: new Date().toISOString() }
+          });
+        }
       } catch (error) {
         logger.error('Error enviando email de recupero', {
           action: 'password_recovery_email_error',
-          email: email,
-          error: error instanceof Error ? error.message : 'Error desconocido'
+          data: { 
+            email, 
+            error: error instanceof Error ? error.message : 'Error desconocido' 
+          }
         });
       }
     }
@@ -111,7 +106,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error('Error en solicitud de recupero de contraseña', {
       action: 'forgot_password_error',
-      error: error instanceof Error ? error.message : 'Error desconocido'
+      data: { error: error instanceof Error ? error.message : 'Error desconocido' }
     });
 
     return NextResponse.json({
@@ -120,3 +115,4 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 }
+
