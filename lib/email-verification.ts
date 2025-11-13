@@ -48,24 +48,24 @@ export async function storeVerificationCode(email: string): Promise<string | fal
       data: { email, expiresAt: expiresAt.toISOString() }
     });
 
-    // Buscar si ya existe un código para este email
+    // Buscar el usuario por email (verificación de seguridad adicional)
     const existingUser = await prisma.usuarios.findFirst({ email });
     
-    if (existingUser) {
-      // Actualizar el usuario existente con el nuevo código
-      await prisma.usuarios.update({ id: existingUser.id }, {
-        password_reset_token: code,
-        password_reset_expires: expiresAt.toISOString()
-      });
-    } else {
-      // Si no existe el usuario, no enviamos el código por seguridad
+    if (!existingUser) {
+      // Si no existe el usuario, no generamos ni almacenamos el código
       logger.warn(`Intento de generar código para email no registrado: ${email}`, {
-        action: 'verification_code_attempt',
-        data: { email }
+        action: 'verification_code_attempt_invalid_email',
+        data: { email: email.substring(0, 3) + '***' }
       });
-      // No lanzamos error, solo retornamos false para indicar que no se procesó
+      // Retornamos false para indicar que no se procesó (el email no existe)
       return false;
     }
+
+    // Actualizar el usuario existente con el nuevo código
+    await prisma.usuarios.update({ id: existingUser.id }, {
+      password_reset_token: code,
+      password_reset_expires: expiresAt.toISOString()
+    });
 
     logger.info(`Código de verificación almacenado para ${email}`, {
       action: 'verification_code_stored',
