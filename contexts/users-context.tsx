@@ -1,6 +1,7 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
+import { useAuth } from "./auth-context"
 
 export interface User {
   id: string
@@ -38,32 +39,60 @@ export function UsersProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { user: authUser, token, isLoading: authLoading } = useAuth()
 
-  const refreshUsers = async () => {
+  const refreshUsers = useCallback(async () => {
+    // Solo cargar usuarios si el usuario está autenticado
+    if (!authUser || !token) {
+      setUsers([])
+      return
+    }
+
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch('/api/usuarios')
+      const response = await fetch('/api/usuarios', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       const data = await response.json()
       
       if (data.success) {
         setUsers(data.data)
       } else {
         setError(data.message || 'Error al cargar usuarios')
+        // Si es un error 401, limpiar usuarios
+        if (response.status === 401) {
+          setUsers([])
+        }
       }
     } catch (err) {
       setError('Error de conexión al cargar usuarios')
       console.error('Error fetching users:', err)
+      setUsers([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [authUser, token])
 
+  // Solo cargar usuarios cuando el usuario esté autenticado
   useEffect(() => {
-    refreshUsers()
-  }, [])
+    if (!authLoading) {
+      if (authUser && token) {
+        refreshUsers()
+      } else {
+        // Si no hay usuario autenticado, limpiar la lista
+        setUsers([])
+      }
+    }
+  }, [authUser, token, authLoading, refreshUsers])
 
   const addUser = async (userData: { nombre_completo?: string; email: string; password: string; rol?: string; nacionalidad?: string; telefono?: string; created_by_admin?: boolean }) => {
+    if (!token) {
+      throw new Error('Autenticación requerida')
+    }
+
     setLoading(true)
     setError(null)
     try {
@@ -71,6 +100,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(userData),
       })
@@ -93,6 +123,10 @@ export function UsersProvider({ children }: { children: ReactNode }) {
   }
 
   const updateUser = async (id: string, updates: Partial<User>) => {
+    if (!token) {
+      throw new Error('Autenticación requerida')
+    }
+
     setLoading(true)
     setError(null)
     
@@ -109,6 +143,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(updates),
       })
@@ -140,11 +175,18 @@ export function UsersProvider({ children }: { children: ReactNode }) {
   }
 
   const deleteUser = async (id: string) => {
+    if (!token) {
+      throw new Error('Autenticación requerida')
+    }
+
     setLoading(true)
     setError(null)
     try {
       const response = await fetch(`/api/usuarios/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       })
       
       const data = await response.json()

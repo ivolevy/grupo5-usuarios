@@ -47,10 +47,20 @@ import { sendUserCreatedEvent } from '@/lib/kafka-api-sender';
 import { logger } from '@/lib/logger';
 import { randomUUID } from 'crypto';
 import { hashPassword } from '@/lib/auth';
+import { verifyJWTMiddleware } from '@/lib/middleware';
 
-// GET /api/usuarios - Obtener todos los usuarios
-export async function GET() {
+// GET /api/usuarios - Obtener todos los usuarios (requiere autenticación)
+export async function GET(request: NextRequest) {
   try {
+    // Verificar autenticación
+    const authResult = verifyJWTMiddleware(request);
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json({
+        success: false,
+        message: 'Autenticación requerida'
+      }, { status: 401 });
+    }
+
     const usuarios = await prisma.usuarios.findMany();
 
     return NextResponse.json({
