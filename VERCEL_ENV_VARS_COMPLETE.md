@@ -1,4 +1,4 @@
-# 🔧 Variables de Entorno para Vercel - Lista AAAAAAAAACompletaAAAAAAAAAAAAAAAAAAAA
+# 🔧 Variables de Entorno para Vercel - Lista AAAAAAAAACompletaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 ## 📋 **INSTRUCCIONES PARA VERCEL:**
 
