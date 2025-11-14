@@ -1,3 +1,4 @@
+import { NextRequest, NextResponse } from 'next/server';
 /**
  * @openapi
  * /api/auth/forgot:
@@ -17,225 +18,198 @@
  *                 format: email
  *     responses:
  *       200:
- *         description: Recovery code sent (if email exists)
+ *         description: Verification code sent
  *       400:
- *         description: Invalid email format
+ *         description: Invalid request
  *       429:
  *         description: Rate limit exceeded
  *       500:
  *         description: Internal server error
  */
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { sendVerificationCode } from '@/lib/email-service';
 import { storeVerificationCode } from '@/lib/email-verification';
+import { sendVerificationCode, isValidEmail } from '@/lib/email-service';
 import { logger } from '@/lib/logger';
 import { rateLimiter } from '@/lib/rate-limiter';
-import { z } from 'zod';
-import { validateData } from '@/lib/validations';
 
-const forgotPasswordSchema = z.object({
-  email: z
-    .string()
-    .email('Debe ser un email válido')
-    .min(1, 'El email es requerido'),
-});
+// Headers CORS reutilizables
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Max-Age': '86400',
+};
 
-// Manejar peticiones OPTIONS (preflight CORS)
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Max-Age': '86400',
-    },
-  });
+// OPTIONS /api/auth/forgot - Manejar preflight request
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200, headers: corsHeaders });
 }
 
 export async function POST(request: NextRequest) {
   try {
+    // Logging de la petición entrante
     const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-    
+    logger.info('Petición de recupero de contraseña recibida', {
+      action: 'forgot_password_request',
+      ip: clientIP,
+      data: { timestamp: new Date().toISOString() }
+    });
+
     // Rate limiting
     const rateLimitResult = await rateLimiter.checkLimit(clientIP, 'forgot_password');
     if (!rateLimitResult.allowed) {
-      return NextResponse.json({
-        success: false,
-        message: 'Demasiadas solicitudes. Intenta nuevamente en unos minutos.'
-      }, { status: 429 });
+      logger.warn('Rate limit excedido para recupero de contraseña', {
+        action: 'rate_limit_exceeded',
+        ip: clientIP,
+        data: { 
+          attempts: rateLimitResult.attempts,
+          resetTime: rateLimitResult.resetTime
+        }
+      });
+      
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Demasiadas solicitudes. Intenta nuevamente en unos minutos.',
+          retryAfter: rateLimitResult.resetTime
+        },
+        { 
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            'Retry-After': rateLimitResult.resetTime.toString()
+          }
+        }
+      );
     }
 
-    const body = await request.json();
-    
-    // Validar datos de entrada
-    const validation = validateData(forgotPasswordSchema, body);
-    if (!validation.success) {
-      return NextResponse.json({
-        success: false,
-        message: 'Datos de entrada inválidos',
-        error: validation.error
-      }, { status: 400 });
-    }
-
-    const { email } = validation.data;
-
-    // Buscar el usuario por email - NO enviar email si no existe en la base de datos
-    let user;
+    // Parsear el cuerpo de la petición
+    let body;
     try {
-      user = await prisma.usuarios.findFirst({ email: email });
-      
-      // Log para debugging (sin revelar información sensible)
-      logger.info('Búsqueda de usuario para recupero de contraseña', {
-        action: 'forgot_password_user_search',
-        data: { 
-          email: email.substring(0, 3) + '***',
-          userFound: !!user,
-          userId: user?.id ? user.id.substring(0, 8) + '***' : null
-        }
-      });
-    } catch (searchError) {
-      logger.error('Error al buscar usuario por email', {
-        action: 'forgot_password_search_error',
-        data: { 
-          email: email.substring(0, 3) + '***',
-          error: searchError instanceof Error ? searchError.message : 'Error desconocido'
-        }
-      });
-      // Si hay error en la búsqueda, no enviar email
-      return NextResponse.json({
-        success: true,
-        message: 'Si el email existe en nuestro sistema, recibirás un código de verificación en unos minutos.'
-      }, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        }
-      });
-    }
-
-    // Solo procesar si el usuario existe en la base de datos
-    if (!user) {
-      // Log del intento sin revelar que el email no existe (seguridad)
-      logger.info('Intento de recupero de contraseña para email no registrado', {
-        action: 'forgot_password_email_not_found',
-        data: { email: email.substring(0, 3) + '***', timestamp: new Date().toISOString() }
+      body = await request.json();
+    } catch (error) {
+      logger.warn('Error al parsear JSON en petición de recupero', {
+        action: 'parse_json_error',
+        ip: clientIP,
+        data: { error: error instanceof Error ? error.message : 'Invalid JSON' }
       });
       
-      // Siempre devolver éxito para no revelar si el email existe (seguridad)
-      return NextResponse.json({
-        success: true,
-        message: 'Si el email existe en nuestro sistema, recibirás un código de verificación en unos minutos.'
-      }, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        }
-      });
+      return NextResponse.json(
+        { success: false, message: 'Formato de petición inválido' },
+        { status: 400, headers: corsHeaders }
+      );
     }
 
-    // El usuario existe, proceder con el envío del código
-    // Generar y almacenar código de verificación en la base de datos
-    let code: string | false;
-    try {
-      code = await storeVerificationCode(email);
-    } catch (codeError) {
-      // Si hay error al generar el código, no enviar email
-      logger.error('Error al generar código de verificación', {
-        action: 'forgot_password_code_generation_error',
-        data: { 
-          email: email.substring(0, 3) + '***',
-          error: codeError instanceof Error ? codeError.message : 'Error desconocido'
-        }
-      });
-      // No revelar que el email no existe o que hubo un error
-      return NextResponse.json({
-        success: true,
-        message: 'Si el email existe en nuestro sistema, recibirás un código de verificación en unos minutos.'
-      }, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        }
-      });
-    }
-    
-    if (!code) {
-      // Si storeVerificationCode retorna false, significa que el usuario no existe
-      // (verificación adicional de seguridad)
-      logger.warn('Intento de generar código para usuario inexistente', {
-        action: 'forgot_password_code_generation_failed_user_not_found',
-        data: { email: email.substring(0, 3) + '***' }
+    const { email } = body;
+
+    // Validar que se proporcionó el email
+    if (!email) {
+      logger.warn('Petición de recupero sin email', {
+        action: 'forgot_password_no_email',
+        ip: clientIP
       });
       
-      // No revelar que el email no existe
-      return NextResponse.json({
-        success: true,
-        message: 'Si el email existe en nuestro sistema, recibirás un código de verificación en unos minutos.'
-      }, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        }
-      });
+      return NextResponse.json(
+        { success: false, message: 'Email es requerido' },
+        { status: 400, headers: corsHeaders }
+      );
     }
 
-    // Enviar email con código solo si el usuario existe y el código se generó correctamente
-    try {
-      const emailSent = await sendVerificationCode(email, code);
+    // Validar formato del email
+    if (!isValidEmail(email)) {
+      logger.warn('Email inválido en petición de recupero', {
+        action: 'forgot_password_invalid_email',
+        ip: clientIP,
+        data: { email }
+      });
       
-      if (emailSent) {
-        logger.info('Email de recupero enviado exitosamente', {
-          action: 'password_recovery_email_sent',
-          data: { email, timestamp: new Date().toISOString() }
-        });
-      } else {
-        logger.error('Error al enviar email de recupero', {
-          action: 'password_recovery_email_send_failed',
-          data: { email }
-        });
-      }
-    } catch (emailError) {
-      logger.error('Error al enviar email de recupero', {
-        action: 'password_recovery_email_error',
-        data: { 
-          email,
-          error: emailError instanceof Error ? emailError.message : 'Error desconocido'
-        }
-      });
-      // No revelar el error al usuario
+      return NextResponse.json(
+        { success: false, message: 'Formato de email inválido' },
+        { status: 400, headers: corsHeaders }
+      );
     }
 
-    // Siempre devolver éxito para no revelar si el email existe
-    return NextResponse.json({
-      success: true,
-      message: 'Si el email existe en nuestro sistema, recibirás un código de verificación en unos minutos.'
-    }, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      }
+    logger.info(`Procesando solicitud de recupero para: ${email}`, {
+      action: 'forgot_password_process',
+      ip: clientIP,
+      data: { email }
     });
 
+    // Generar y almacenar código de verificación
+    const code = await storeVerificationCode(email);
+    
+    // Si no se pudo generar el código (email no existe), retornar mensaje específico
+    if (!code) {
+      logger.info(`Solicitud de recupero para email no registrado: ${email}`, {
+        action: 'forgot_password_email_not_found',
+        ip: clientIP,
+        data: { email }
+      });
+
+      return NextResponse.json({
+        success: false,
+        message: 'El email no está registrado en nuestro sistema.',
+        data: {
+          email,
+          emailExists: false
+        }
+      }, { headers: corsHeaders });
+    }
+    
+    // Enviar email con el código
+    const emailSent = await sendVerificationCode(email, code);
+
+    if (emailSent) {
+      logger.info(`Recupero de contraseña procesado exitosamente para: ${email}`, {
+        action: 'forgot_password_success',
+        ip: clientIP,
+        data: { email }
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Código de verificación enviado a tu email.',
+        data: {
+          email,
+          emailExists: true,
+          codeExpiresIn: 5 // minutos
+        }
+      }, { headers: corsHeaders });
+    } else {
+      logger.error(`Error al enviar email de recupero para: ${email}`, {
+        action: 'forgot_password_email_error',
+        ip: clientIP,
+        data: { email }
+      });
+
+      return NextResponse.json(
+        { success: false, message: 'Error al enviar el email de verificación. Intenta nuevamente.' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
   } catch (error) {
-    logger.error('Error en solicitud de recupero de contraseña', {
-      action: 'forgot_password_error',
+    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    
+    logger.error('Error interno en recupero de contraseña', {
+      action: 'forgot_password_internal_error',
+      ip: clientIP,
       data: { 
-        error: error instanceof Error ? error.message : 'Error desconocido',
+        error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined
       }
     });
 
-    return NextResponse.json({
-      success: false,
-      message: 'Error interno del servidor'
-    }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: 'Error interno del servidor. Intenta nuevamente más tarde.' },
+      { status: 500, headers: corsHeaders }
+    );
   }
 }
 
+// Manejar otros métodos HTTP
+export async function GET() {
+  return NextResponse.json(
+    { success: false, message: 'Método no permitido' },
+    { status: 405, headers: corsHeaders }
+  );
+}

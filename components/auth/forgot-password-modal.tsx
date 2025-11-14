@@ -97,7 +97,11 @@ export default function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordM
           resendCooldown: 60
         }))
       } else {
-        setState(prev => ({ ...prev, errorMsg: data.message || 'Error al enviar código' }))
+        // Mostrar mensaje de error específico
+        const errorMessage = data.data?.emailExists === false 
+          ? 'El email no está registrado en nuestro sistema.'
+          : (data.message || 'Error al enviar código')
+        setState(prev => ({ ...prev, errorMsg: errorMessage }))
       }
     } catch (error) {
       setState(prev => ({ ...prev, errorMsg: 'Error de conexión. Intenta nuevamente.' }))
