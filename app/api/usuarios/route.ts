@@ -106,12 +106,19 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Verificar si el usuario ya existe
-    const existingUser = await prisma.usuarios.findFirst({ 
-      where: { email: email } 
-    });
+    // Verificar si el usuario ya existe por email
+    const existingUser = await prisma.usuarios.findFirst({ email: email });
 
     if (existingUser) {
+      logger.warn('Intento de crear usuario con email duplicado', {
+        action: 'user_creation_duplicate_email',
+        data: { 
+          email: email,
+          existingUserId: existingUser.id,
+          attemptedBy: 'admin'
+        }
+      });
+      
       return NextResponse.json({
         success: false,
         message: 'Ya existe un usuario con este email'

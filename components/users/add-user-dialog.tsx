@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { useUsers, type User } from "@/contexts/users-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,8 +25,6 @@ export function AddUserDialog() {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [passwordError, setPasswordError] = useState("")
-  const [emailError, setEmailError] = useState("")
-  const [isCheckingEmail, setIsCheckingEmail] = useState(false)
   const [formData, setFormData] = useState({
     nombre_completo: "",
     email: "",
@@ -43,49 +41,11 @@ export function AddUserDialog() {
   useEffect(() => {
     if (open) {
       setPasswordError("")
-      setEmailError("")
-      setFormData({
-        nombre_completo: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        rol: "usuario",
-        nacionalidad: "",
-        telefono: "",
-      })
     }
   }, [open])
 
-  // Verificar si el email existe en la base de datos
-  const checkEmailExists = useCallback(async (email: string): Promise<boolean> => {
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return false
-    }
-
-    try {
-      const response = await fetch('/api/usuarios/check-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      })
-
-      const data = await response.json()
-      return data.success && data.exists === true
-    } catch (error) {
-      console.error('Error al verificar email:', error)
-      return false
-    }
-  }, [])
-
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-    
-    // Limpiar error de email cuando el usuario modifica el campo
-    if (field === "email") {
-      setEmailError("")
-    }
     
     // Validar contraseñas en tiempo real
     if (field === "password" || field === "confirmPassword") {
@@ -100,32 +60,6 @@ export function AddUserDialog() {
     }
   }
 
-  // Validar email en tiempo real con debounce
-  useEffect(() => {
-    const email = formData.email.trim()
-    
-    // Solo validar si el email tiene formato válido y no está vacío
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError("")
-      return
-    }
-
-    // Debounce: esperar 500ms después de que el usuario deje de escribir
-    const timeoutId = setTimeout(async () => {
-      setIsCheckingEmail(true)
-      const exists = await checkEmailExists(email)
-      setIsCheckingEmail(false)
-      
-      if (exists) {
-        setEmailError("Este email ya está registrado en el sistema")
-      } else {
-        setEmailError("")
-      }
-    }, 500)
-
-    return () => clearTimeout(timeoutId)
-  }, [formData.email, checkEmailExists])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -138,38 +72,12 @@ export function AddUserDialog() {
       return
     }
 
-    // Validar formato de email
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setEmailError("Por favor ingresa un email válido")
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Por favor ingresa un email válido.",
-      })
-      return
-    }
-
     if (formData.password !== formData.confirmPassword) {
       setPasswordError("Las contraseñas no coinciden")
       toast({
         variant: "destructive",
         title: "Error",
         description: "Las contraseñas no coinciden.",
-      })
-      return
-    }
-
-    // Verificar si el email existe antes de enviar
-    setIsCheckingEmail(true)
-    const emailExists = await checkEmailExists(formData.email)
-    setIsCheckingEmail(false)
-
-    if (emailExists) {
-      setEmailError("Este email ya está registrado en el sistema")
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Este email ya está registrado en el sistema. Por favor usa otro email.",
       })
       return
     }
@@ -188,7 +96,6 @@ export function AddUserDialog() {
       
       setFormData({ nombre_completo: "", email: "", password: "", confirmPassword: "", rol: "usuario", nacionalidad: "", telefono: "" })
       setPasswordError("")
-      setEmailError("")
       setOpen(false)
       
       toast({
@@ -196,18 +103,10 @@ export function AddUserDialog() {
         description: "El usuario ha sido creado exitosamente.",
       })
     } catch (error) {
-      // Manejar errores específicos del backend
-      const errorMessage = error instanceof Error ? error.message : "Error desconocido"
-      
-      // Si el error es sobre email duplicado, actualizar el estado
-      if (errorMessage.includes("email") || errorMessage.includes("existe")) {
-        setEmailError("Este email ya está registrado en el sistema")
-      }
-      
       toast({
         variant: "destructive",
         title: "Error al crear usuario",
-        description: errorMessage,
+        description: error instanceof Error ? error.message : "Error desconocido",
       })
     } finally {
       setIsSubmitting(false)
@@ -242,24 +141,15 @@ export function AddUserDialog() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <div className="relative">
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                placeholder="usuario@example.com"
-                required
-                disabled={isSubmitting || isCheckingEmail}
-                className={emailError ? "border-red-500" : ""}
-              />
-              {isCheckingEmail && (
-                <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />
-              )}
-            </div>
-            {emailError && (
-              <p className="text-sm text-red-600 mt-1">{emailError}</p>
-            )}
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="usuario@example.com"
+              required
+              disabled={isSubmitting}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
