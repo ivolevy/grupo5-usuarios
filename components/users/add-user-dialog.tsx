@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useUsers, type User } from "@/contexts/users-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -44,48 +44,48 @@ export function AddUserDialog() {
     if (open) {
       setPasswordError("")
       setEmailError("")
+      setFormData({
+        nombre_completo: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        rol: "usuario",
+        nacionalidad: "",
+        telefono: "",
+      })
     }
   }, [open])
 
-  // Verificar si el email ya existe (con debounce)
-  useEffect(() => {
-    // Solo verificar si el diálogo está abierto
-    if (!open) {
-      return
+  // Verificar si el email existe en la base de datos
+  const checkEmailExists = useCallback(async (email: string): Promise<boolean> => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return false
     }
 
-    const checkEmail = async () => {
-      // Limpiar error si el email está vacío o no es válido
-      if (!formData.email || !formData.email.includes('@')) {
-        setEmailError("")
-        return
-      }
+    try {
+      const response = await fetch('/api/usuarios/check-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
 
-      setIsCheckingEmail(true)
-      try {
-        const response = await fetch(`/api/usuarios/check-email?email=${encodeURIComponent(formData.email)}`)
-        const data = await response.json()
-        
-        if (data.success && data.exists) {
-          setEmailError("Este email ya está registrado en el sistema")
-        } else {
-          setEmailError("")
-        }
-      } catch (error) {
-        console.error('Error verificando email:', error)
-        setEmailError("")
-      } finally {
-        setIsCheckingEmail(false)
-      }
+      const data = await response.json()
+      return data.success && data.exists === true
+    } catch (error) {
+      console.error('Error al verificar email:', error)
+      return false
     }
-
-    // Debounce: esperar 500ms después de que el usuario deje de escribir
-    const timeoutId = setTimeout(checkEmail, 500)
-    return () => clearTimeout(timeoutId)
-  }, [formData.email, open])
+  }, [])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+    
+    // Limpiar error de email cuando el usuario modifica el campo
+    if (field === "email") {
+      setEmailError("")
+    }
     
     // Validar contraseñas en tiempo real
     if (field === "password" || field === "confirmPassword") {
@@ -100,6 +100,32 @@ export function AddUserDialog() {
     }
   }
 
+  // Validar email en tiempo real con debounce
+  useEffect(() => {
+    const email = formData.email.trim()
+    
+    // Solo validar si el email tiene formato válido y no está vacío
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError("")
+      return
+    }
+
+    // Debounce: esperar 500ms después de que el usuario deje de escribir
+    const timeoutId = setTimeout(async () => {
+      setIsCheckingEmail(true)
+      const exists = await checkEmailExists(email)
+      setIsCheckingEmail(false)
+      
+      if (exists) {
+        setEmailError("Este email ya está registrado en el sistema")
+      } else {
+        setEmailError("")
+      }
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [formData.email, checkEmailExists])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -112,11 +138,13 @@ export function AddUserDialog() {
       return
     }
 
-    if (emailError) {
+    // Validar formato de email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setEmailError("Por favor ingresa un email válido")
       toast({
         variant: "destructive",
         title: "Error",
-        description: "El email ingresado ya está registrado. Por favor usa otro email.",
+        description: "Por favor ingresa un email válido.",
       })
       return
     }
@@ -131,6 +159,21 @@ export function AddUserDialog() {
       return
     }
 
+    // Verificar si el email existe antes de enviar
+    setIsCheckingEmail(true)
+    const emailExists = await checkEmailExists(formData.email)
+    setIsCheckingEmail(false)
+
+    if (emailExists) {
+      setEmailError("Este email ya está registrado en el sistema")
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Este email ya está registrado en el sistema. Por favor usa otro email.",
+      })
+      return
+    }
+
     setIsSubmitting(true)
     try {
       await addUser({
@@ -140,10 +183,12 @@ export function AddUserDialog() {
         rol: formData.rol,
         nacionalidad: formData.nacionalidad,
         telefono: formData.telefono || undefined,
-        created_by_admin: true,
+        created_by_admin: true, // Este usuario fue creado por un admin
       })
       
-      // Cerrar el diálogo (handleOpenChange se encarga de limpiar el formulario)
+      setFormData({ nombre_completo: "", email: "", password: "", confirmPassword: "", rol: "usuario", nacionalidad: "", telefono: "" })
+      setPasswordError("")
+      setEmailError("")
       setOpen(false)
       
       toast({
@@ -151,7 +196,14 @@ export function AddUserDialog() {
         description: "El usuario ha sido creado exitosamente.",
       })
     } catch (error) {
+      // Manejar errores específicos del backend
       const errorMessage = error instanceof Error ? error.message : "Error desconocido"
+      
+      // Si el error es sobre email duplicado, actualizar el estado
+      if (errorMessage.includes("email") || errorMessage.includes("existe")) {
+        setEmailError("Este email ya está registrado en el sistema")
+      }
+      
       toast({
         variant: "destructive",
         title: "Error al crear usuario",
@@ -162,27 +214,8 @@ export function AddUserDialog() {
     }
   }
 
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen)
-    // Limpiar el formulario cuando se cierra el diálogo
-    if (!newOpen) {
-      setFormData({ 
-        nombre_completo: "", 
-        email: "", 
-        password: "", 
-        confirmPassword: "", 
-        rol: "usuario", 
-        nacionalidad: "", 
-        telefono: "" 
-      })
-      setPasswordError("")
-      setEmailError("")
-      setIsCheckingEmail(false)
-    }
-  }
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="bg-blue-600 hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" />
@@ -214,16 +247,14 @@ export function AddUserDialog() {
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => handleInputChange("email", e.target.value)}
                 placeholder="usuario@example.com"
                 required
-                disabled={isSubmitting}
+                disabled={isSubmitting || isCheckingEmail}
                 className={emailError ? "border-red-500" : ""}
               />
               {isCheckingEmail && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                </div>
+                <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />
               )}
             </div>
             {emailError && (
@@ -320,7 +351,7 @@ export function AddUserDialog() {
             <Button 
               type="submit" 
               className="bg-blue-600 hover:bg-blue-700"
-              disabled={isSubmitting || !!emailError || isCheckingEmail}
+              disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
