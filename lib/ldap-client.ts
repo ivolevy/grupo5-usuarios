@@ -5,6 +5,7 @@
 
 import { Client } from 'ldapts';
 import { ldapConfig, Usuario, LDAPUserEntry } from './ldap-config';
+import { hashPassword } from './auth';
 
 class LDAPClient {
   private client: Client;
@@ -259,6 +260,28 @@ class LDAPClient {
           }
 
           // Construir metadatos
+          // IMPORTANTE: Si data.password es texto plano, lo usamos para userPassword de LDAP
+          // y generamos el hash bcrypt para guardarlo en metadatos (para verificación en la app)
+          // Si data.password ya es un hash bcrypt, lo guardamos en metadatos pero NO en userPassword
+          let passwordForLDAP = data.password!;
+          let passwordForMetadata: string | undefined = undefined;
+          
+          if (data.password?.startsWith('$2')) {
+            // Ya es un hash bcrypt, guardarlo en metadatos pero NO en userPassword de LDAP
+            passwordForMetadata = data.password;
+            // No actualizar userPassword si ya es un hash (mantener el valor actual o usar texto plano si no existe)
+            // En este caso, si es creación, necesitamos texto plano para LDAP
+            throw new Error('No se puede crear usuario con hash bcrypt. Se requiere contraseña en texto plano para LDAP.');
+          } else {
+            // Es texto plano, generar hash bcrypt para metadatos
+            try {
+              passwordForMetadata = await hashPassword(data.password!);
+            } catch (hashError) {
+              console.warn('Error al hashear contraseña para metadatos:', hashError);
+              // Continuar sin hash en metadatos, pero esto afectará la verificación en la app
+            }
+          }
+          
           const metadata = {
             supabase_id: data.id || `temp-${Date.now()}`,
             created_at: data.created_at || new Date().toISOString(),
@@ -268,7 +291,8 @@ class LDAPClient {
             nombre_completo: data.nombre_completo,
             nacionalidad: data.nacionalidad,
             telefono: data.telefono,
-            password: data.password, // Incluir contraseña en metadatos si existe
+            // Guardar hash bcrypt en metadatos para verificación en la app
+            password: passwordForMetadata,
             password_reset_token: data.password_reset_token,
             password_reset_expires: data.password_reset_expires,
             email_verification_token: data.email_verification_token,
@@ -295,7 +319,7 @@ class LDAPClient {
             givenName: givenName,
             mail: data.email!,
             uid: uid,
-            userPassword: data.password!,
+            userPassword: passwordForLDAP, // Texto plano para LDAP (LDAP lo hasheará según su configuración)
             title: data.rol || 'usuario',
             description: description
           };

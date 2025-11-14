@@ -131,13 +131,15 @@ export async function POST(request: NextRequest) {
 
     // PASO 1: Crear el usuario directamente en LDAP
     try {
-      const hashedPassword = await hashPassword(password);
+      // IMPORTANTE: LDAP necesita la contraseña en texto plano para userPassword
+      // El cliente LDAP generará automáticamente el hash bcrypt y lo guardará en metadatos
+      // Esto permite que LDAP autentique con texto plano y la app verifique con bcrypt
       const newUser = await prisma.usuarios.create({
         data: {
           id: userId,
           nombre_completo: nombre_completo || 'Usuario sin nombre',
           email: email,
-          password: hashedPassword, // Guardar contraseña hasheada en LDAP
+          password: password, // Texto plano para LDAP - el cliente generará hash bcrypt en metadatos
           rol: rol || 'usuario',
           nacionalidad: nacionalidad || 'No especificada',
           telefono: telefono || undefined,
