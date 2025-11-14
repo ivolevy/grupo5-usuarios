@@ -1,55 +1,34 @@
-import { NextRequest, NextResponse } from 'next/server'
-/**
- * @openapi
- * /api/usuarios/check-email:
- *   post:
- *     tags: [usuarios]
- *     summary: Check if user email exists
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [email]
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *     responses:
- *       200:
- *         description: Email existence status
- *       400:
- *         description: Validation error
- *       500:
- *         description: Internal server error
- */
-import { prisma } from '@/lib/db'
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
 
-export async function POST(request: NextRequest) {
+// GET /api/usuarios/check-email?email=example@email.com
+export async function GET(request: NextRequest) {
   try {
-    const { email } = await request.json()
+    const searchParams = request.nextUrl.searchParams;
+    const email = searchParams.get('email');
 
     if (!email) {
-      return NextResponse.json(
-        { success: false, message: 'Email es requerido' },
-        { status: 400 }
-      )
+      return NextResponse.json({
+        success: false,
+        message: 'Email es requerido'
+      }, { status: 400 });
     }
 
-    // Verificar si el email existe en la base de datos usando LDAP
-    const user = await prisma.usuarios.findFirst({ email: email })
+    // Buscar si existe un usuario con ese email
+    const existingUser = await prisma.usuarios.findFirst({
+      where: { email: email }
+    });
 
     return NextResponse.json({
       success: true,
-      exists: !!user,
-      message: user ? 'Email encontrado' : 'Email no encontrado'
-    })
-
+      exists: !!existingUser
+    });
   } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    console.error('Error al verificar email:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Error al verificar email',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    }, { status: 500 });
   }
 }

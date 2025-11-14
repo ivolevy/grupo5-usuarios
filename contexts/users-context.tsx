@@ -110,8 +110,9 @@ export function UsersProvider({ children }: { children: ReactNode }) {
       if (data.success) {
         await refreshUsers() // Refresh the list
       } else {
-        setError(data.message || 'Error al crear usuario')
-        throw new Error(data.message)
+        const errorMessage = data.message || 'Error al crear usuario'
+        setError(errorMessage)
+        throw new Error(errorMessage)
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error de conexión al crear usuario'

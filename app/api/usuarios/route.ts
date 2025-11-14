@@ -107,7 +107,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar si el usuario ya existe
-    const existingUser = await prisma.usuarios.findFirst({ email: email });
+    const existingUser = await prisma.usuarios.findFirst({ 
+      where: { email: email } 
+    });
 
     if (existingUser) {
       return NextResponse.json({
@@ -124,18 +126,20 @@ export async function POST(request: NextRequest) {
     try {
       const hashedPassword = await hashPassword(password);
       const newUser = await prisma.usuarios.create({
-        id: userId,
-        nombre_completo: nombre_completo || 'Usuario sin nombre',
-        email: email,
-        password: hashedPassword, // Guardar contraseña hasheada en LDAP
-        rol: rol || 'usuario',
-        nacionalidad: nacionalidad || 'No especificada',
-        telefono: telefono || undefined,
-        email_verified: true,
-        created_at: createdAt,
-        updated_at: createdAt,
-        created_by_admin: created_by_admin ?? false,
-        initial_password_changed: false
+        data: {
+          id: userId,
+          nombre_completo: nombre_completo || 'Usuario sin nombre',
+          email: email,
+          password: hashedPassword, // Guardar contraseña hasheada en LDAP
+          rol: rol || 'usuario',
+          nacionalidad: nacionalidad || 'No especificada',
+          telefono: telefono || undefined,
+          email_verified: true,
+          created_at: createdAt,
+          updated_at: createdAt,
+          created_by_admin: created_by_admin ?? false,
+          initial_password_changed: false
+        }
       });
 
       logger.info('Usuario creado exitosamente en LDAP', {
@@ -214,21 +218,37 @@ export async function POST(request: NextRequest) {
         message: 'Usuario creado exitosamente'
       }, { status: 201 }); // 201 Created
 
-    } catch (ldapError) {
-      // Si falla la creación en LDAP, retornar error
+    } catch (ldapError: any) {
+      // Si falla la creación en LDAP, verificar si es por email duplicado
+      const errorMessage = ldapError instanceof Error ? ldapError.message : 'Error desconocido';
+      
+      // Prisma lanza error con código P2002 cuando hay violación de constraint único
+      const isDuplicateError = ldapError?.code === 'P2002' || 
+                               errorMessage.includes('unique constraint') ||
+                               errorMessage.includes('Unique constraint');
+      
       logger.error('Error creando usuario en LDAP', {
         action: 'user_created_ldap_failed',
         data: {
           userId: userId,
           email: email,
-          message: ldapError instanceof Error ? ldapError.message : 'Error desconocido'
+          message: errorMessage,
+          code: ldapError?.code,
+          isDuplicate: isDuplicateError
         }
       });
+
+      if (isDuplicateError) {
+        return NextResponse.json({
+          success: false,
+          message: 'Ya existe un usuario con este email'
+        }, { status: 409 });
+      }
 
       return NextResponse.json({
         success: false,
         message: 'Error al crear usuario en LDAP',
-        error: ldapError instanceof Error ? ldapError.message : 'Error desconocido'
+        error: errorMessage
       }, { status: 500 });
     }
 

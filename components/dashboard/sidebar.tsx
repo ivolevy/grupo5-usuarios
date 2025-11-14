@@ -11,7 +11,6 @@ import { usePermissions, Permission } from "@/hooks/use-permissions"
 
 const navigation = [
   { name: "Inicio", href: "/", icon: Home, permission: null },
-  { name: "Dashboard", href: "/dashboard", icon: Shield, permission: Permission.ADMIN_DASHBOARD },
   { name: "Usuarios", href: "/dashboard/users", icon: Users, permission: Permission.ADMIN_DASHBOARD },
 ]
 

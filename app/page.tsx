@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plane, Users, Shield, TrendingUp, Settings, BarChart3 } from "lucide-react"
+import { Users, Shield, TrendingUp, Settings, BarChart3 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
@@ -15,29 +15,6 @@ import { useEffect } from "react"
 export default function HomePage() {
   const { user, isLoading } = useAuth()
   const router = useRouter()
-
-  const features = [
-    {
-      icon: Plane,
-      title: "Gestión de Vuelos",
-      description: "Administra y controla todos los aspectos de tus vuelos de manera eficiente."
-    },
-    {
-      icon: Users,
-      title: "Gestión de Usuarios",
-      description: "Sistema completo de usuarios con roles y permisos personalizables."
-    },
-    {
-      icon: BarChart3,
-      title: "Análisis y Reportes",
-      description: "Visualiza estadísticas y métricas importantes de tu sistema."
-    },
-    {
-      icon: Shield,
-      title: "Seguridad Avanzada",
-      description: "Protección robusta con autenticación y autorización por roles."
-    }
-  ]
 
   // Redirigir al login si no hay usuario autenticado
   useEffect(() => {
@@ -87,119 +64,111 @@ export default function HomePage() {
               <p className="text-slate-600">Aquí tienes acceso a todas las funcionalidades del sistema según tu rol.</p>
             </div>
 
-            {/* Features Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {features.map((feature, index) => (
-                <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                      <feature.icon className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <CardTitle className="text-lg font-semibold text-slate-900">
-                      {feature.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-slate-600">
-                      {feature.description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
             {/* User Actions Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-blue-600" />
-                    Tu Perfil
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-600 mb-4">
-                    Gestiona tu información personal y configuración de cuenta
-                  </p>
-                  <p className="text-xs text-slate-500 mb-4">
-                    Rol actual: <span className="font-semibold capitalize">{user.rol}</span>
-                  </p>
-                  <Button 
-                    onClick={() => router.push('/dashboard/profile')}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Ver Perfil
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {user.rol === 'admin' && (
-                <>
-                  <Card className="border-0 shadow-sm">
+            <div className="max-w-5xl mx-auto">
+              {user.rol === 'admin' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+                  {/* Gestión de Usuarios Card */}
+                  <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <BarChart3 className="w-5 h-5 text-blue-600" />
-                        Dashboard Admin
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-slate-600 mb-4">
-                        Accede a métricas, estadísticas y análisis del sistema
-                      </p>
-                      <Button 
-                        onClick={() => router.push('/dashboard')}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                      >
-                        <BarChart3 className="w-4 h-4 mr-2" />
-                        Ir al Dashboard
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-0 shadow-sm">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Shield className="w-5 h-5 text-blue-600" />
+                      <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-3">
+                        <Shield className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <CardTitle className="text-lg font-bold text-slate-900">
                         Gestión de Usuarios
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-slate-600 mb-4">
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-slate-600">
                         Administra usuarios, roles y permisos del sistema
                       </p>
                       <Button 
                         onClick={() => router.push('/dashboard/users')}
-                        className="w-full"
-                        variant="outline"
+                        className="w-full bg-blue-600 hover:bg-blue-700 shadow-sm"
                       >
                         <Users className="w-4 h-4 mr-2" />
                         Gestionar Usuarios
                       </Button>
                     </CardContent>
                   </Card>
-                </>
-              )}
 
-              {user.rol !== 'admin' && (
-                <Card className="border-0 shadow-sm md:col-span-2">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-blue-600" />
-                      Estado del Sistema
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-slate-600 mb-4">
-                      Tu rol actual: <span className="font-semibold capitalize">{user.rol}</span>
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      Tienes acceso a las funcionalidades básicas del sistema. 
-                      Para acceso administrativo, contacta con tu administrador.
-                    </p>
-                  </CardContent>
-                </Card>
+                  {/* Tu Perfil Card */}
+                  <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+                    <CardHeader>
+                      <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-3">
+                        <Users className="w-6 h-6 text-emerald-600" />
+                      </div>
+                      <CardTitle className="text-lg font-bold text-slate-900">
+                        Tu Perfil
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-slate-600">
+                        Gestiona tu información personal y configuración de cuenta
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Rol actual: <span className="font-semibold capitalize">{user.rol}</span>
+                      </p>
+                      <Button 
+                        onClick={() => router.push('/dashboard/profile')}
+                        className="w-full bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200 shadow-sm"
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        Ver Perfil
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+                  {/* Tu Perfil Card */}
+                  <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+                    <CardHeader>
+                      <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-3">
+                        <Users className="w-6 h-6 text-emerald-600" />
+                      </div>
+                      <CardTitle className="text-lg font-bold text-slate-900">
+                        Tu Perfil
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-slate-600">
+                        Gestiona tu información personal y configuración de cuenta
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Rol actual: <span className="font-semibold capitalize">{user.rol}</span>
+                      </p>
+                      <Button 
+                        onClick={() => router.push('/dashboard/profile')}
+                        className="w-full bg-blue-600 hover:bg-blue-700 shadow-sm"
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        Ver Perfil
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Estado del Sistema Card */}
+                  <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+                    <CardHeader>
+                      <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-3">
+                        <TrendingUp className="w-6 h-6 text-amber-600" />
+                      </div>
+                      <CardTitle className="text-lg font-bold text-slate-900">
+                        Estado del Sistema
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-slate-600 mb-2">
+                        Tu rol actual: <span className="font-semibold capitalize">{user.rol}</span>
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        Tienes acceso a las funcionalidades básicas del sistema. 
+                        Para acceso administrativo, contacta con tu administrador.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
               )}
             </div>
           </div>
