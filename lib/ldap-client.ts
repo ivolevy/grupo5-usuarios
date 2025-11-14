@@ -411,6 +411,40 @@ class LDAPClient {
           const oldDn = this.generateDN(oldUid);
 
           // Construir metadatos actualizados
+          // IMPORTANTE: Si updatedData.password es un hash bcrypt (empieza con $2),
+          // solo lo guardamos en metadatos, NO en userPassword de LDAP
+          // Si es texto plano o undefined, preservamos el userPassword actual de LDAP
+          let passwordForMetadata: string | undefined = updatedData.password;
+          let passwordForLDAP: string | undefined = undefined;
+          
+          // Si se está actualizando el password explícitamente
+          if (data.password !== undefined) {
+            if (data.password.startsWith('$2')) {
+              // Es un hash bcrypt, solo guardarlo en metadatos
+              passwordForMetadata = data.password;
+              // NO actualizar userPassword en LDAP (mantener el actual)
+              passwordForLDAP = undefined;
+            } else {
+              // Es texto plano, actualizar userPassword en LDAP
+              passwordForLDAP = data.password;
+              // También generar hash bcrypt para metadatos
+              try {
+                const { hashPassword } = await import('./auth');
+                passwordForMetadata = await hashPassword(data.password);
+              } catch (hashError) {
+                console.warn('Error al hashear contraseña para metadatos en update:', hashError);
+                passwordForMetadata = undefined;
+              }
+            }
+          } else {
+            // No se está actualizando el password, preservar el hash bcrypt en metadatos si existe
+            // pero NO tocar userPassword de LDAP
+            if (updatedData.password?.startsWith('$2')) {
+              passwordForMetadata = updatedData.password;
+              passwordForLDAP = undefined; // No actualizar userPassword
+            }
+          }
+          
           const metadata = {
             supabase_id: updatedData.id,
             created_at: updatedData.created_at,
@@ -420,18 +454,13 @@ class LDAPClient {
             nombre_completo: updatedData.nombre_completo,
             nacionalidad: updatedData.nacionalidad,
             telefono: updatedData.telefono,
-            password: updatedData.password, // Incluir contraseña en metadatos si existe
+            password: passwordForMetadata, // Hash bcrypt en metadatos
             password_reset_token: updatedData.password_reset_token,
             password_reset_expires: updatedData.password_reset_expires,
             email_verification_token: updatedData.email_verification_token,
             created_by_admin: updatedData.created_by_admin,
             initial_password_changed: updatedData.initial_password_changed
           };
-
-
-          
-          // Debug: Log del campo password
-
 
           const description = `Migrado desde Supabase - ${JSON.stringify(metadata)}`;
 
@@ -445,17 +474,23 @@ class LDAPClient {
             sn = nameParts.slice(1).join(' ') || uid;
           }
 
-          const ldapEntry = {
+          const ldapEntry: any = {
             objectClass: ['inetOrgPerson', 'organizationalPerson', 'person', 'top'],
             cn: updatedData.nombre_completo || uid,
             sn: sn,
             givenName: givenName,
             mail: updatedData.email,
             uid: uid,
-            userPassword: updatedData.password,
             title: updatedData.rol,
             description: description
           };
+          
+          // Solo actualizar userPassword si es texto plano (no hash bcrypt)
+          if (passwordForLDAP !== undefined) {
+            ldapEntry.userPassword = passwordForLDAP;
+          }
+          // Si passwordForLDAP es undefined, NO incluimos userPassword en ldapEntry
+          // para que LDAP mantenga el valor actual
 
           // Agregar campos opcionales si existen
           if (updatedData.telefono) {
@@ -593,6 +628,23 @@ class LDAPClient {
               }
             }
           });
+          
+          // Actualizar userPassword solo si passwordForLDAP tiene un valor (texto plano)
+          // Si passwordForLDAP es undefined, NO lo tocamos (mantiene el valor actual)
+          if (passwordForLDAP !== undefined) {
+            const passwordAttr = new Attribute({
+              type: 'userPassword',
+              values: [String(passwordForLDAP)]
+            });
+            const passwordChange = new Change({
+              operation: 'replace',
+              modification: passwordAttr
+            });
+            basicChanges.push(passwordChange);
+            console.log('🔄 Actualizando userPassword en LDAP (texto plano)');
+          } else {
+            console.log('ℹ️  No se actualiza userPassword (mantiene valor actual o es hash bcrypt)');
+          }
 
           // Aplicar cambios básicos
           try {
