@@ -167,7 +167,7 @@ export function AdvancedFilters({
                   <SelectContent>
                     <SelectItem value="all">Todos los roles</SelectItem>
                     <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="interno">Moderador</SelectItem>
+                    <SelectItem value="interno">Usuario Interno</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

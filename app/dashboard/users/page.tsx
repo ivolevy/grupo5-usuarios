@@ -256,7 +256,7 @@ export default function UsersPage() {
                 <Shield className="w-4 h-4 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm font-roboto-medium text-gray-600">Admin/Mod</p>
+                <p className="text-sm font-roboto-medium text-gray-600">Admin/Interno</p>
                 <p className="text-xl font-roboto-bold text-dark-gray">{totalStats.adminModerator}</p>
               </div>
             </div>
@@ -325,7 +325,7 @@ export default function UsersPage() {
               className="flex items-center gap-2"
             >
               <Shield className="w-4 h-4" />
-              Administradores y Moderadores
+              Administradores y Usuarios Internos
             </TabsTrigger>
             <TabsTrigger 
               value="normal-users" 
@@ -362,7 +362,7 @@ export default function UsersPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="font-roboto-bold">Administradores y Moderadores</CardTitle>
+                  <CardTitle className="font-roboto-bold">Administradores y Usuarios Internos</CardTitle>
                   <CardDescription className="font-roboto-regular">
                     {filteredUsers.length} de {usuariosAdminModerador.length} usuarios con permisos especiales
                     {Object.values(filters).some(value => 
