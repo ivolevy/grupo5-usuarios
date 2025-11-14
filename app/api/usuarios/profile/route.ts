@@ -189,7 +189,6 @@ export async function PUT(request: NextRequest) {
     }
 
     const updateData: any = {};
-    let emailChanged = false;
 
     // Actualizar campos básicos
     if (nombre_completo !== undefined) updateData.nombre_completo = nombre_completo;
@@ -202,22 +201,18 @@ export async function PUT(request: NextRequest) {
       password: updateData.password ? '[HASHED]' : 'undefined'
     });
 
-    // Cambio de email
+    // Cambio de email - NO PERMITIDO
     if (email && email !== currentUser.email) {
-      // Verificar que el nuevo email no esté en uso
-      const emailInUse = await prisma.usuarios.findFirst({ email: email });
+      logger.security('Attempt to change email in profile update', clientIp, {
+        userId: user.userId,
+        currentEmail: currentUser.email,
+        attemptedEmail: email
+      });
 
-      if (emailInUse) {
-        return NextResponse.json({
-          success: false,
-          message: 'Ya existe un usuario con este email'
-        }, { status: 409 });
-      }
-
-      updateData.email = email;
-      updateData.email_verified = false; // Requerir nueva verificación
-      updateData.email_verification_token = null; // Limpiar token anterior
-      emailChanged = true;
+      return NextResponse.json({
+        success: false,
+        message: 'No se puede modificar el email por seguridad. Contacta a un administrador si necesitas cambiar tu email.'
+      }, { status: 403 });
     }
 
     // Cambio de contraseña
@@ -305,15 +300,13 @@ export async function PUT(request: NextRequest) {
 
     logger.userAction('profile_updated', user.userId, clientIp, {
       changes: Object.keys(updateData),
-      emailChanged,
       passwordChanged: !!newPassword
     });
 
     return NextResponse.json({
       success: true,
       data: updatedUser,
-      message: 'Perfil actualizado exitosamente',
-      warnings: emailChanged ? ['Tu email ha cambiado. Necesitarás verificar el nuevo email.'] : undefined
+      message: 'Perfil actualizado exitosamente'
     });
 
   } catch (error) {

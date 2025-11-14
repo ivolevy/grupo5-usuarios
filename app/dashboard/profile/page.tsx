@@ -369,7 +369,12 @@ export default function ProfilePage() {
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="tu@email.com"
+                      disabled
+                      className="bg-gray-100 cursor-not-allowed"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      El email no se puede modificar por seguridad
+                    </p>
                   </div>
 
                   <div>
