@@ -46,7 +46,6 @@ import { createUsuarioSchema, validateData } from '@/lib/validations';
 import { sendUserCreatedEvent } from '@/lib/kafka-api-sender';
 import { logger } from '@/lib/logger';
 import { randomUUID } from 'crypto';
-import { hashPassword } from '@/lib/auth';
 import { verifyJWTMiddleware } from '@/lib/middleware';
 
 // GET /api/usuarios - Obtener todos los usuarios (requiere autenticación)
@@ -134,21 +133,20 @@ export async function POST(request: NextRequest) {
       // IMPORTANTE: LDAP necesita la contraseña en texto plano para userPassword
       // El cliente LDAP generará automáticamente el hash bcrypt y lo guardará en metadatos
       // Esto permite que LDAP autentique con texto plano y la app verifique con bcrypt
+      // NOTA: El cliente LDAP no usa la sintaxis { data: {...} } de Prisma, pasa los datos directamente
       const newUser = await prisma.usuarios.create({
-        data: {
-          id: userId,
-          nombre_completo: nombre_completo || 'Usuario sin nombre',
-          email: email,
-          password: password, // Texto plano para LDAP - el cliente generará hash bcrypt en metadatos
-          rol: rol || 'usuario',
-          nacionalidad: nacionalidad || 'No especificada',
-          telefono: telefono || undefined,
-          email_verified: true,
-          created_at: createdAt,
-          updated_at: createdAt,
-          created_by_admin: created_by_admin ?? false,
-          initial_password_changed: false
-        }
+        id: userId,
+        nombre_completo: nombre_completo || 'Usuario sin nombre',
+        email: email,
+        password: password, // Texto plano para LDAP - el cliente generará hash bcrypt en metadatos
+        rol: rol || 'usuario',
+        nacionalidad: nacionalidad || 'No especificada',
+        telefono: telefono || undefined,
+        email_verified: true,
+        created_at: createdAt,
+        updated_at: createdAt,
+        created_by_admin: created_by_admin ?? false,
+        initial_password_changed: false
       });
 
       logger.info('Usuario creado exitosamente en LDAP', {
