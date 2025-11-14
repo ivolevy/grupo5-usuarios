@@ -172,14 +172,29 @@ class LDAPClient {
             await this.connect();
           }
 
+          // Escapar caracteres especiales en el email para el filtro LDAP
+          // Los caracteres que deben escaparse son: * ( ) \ / NUL
+          const escapedEmail = where.email
+            .replace(/\\/g, '\\5c')
+            .replace(/\*/g, '\\2a')
+            .replace(/\(/g, '\\28')
+            .replace(/\)/g, '\\29')
+            .replace(/\//g, '\\2f')
+            .replace(/\0/g, '\\00');
+
           const searchResult = await this.client.search(ldapConfig.usersOU, {
             scope: 'sub',
-            filter: `(mail=${where.email})`,
+            filter: `(mail=${escapedEmail})`,
             attributes: ['*']
           });
 
+          let foundUser: Usuario | null = null;
           for await (const entry of searchResult.searchEntries) {
-            return this.ldapUserToUsuario(entry);
+            foundUser = this.ldapUserToUsuario(entry);
+            // Verificar que el email coincida exactamente (por si acaso)
+            if (foundUser.email.toLowerCase() === where.email.toLowerCase()) {
+              return foundUser;
+            }
           }
 
           return null;

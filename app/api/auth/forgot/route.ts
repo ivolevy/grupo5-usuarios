@@ -82,7 +82,39 @@ export async function POST(request: NextRequest) {
     const { email } = validation.data;
 
     // Buscar el usuario por email - NO enviar email si no existe en la base de datos
-    const user = await prisma.usuarios.findFirst({ email: email });
+    let user;
+    try {
+      user = await prisma.usuarios.findFirst({ email: email });
+      
+      // Log para debugging (sin revelar información sensible)
+      logger.info('Búsqueda de usuario para recupero de contraseña', {
+        action: 'forgot_password_user_search',
+        data: { 
+          email: email.substring(0, 3) + '***',
+          userFound: !!user,
+          userId: user?.id ? user.id.substring(0, 8) + '***' : null
+        }
+      });
+    } catch (searchError) {
+      logger.error('Error al buscar usuario por email', {
+        action: 'forgot_password_search_error',
+        data: { 
+          email: email.substring(0, 3) + '***',
+          error: searchError instanceof Error ? searchError.message : 'Error desconocido'
+        }
+      });
+      // Si hay error en la búsqueda, no enviar email
+      return NextResponse.json({
+        success: true,
+        message: 'Si el email existe en nuestro sistema, recibirás un código de verificación en unos minutos.'
+      }, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      });
+    }
 
     // Solo procesar si el usuario existe en la base de datos
     if (!user) {
@@ -106,23 +138,55 @@ export async function POST(request: NextRequest) {
     }
 
     // El usuario existe, proceder con el envío del código
+    // Generar y almacenar código de verificación en la base de datos
+    let code: string | false;
     try {
-      // Generar y almacenar código de verificación en la base de datos
-      const code = await storeVerificationCode(email);
+      code = await storeVerificationCode(email);
+    } catch (codeError) {
+      // Si hay error al generar el código, no enviar email
+      logger.error('Error al generar código de verificación', {
+        action: 'forgot_password_code_generation_error',
+        data: { 
+          email: email.substring(0, 3) + '***',
+          error: codeError instanceof Error ? codeError.message : 'Error desconocido'
+        }
+      });
+      // No revelar que el email no existe o que hubo un error
+      return NextResponse.json({
+        success: true,
+        message: 'Si el email existe en nuestro sistema, recibirás un código de verificación en unos minutos.'
+      }, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      });
+    }
+    
+    if (!code) {
+      // Si storeVerificationCode retorna false, significa que el usuario no existe
+      // (verificación adicional de seguridad)
+      logger.warn('Intento de generar código para usuario inexistente', {
+        action: 'forgot_password_code_generation_failed_user_not_found',
+        data: { email: email.substring(0, 3) + '***' }
+      });
       
-      if (!code) {
-        logger.error('Error al generar código de verificación', {
-          action: 'forgot_password_code_generation_failed',
-          data: { email }
-        });
-        
-        return NextResponse.json({
-          success: false,
-          message: 'Error al generar el código de verificación. Intenta nuevamente.'
-        }, { status: 500 });
-      }
+      // No revelar que el email no existe
+      return NextResponse.json({
+        success: true,
+        message: 'Si el email existe en nuestro sistema, recibirás un código de verificación en unos minutos.'
+      }, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      });
+    }
 
-      // Enviar email con código solo si el usuario existe y el código se generó correctamente
+    // Enviar email con código solo si el usuario existe y el código se generó correctamente
+    try {
       const emailSent = await sendVerificationCode(email, code);
       
       if (emailSent) {
@@ -136,15 +200,15 @@ export async function POST(request: NextRequest) {
           data: { email }
         });
       }
-    } catch (error) {
-      logger.error('Error en proceso de recupero de contraseña', {
-        action: 'password_recovery_error',
+    } catch (emailError) {
+      logger.error('Error al enviar email de recupero', {
+        action: 'password_recovery_email_error',
         data: { 
-          email, 
-          error: error instanceof Error ? error.message : 'Error desconocido',
-          stack: error instanceof Error ? error.stack : undefined
+          email,
+          error: emailError instanceof Error ? emailError.message : 'Error desconocido'
         }
       });
+      // No revelar el error al usuario
     }
 
     // Siempre devolver éxito para no revelar si el email existe
