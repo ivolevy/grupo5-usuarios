@@ -189,7 +189,6 @@ export async function PUT(request: NextRequest) {
     }
 
     const updateData: any = {};
-    let emailChanged = false;
 
     // Actualizar campos básicos
     if (nombre_completo !== undefined) updateData.nombre_completo = nombre_completo;
@@ -207,7 +206,7 @@ export async function PUT(request: NextRequest) {
     if (email && email !== currentUser.email) {
       // Ignorar el cambio de email - no permitir modificación desde perfil
       // El email solo puede ser cambiado por un administrador
-      logger.info('Attempt to change email from profile page blocked', {
+      logger.security('Attempt to change email from profile page blocked', clientIp, {
         userId: user.userId,
         currentEmail: currentUser.email,
         attemptedEmail: email
@@ -300,15 +299,13 @@ export async function PUT(request: NextRequest) {
 
     logger.userAction('profile_updated', user.userId, clientIp, {
       changes: Object.keys(updateData),
-      emailChanged,
       passwordChanged: !!newPassword
     });
 
     return NextResponse.json({
       success: true,
       data: updatedUser,
-      message: 'Perfil actualizado exitosamente',
-      warnings: emailChanged ? ['Tu email ha cambiado. Necesitarás verificar el nuevo email.'] : undefined
+      message: 'Perfil actualizado exitosamente'
     });
 
   } catch (error) {
