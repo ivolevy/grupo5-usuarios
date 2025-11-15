@@ -202,22 +202,17 @@ export async function PUT(request: NextRequest) {
       password: updateData.password ? '[HASHED]' : 'undefined'
     });
 
-    // Cambio de email
+    // Cambio de email - NO PERMITIDO desde el perfil del usuario
+    // El email no se puede modificar desde la configuración de perfil
     if (email && email !== currentUser.email) {
-      // Verificar que el nuevo email no esté en uso
-      const emailInUse = await prisma.usuarios.findFirst({ email: email });
-
-      if (emailInUse) {
-        return NextResponse.json({
-          success: false,
-          message: 'Ya existe un usuario con este email'
-        }, { status: 409 });
-      }
-
-      updateData.email = email;
-      updateData.email_verified = false; // Requerir nueva verificación
-      updateData.email_verification_token = null; // Limpiar token anterior
-      emailChanged = true;
+      // Ignorar el cambio de email - no permitir modificación desde perfil
+      // El email solo puede ser cambiado por un administrador
+      logger.info('Attempt to change email from profile page blocked', {
+        userId: user.userId,
+        currentEmail: currentUser.email,
+        attemptedEmail: email
+      });
+      // No agregar email a updateData - simplemente ignorarlo
     }
 
     // Cambio de contraseña
