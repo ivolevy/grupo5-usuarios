@@ -54,14 +54,17 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
     e.preventDefault()
     setIsLoading(true)
 
+    // Excluir el email de los datos a actualizar
+    const { email, ...dataToUpdate } = formData
+
     console.log('🔵 [FRONTEND] Datos enviados al backend para actualizar usuario:', {
       userId: user.id,
-      formData: formData,
+      formData: dataToUpdate,
       endpoint: `/api/usuarios/${user.id}`
     })
 
     try {
-      await updateUser(user.id, formData)
+      await updateUser(user.id, dataToUpdate)
       toast({
         title: "Usuario actualizado",
         description: "Los datos del usuario se han actualizado correctamente.",
@@ -118,7 +121,10 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
               value={formData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
               placeholder="usuario@ejemplo.com"
+              disabled
+              className="bg-gray-50 cursor-not-allowed"
             />
+            <p className="text-xs text-gray-500">El email no se puede modificar</p>
           </div>
 
           <div className="space-y-2">

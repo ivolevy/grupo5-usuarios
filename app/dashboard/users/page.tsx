@@ -52,7 +52,7 @@ export default function UsersPage() {
   
   // Función de filtrado avanzado
   const applyAdvancedFilters = (users: typeof currentUsers) => {
-    return users.filter((user) => {
+    let filtered = users.filter((user) => {
       // Filtro por búsqueda de texto
       const matchesSearch = searchTerm === "" || 
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -83,6 +83,17 @@ export default function UsersPage() {
 
       return matchesSearch && matchesRole && matchesActivity && matchesDateRange && matchesNationality
     })
+
+    // Ordenar para que el usuario actual aparezca primero
+    if (user) {
+      filtered = filtered.sort((a, b) => {
+        if (a.email === user.email) return -1
+        if (b.email === user.email) return 1
+        return 0
+      })
+    }
+
+    return filtered
   }
   
   const filteredUsers = applyAdvancedFilters(currentUsers)
@@ -163,28 +174,31 @@ export default function UsersPage() {
             </TableCell>
           </TableRow>
         ) : (
-          filteredUsers.map((user) => (
-            <TableRow key={user.email}>
+          filteredUsers.map((currentUser) => (
+            <TableRow key={currentUser.email}>
               <TableCell className="font-roboto-medium">
-                {user.nombre_completo || "Sin nombre"}
+                {currentUser.nombre_completo || "Sin nombre"}
+                {user && currentUser.email === user.email && (
+                  <span className="ml-2 text-blue-600 font-roboto-regular text-sm">(Tú)</span>
+                )}
               </TableCell>
-              <TableCell className="font-roboto-medium">{user.email}</TableCell>
+              <TableCell className="font-roboto-medium">{currentUser.email}</TableCell>
               <TableCell>
-                <Badge variant="outline" className={cn("capitalize", getRoleBadge(user.rol))}>
-                  {user.rol}
+                <Badge variant="outline" className={cn("capitalize", getRoleBadge(currentUser.rol))}>
+                  {currentUser.rol}
                 </Badge>
               </TableCell>
               <TableCell className="text-gray-600 font-roboto-regular">
-                {user.nacionalidad || "No especificada"}
+                {currentUser.nacionalidad || "No especificada"}
               </TableCell>
               <TableCell className="text-gray-600 font-roboto-regular">
-                {user.telefono || "No especificado"}
+                {currentUser.telefono || "No especificado"}
               </TableCell>
               <TableCell className="text-gray-600 font-roboto-regular">
-                {new Date(user.created_at).toLocaleDateString('es-ES')}
+                {new Date(currentUser.created_at).toLocaleDateString('es-ES')}
               </TableCell>
               <TableCell className="text-center">
-                {user.created_by_admin ? (
+                {currentUser.created_by_admin ? (
                   <Check className="w-5 h-5 text-gray-700 mx-auto" />
                 ) : (
                   <X className="w-5 h-5 text-gray-400 mx-auto" />
@@ -192,7 +206,7 @@ export default function UsersPage() {
               </TableCell>
               {showActions && (
                 <TableCell className="text-center">
-                  <UserActions user={user} />
+                  <UserActions user={currentUser} />
                 </TableCell>
               )}
             </TableRow>
