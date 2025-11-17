@@ -35,7 +35,6 @@ class KafkaConsumerService {
   private consumer: Consumer | null = null;
   private isRunning = false;
   private isProcessing = false;
-  private processedMessageIds = new Set<string>(); // Para idempotencia
 
   /**
    * Conecta el consumer a Kafka
@@ -236,16 +235,6 @@ class KafkaConsumerService {
         }
       });
 
-      // Marcar como procesado solo si fue exitoso
-      this.processedMessageIds.add(envelope.messageId);
-      // Limpiar messageIds antiguos (mantener solo los últimos 1000 para no llenar memoria)
-      if (this.processedMessageIds.size > 1000) {
-        const firstId = Array.from(this.processedMessageIds)[0];
-        if (firstId) {
-          this.processedMessageIds.delete(firstId);
-        }
-      }
-
     } catch (error) {
       logger.error('Error procesando evento de usuario creado', {
         action: 'kafka_process_user_created_error',
@@ -274,19 +263,6 @@ class KafkaConsumerService {
 
       // Parsear el envelope del evento
       const envelope: KafkaEventEnvelope = JSON.parse(value);
-
-      // Idempotencia: Verificar si ya procesamos este messageId
-      if (this.processedMessageIds.has(envelope.messageId)) {
-        logger.warn('Mensaje duplicado detectado, ignorando', {
-          action: 'kafka_duplicate_message_ignored',
-          data: {
-            eventType: envelope.eventType,
-            messageId: envelope.messageId,
-            producer: envelope.producer
-          }
-        });
-        return;
-      }
 
       logger.info('Mensaje recibido de Kafka', {
         action: 'kafka_message_received',
