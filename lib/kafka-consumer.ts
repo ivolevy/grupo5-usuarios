@@ -36,6 +36,7 @@ class KafkaConsumerService {
   private consumer: Consumer | null = null;
   private isRunning = false;
   private isProcessing = false;
+  private processedMessageIds = new Set<string>(); // Para idempotencia
 
   /**
    * Conecta el consumer a Kafka
@@ -123,6 +124,17 @@ class KafkaConsumerService {
     try {
       const rawPayload = this.parsePayload(envelope.payload);
       
+      // Log del payload recibido para debugging
+      logger.info('Payload recibido de Kafka', {
+        action: 'kafka_payload_received',
+        data: {
+          rawPayload: rawPayload,
+          payloadType: typeof rawPayload,
+          payloadKeys: typeof rawPayload === 'object' && rawPayload !== null ? Object.keys(rawPayload) : 'N/A',
+          messageId: envelope.messageId
+        }
+      });
+      
       // Validar el payload con el schema
       const payload = userCreatedEventSchema.parse(rawPayload) as UserCreatedPayload;
 
@@ -135,22 +147,7 @@ class KafkaConsumerService {
         }
       });
 
-      // Verificar si el usuario ya existe por email
-      const existingUserByEmail = await prisma.usuarios.findFirst({ email: payload.email });
-      if (existingUserByEmail) {
-        logger.warn('Usuario ya existe por email, ignorando evento', {
-          action: 'kafka_user_already_exists_email',
-          data: {
-            userId: payload.userId,
-            email: payload.email,
-            existingUserId: existingUserByEmail.id,
-            messageId: envelope.messageId
-          }
-        });
-        return;
-      }
-
-      // Verificar si el ID ya existe y generar uno nuevo si es necesario
+      // Verificar si el ID ya existe y generar uno nuevo si es necesario (PRIMERO)
       let finalUserId = payload.userId;
       let existingUserById = await prisma.usuarios.findUnique({ id: payload.userId });
       
@@ -198,6 +195,21 @@ class KafkaConsumerService {
         });
       }
 
+      // Verificar si el usuario ya existe por email (DESPUÉS de verificar ID)
+      const existingUserByEmail = await prisma.usuarios.findFirst({ email: payload.email });
+      if (existingUserByEmail) {
+        logger.warn('Usuario ya existe por email, ignorando evento', {
+          action: 'kafka_user_already_exists_email',
+          data: {
+            userId: finalUserId,
+            email: payload.email,
+            existingUserId: existingUserByEmail.id,
+            messageId: envelope.messageId
+          }
+        });
+        return;
+      }
+
       // Hashear la contraseña
       const hashedPassword = await hashPassword(payload.password);
 
@@ -224,6 +236,16 @@ class KafkaConsumerService {
           messageId: envelope.messageId
         }
       });
+
+      // Marcar como procesado solo si fue exitoso
+      this.processedMessageIds.add(envelope.messageId);
+      // Limpiar messageIds antiguos (mantener solo los últimos 1000 para no llenar memoria)
+      if (this.processedMessageIds.size > 1000) {
+        const firstId = Array.from(this.processedMessageIds)[0];
+        if (firstId) {
+          this.processedMessageIds.delete(firstId);
+        }
+      }
 
     } catch (error) {
       logger.error('Error procesando evento de usuario creado', {
@@ -254,6 +276,19 @@ class KafkaConsumerService {
       // Parsear el envelope del evento
       const envelope: KafkaEventEnvelope = JSON.parse(value);
 
+      // Idempotencia: Verificar si ya procesamos este messageId
+      if (this.processedMessageIds.has(envelope.messageId)) {
+        logger.warn('Mensaje duplicado detectado, ignorando', {
+          action: 'kafka_duplicate_message_ignored',
+          data: {
+            eventType: envelope.eventType,
+            messageId: envelope.messageId,
+            producer: envelope.producer
+          }
+        });
+        return;
+      }
+
       logger.info('Mensaje recibido de Kafka', {
         action: 'kafka_message_received',
         data: {
@@ -267,6 +302,7 @@ class KafkaConsumerService {
       switch (envelope.eventType) {
         case 'users.user.created':
           await this.handleUserCreatedEvent(envelope);
+          // El messageId se marca como procesado dentro de handleUserCreatedEvent si fue exitoso
           break;
         default:
           logger.warn('Tipo de evento no manejado', {
@@ -308,16 +344,10 @@ class KafkaConsumerService {
         throw new Error('Consumer no inicializado');
       }
 
-      // Suscribirse al topic de usuarios
+      // Suscribirse SOLO al topic de usuarios (no a core.ingress para evitar duplicados)
       await this.consumer.subscribe({
         topic: KAFKA_TOPICS.USERS_EVENTS,
         fromBeginning: false, // Solo leer mensajes nuevos
-      });
-
-      // También escuchar en core.ingress si hay eventos allí
-      await this.consumer.subscribe({
-        topic: KAFKA_TOPICS.CORE_INGRESS,
-        fromBeginning: false,
       });
 
       this.isRunning = true;
@@ -325,7 +355,8 @@ class KafkaConsumerService {
       logger.info('Kafka consumer iniciado y escuchando eventos', {
         action: 'kafka_consumer_started',
         data: {
-          topics: [KAFKA_TOPICS.USERS_EVENTS, KAFKA_TOPICS.CORE_INGRESS]
+          topics: [KAFKA_TOPICS.USERS_EVENTS],
+          note: 'Solo suscrito a users.events para evitar duplicados'
         }
       });
 
@@ -334,6 +365,15 @@ class KafkaConsumerService {
         eachMessage: async ({ topic, partition, message }) => {
           try {
             this.isProcessing = true;
+            // Log del topic para debugging
+            logger.debug('Mensaje recibido desde topic', {
+              action: 'kafka_message_from_topic',
+              data: {
+                topic,
+                partition,
+                offset: message.offset
+              }
+            });
             await this.processMessage(message);
           } catch (error) {
             logger.error('Error en eachMessage handler', {
