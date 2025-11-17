@@ -532,7 +532,7 @@ class LDAPClient {
             console.log('✅ Usuario anterior borrado');
             
             // Crear nuevo usuario con datos actualizados
-            const ldapEntry = {
+            const ldapEntry: any = {
               objectClass: ['inetOrgPerson', 'organizationalPerson', 'person', 'top'],
               uid: uid,
               cn: updatedData.nombre_completo || uid,
@@ -541,10 +541,16 @@ class LDAPClient {
               mail: updatedData.email,
               title: updatedData.rol || 'usuario',
               userPassword: updatedData.password,
-              description: description,
-              st: updatedData.nacionalidad || '',
-              telephoneNumber: updatedData.telefono || ''
+              description: description
             };
+
+            // Agregar campos opcionales solo si tienen valores válidos (LDAP no acepta cadenas vacías)
+            if (updatedData.telefono) {
+              ldapEntry.telephoneNumber = updatedData.telefono;
+            }
+            if (updatedData.nacionalidad) {
+              ldapEntry.st = updatedData.nacionalidad;
+            }
 
             // Verificar conexión antes de crear el nuevo usuario
             if (!this.client.isConnected) {
