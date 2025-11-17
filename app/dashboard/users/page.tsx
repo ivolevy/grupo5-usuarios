@@ -27,7 +27,7 @@ export default function UsersPage() {
     dateRange: { from: undefined, to: undefined },
     searchTerm: ""
   })
-  const { getAdminModeratorUsers, getNormalUsers, loading, error } = useUsers()
+  const { getAdminModeratorUsers, getNormalUsers, getUniqueNationalities, loading, error } = useUsers()
   const { user } = useAuth()
 
   // Verificar si el usuario tiene permisos de administrador
@@ -46,6 +46,9 @@ export default function UsersPage() {
   
   // Filtrar usuarios según la pestaña activa
   const currentUsers = activeTab === "admin-moderator" ? usuariosAdminModerador : usuariosNormales
+  
+  // Obtener nacionalidades únicas desde LDAP
+  const uniqueNationalities = getUniqueNationalities()
   
   // Función de filtrado avanzado
   const applyAdvancedFilters = (users: typeof currentUsers) => {
@@ -329,6 +332,7 @@ export default function UsersPage() {
               isOpen={isFiltersOpen}
               onToggle={() => setIsFiltersOpen(!isFiltersOpen)}
               activeTab={activeTab}
+              availableNationalities={uniqueNationalities}
             />
           </div>
         </div>

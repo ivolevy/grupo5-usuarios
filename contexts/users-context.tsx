@@ -31,6 +31,7 @@ interface UsersContextType {
   getUsersByRole: (role: string) => User[]
   getAdminModeratorUsers: () => User[]
   getNormalUsers: () => User[]
+  getUniqueNationalities: () => string[]
 }
 
 const UsersContext = createContext<UsersContextType | undefined>(undefined)
@@ -223,6 +224,18 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     return users.filter(user => user.rol === "usuario")
   }
 
+  const getUniqueNationalities = () => {
+    const nationalities = new Set<string>()
+    
+    users.forEach(user => {
+      if (user.nacionalidad && user.nacionalidad.trim() !== '') {
+        nationalities.add(user.nacionalidad)
+      }
+    })
+
+    return Array.from(nationalities).sort()
+  }
+
   return (
     <UsersContext.Provider
       value={{
@@ -237,6 +250,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
         getUsersByRole,
         getAdminModeratorUsers,
         getNormalUsers,
+        getUniqueNationalities,
       }}
     >
       {children}
