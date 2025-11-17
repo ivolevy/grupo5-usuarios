@@ -4,7 +4,6 @@ import { Consumer, Kafka } from 'kafkajs';
 import { kafka, KAFKA_TOPICS, consumerConfig } from './kafka-config';
 import { logger } from './logger';
 import { prisma } from './db';
-import { hashPassword } from './auth';
 import { userCreatedEventSchema } from './kafka-schemas';
 import { randomUUID } from 'crypto';
 
@@ -210,15 +209,15 @@ class KafkaConsumerService {
         return;
       }
 
-      // Hashear la contraseña
-      const hashedPassword = await hashPassword(payload.password);
-
+      // IMPORTANTE: LDAP necesita la contraseña en texto plano para userPassword
+      // El cliente LDAP generará automáticamente el hash bcrypt y lo guardará en metadatos
+      // Esto permite que LDAP autentique con texto plano y la app verifique con bcrypt
       // Crear el usuario con el ID final (original o generado)
       const newUser = await prisma.usuarios.create({
         id: finalUserId, // Usar el ID original o el nuevo generado
         nombre_completo: payload.nombre_completo,
         email: payload.email,
-        password: hashedPassword,
+        password: payload.password, // Texto plano para LDAP - el cliente generará hash bcrypt en metadatos
         rol: payload.roles[0] || 'usuario',
         email_verified: true,
         nacionalidad: payload.nationalityOrOrigin || 'No especificada',
