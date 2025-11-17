@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { EditUserDialog } from "@/components/users/edit-user-dialog"
-import { MoreHorizontal, Trash2, UserCheck, UserX, Edit } from "lucide-react"
+import { MoreHorizontal, Trash2, Edit } from "lucide-react"
 
 interface UserActionsProps {
   user: User
@@ -24,11 +24,7 @@ interface UserActionsProps {
 export function UserActions({ user }: UserActionsProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
-  const { updateUser, deleteUser } = useUsers()
-
-  const handleVerificationToggle = () => {
-    updateUser(user.id, { email_verified: !user.email_verified })
-  }
+  const { deleteUser } = useUsers()
 
   const handleDelete = () => {
     deleteUser(user.id)
@@ -52,19 +48,6 @@ export function UserActions({ user }: UserActionsProps) {
               Editar Usuario
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={handleVerificationToggle}>
-            {user.email_verified ? (
-              <>
-                <UserX className="mr-2 h-4 w-4" />
-                Marcar como no verificado
-              </>
-            ) : (
-              <>
-                <UserCheck className="mr-2 h-4 w-4" />
-                Marcar como verificado
-              </>
-            )}
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-600 focus:text-red-600">
             <Trash2 className="mr-2 h-4 w-4" />
             Eliminar

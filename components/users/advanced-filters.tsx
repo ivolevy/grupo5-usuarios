@@ -16,14 +16,9 @@ import { cn } from "@/lib/utils"
 
 export interface FilterOptions {
   role: string
-  verificationStatus: string
   activityStatus: string
   nationality: string
   dateRange: {
-    from: Date | undefined
-    to: Date | undefined
-  }
-  lastLoginRange: {
     from: Date | undefined
     to: Date | undefined
   }
@@ -67,18 +62,6 @@ export function AdvancedFilters({
     onFiltersChange(newFilters)
   }
 
-  const handleLastLoginRangeChange = (type: 'from' | 'to', date: Date | undefined) => {
-    const newFilters = {
-      ...localFilters,
-      lastLoginRange: {
-        ...localFilters.lastLoginRange,
-        [type]: date
-      }
-    }
-    setLocalFilters(newFilters)
-    onFiltersChange(newFilters)
-  }
-
   const applyFilters = () => {
     onFiltersChange(localFilters)
   }
@@ -86,11 +69,9 @@ export function AdvancedFilters({
   const resetFilters = () => {
     const resetFilters = {
       role: "all",
-      verificationStatus: "all",
       activityStatus: "all",
       nationality: "all",
       dateRange: { from: undefined, to: undefined },
-      lastLoginRange: { from: undefined, to: undefined },
       searchTerm: ""
     }
     setLocalFilters(resetFilters)
@@ -100,11 +81,9 @@ export function AdvancedFilters({
   const getActiveFiltersCount = () => {
     let count = 0
     if (filters.role && filters.role !== "all") count++
-    if (filters.verificationStatus && filters.verificationStatus !== "all") count++
     if (filters.activityStatus && filters.activityStatus !== "all") count++
     if (filters.nationality && filters.nationality !== "all") count++
     if (filters.dateRange.from || filters.dateRange.to) count++
-    if (filters.lastLoginRange.from || filters.lastLoginRange.to) count++
     return count
   }
 
@@ -172,24 +151,6 @@ export function AdvancedFilters({
                 </Select>
               </div>
             )}
-
-            {/* Filtro por estado de verificación */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Estado de Verificación</Label>
-              <Select
-                value={localFilters.verificationStatus}
-                onValueChange={(value) => handleFilterChange('verificationStatus', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos los estados" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="verified">Verificado</SelectItem>
-                  <SelectItem value="unverified">Sin verificar</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
             {/* Filtro por nacionalidad */}
             <div className="space-y-2">
@@ -473,71 +434,6 @@ export function AdvancedFilters({
                         mode="single"
                         selected={localFilters.dateRange.to}
                         onSelect={(date) => handleDateRangeChange('to', date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            </div>
-
-            {/* Filtro por último login */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Último Login</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs text-gray-500">Desde</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !localFilters.lastLoginRange.from && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {localFilters.lastLoginRange.from ? (
-                          localFilters.lastLoginRange.from.toLocaleDateString('es-ES')
-                        ) : (
-                          "Seleccionar"
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={localFilters.lastLoginRange.from}
-                        onSelect={(date) => handleLastLoginRangeChange('from', date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-500">Hasta</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !localFilters.lastLoginRange.to && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {localFilters.lastLoginRange.to ? (
-                          localFilters.lastLoginRange.to.toLocaleDateString('es-ES')
-                        ) : (
-                          "Seleccionar"
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={localFilters.lastLoginRange.to}
-                        onSelect={(date) => handleLastLoginRangeChange('to', date)}
                         initialFocus
                       />
                     </PopoverContent>

@@ -6,6 +6,7 @@ import { logger } from './logger';
 import { prisma } from './db';
 import { hashPassword } from './auth';
 import { userCreatedEventSchema } from './kafka-schemas';
+import { randomUUID } from 'crypto';
 
 // Tipo para el envelope del evento
 interface KafkaEventEnvelope {
@@ -134,26 +135,75 @@ class KafkaConsumerService {
         }
       });
 
-      // Verificar si el usuario ya existe
-      const existingUser = await prisma.usuarios.findFirst({ email: payload.email });
-      if (existingUser) {
-        logger.warn('Usuario ya existe, ignorando evento', {
-          action: 'kafka_user_already_exists',
+      // Verificar si el usuario ya existe por email
+      const existingUserByEmail = await prisma.usuarios.findFirst({ email: payload.email });
+      if (existingUserByEmail) {
+        logger.warn('Usuario ya existe por email, ignorando evento', {
+          action: 'kafka_user_already_exists_email',
           data: {
             userId: payload.userId,
             email: payload.email,
+            existingUserId: existingUserByEmail.id,
             messageId: envelope.messageId
           }
         });
         return;
       }
 
+      // Verificar si el ID ya existe y generar uno nuevo si es necesario
+      let finalUserId = payload.userId;
+      let existingUserById = await prisma.usuarios.findUnique({ id: payload.userId });
+      
+      if (existingUserById) {
+        logger.warn('ID del evento ya existe, generando nuevo ID', {
+          action: 'kafka_user_id_exists_generating_new',
+          data: {
+            originalUserId: payload.userId,
+            email: payload.email,
+            messageId: envelope.messageId
+          }
+        });
+
+        // Generar un nuevo ID que no exista
+        let attempts = 0;
+        const maxAttempts = 10; // Límite de intentos para evitar loops infinitos
+        
+        while (existingUserById && attempts < maxAttempts) {
+          finalUserId = randomUUID();
+          existingUserById = await prisma.usuarios.findUnique({ id: finalUserId });
+          attempts++;
+        }
+
+        if (attempts >= maxAttempts) {
+          logger.error('No se pudo generar un ID único después de múltiples intentos', {
+            action: 'kafka_user_id_generation_failed',
+            data: {
+              originalUserId: payload.userId,
+              email: payload.email,
+              messageId: envelope.messageId
+            }
+          });
+          throw new Error('No se pudo generar un ID único para el usuario');
+        }
+
+        logger.info('Nuevo ID generado exitosamente', {
+          action: 'kafka_user_new_id_generated',
+          data: {
+            originalUserId: payload.userId,
+            newUserId: finalUserId,
+            email: payload.email,
+            attempts: attempts,
+            messageId: envelope.messageId
+          }
+        });
+      }
+
       // Hashear la contraseña
       const hashedPassword = await hashPassword(payload.password);
 
-      // Crear el usuario
+      // Crear el usuario con el ID final (original o generado)
       const newUser = await prisma.usuarios.create({
-        id: payload.userId, // Usar el userId del evento
+        id: finalUserId, // Usar el ID original o el nuevo generado
         nombre_completo: payload.nombre_completo,
         email: payload.email,
         password: hashedPassword,
@@ -168,6 +218,8 @@ class KafkaConsumerService {
         action: 'kafka_user_created_success',
         data: {
           userId: newUser.id,
+          originalUserId: payload.userId,
+          idWasRegenerated: payload.userId !== finalUserId,
           email: newUser.email,
           messageId: envelope.messageId
         }

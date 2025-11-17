@@ -22,11 +22,9 @@ export default function UsersPage() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const [filters, setFilters] = useState<FilterOptions>({
     role: "all",
-    verificationStatus: "all",
     activityStatus: "all",
     nationality: "all",
     dateRange: { from: undefined, to: undefined },
-    lastLoginRange: { from: undefined, to: undefined },
     searchTerm: ""
   })
   const { getAdminModeratorUsers, getNormalUsers, loading, error } = useUsers()
@@ -62,11 +60,6 @@ export default function UsersPage() {
       // Filtro por rol - Solo aplicar si estamos en la pestaña de admin-moderator
       const matchesRole = activeTab === "normal-users" || filters.role === "all" || user.rol === filters.role
 
-      // Filtro por estado de verificación
-      const matchesVerification = filters.verificationStatus === "all" || 
-        (filters.verificationStatus === "verified" && user.email_verified) ||
-        (filters.verificationStatus === "unverified" && !user.email_verified)
-
       // Filtro por actividad - Solo para usuarios normales
       const matchesActivity = activeTab === "admin-moderator" || filters.activityStatus === "all" || 
         (filters.activityStatus === "active" && user.last_login_at && 
@@ -80,17 +73,12 @@ export default function UsersPage() {
       const matchesDateRange = (!filters.dateRange.from || userCreatedAt >= filters.dateRange.from) &&
         (!filters.dateRange.to || userCreatedAt <= filters.dateRange.to)
 
-      // Filtro por último login
-      const userLastLogin = user.last_login_at ? new Date(user.last_login_at) : null
-      const matchesLastLoginRange = (!filters.lastLoginRange.from || (userLastLogin && userLastLogin >= filters.lastLoginRange.from)) &&
-        (!filters.lastLoginRange.to || (userLastLogin && userLastLogin <= filters.lastLoginRange.to))
-
       // Filtro por nacionalidad
       const matchesNationality = filters.nationality === "all" ||
         (filters.nationality === "Sin especificar" && (!user.nacionalidad || user.nacionalidad === "")) ||
         (user.nacionalidad && user.nacionalidad === filters.nationality)
 
-      return matchesSearch && matchesRole && matchesVerification && matchesActivity && matchesDateRange && matchesLastLoginRange && matchesNationality
+      return matchesSearch && matchesRole && matchesActivity && matchesDateRange && matchesNationality
     })
   }
   
@@ -130,11 +118,9 @@ export default function UsersPage() {
   const handleResetFilters = () => {
     setFilters({
       role: "all",
-      verificationStatus: "all",
       activityStatus: "all",
       nationality: "all",
       dateRange: { from: undefined, to: undefined },
-      lastLoginRange: { from: undefined, to: undefined },
       searchTerm: ""
     })
     setSearchTerm("")
@@ -147,37 +133,35 @@ export default function UsersPage() {
           <TableHead>Nombre Completo</TableHead>
           <TableHead>Email</TableHead>
           <TableHead>Rol</TableHead>
-          <TableHead>Estado</TableHead>
           <TableHead>Nacionalidad</TableHead>
           <TableHead>Teléfono</TableHead>
           <TableHead>Fecha Creación</TableHead>
           <TableHead>Creado por Admin</TableHead>
-          <TableHead>Último Login</TableHead>
           {showActions && <TableHead className="text-center">Acciones</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 10 : 9} className="text-center py-8">
+            <TableCell colSpan={showActions ? 8 : 7} className="text-center py-8">
               Cargando usuarios...
             </TableCell>
           </TableRow>
         ) : error ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 10 : 9} className="text-center py-8 text-red-600">
+            <TableCell colSpan={showActions ? 8 : 7} className="text-center py-8 text-red-600">
               Error: {error}
             </TableCell>
           </TableRow>
         ) : filteredUsers.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 10 : 9} className="text-center py-8">
+            <TableCell colSpan={showActions ? 8 : 7} className="text-center py-8">
               No se encontraron usuarios
             </TableCell>
           </TableRow>
         ) : (
           filteredUsers.map((user) => (
-            <TableRow key={user.id}>
+            <TableRow key={user.email}>
               <TableCell className="font-roboto-medium">
                 {user.nombre_completo || "Sin nombre"}
               </TableCell>
@@ -185,11 +169,6 @@ export default function UsersPage() {
               <TableCell>
                 <Badge variant="outline" className={cn("capitalize", getRoleBadge(user.rol))}>
                   {user.rol}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline" className={cn("capitalize", getVerifiedBadge(user.email_verified))}>
-                  {user.email_verified ? "Verificado" : "Sin verificar"}
                 </Badge>
               </TableCell>
               <TableCell className="text-gray-600 font-roboto-regular">
@@ -207,9 +186,6 @@ export default function UsersPage() {
                 ) : (
                   <X className="w-5 h-5 text-gray-400 mx-auto" />
                 )}
-              </TableCell>
-              <TableCell className="text-gray-600 font-roboto-regular">
-                {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString('es-ES') : "Nunca"}
               </TableCell>
               {showActions && (
                 <TableCell className="text-center">
