@@ -1,4 +1,4 @@
-/**AAAAAAAAAA
+/**AAAAAAAAAAAAAAAAAAAA
  * @openapi
  * /api/admin/metrics:
  *   get:
