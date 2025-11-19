@@ -182,3 +182,32 @@ export async function sendUserDeletedEvent(userData: {
 }): Promise<boolean> {
   return sendEventToKafka('users.user.deleted', userData, 'users-service');
 }
+
+/**
+ * Envía evento de usuario insertado en base de datos a Kafka
+ * Este evento se envía cuando se confirma que el usuario fue insertado exitosamente en LDAP
+ */
+export async function sendUserDatabaseInsertedEvent(userData: {
+  email: string;
+  createdAt: string;
+}): Promise<boolean> {
+  try {
+    // Construir payload según el esquema del broker
+    // El broker espera camelCase: createdAt (no created_at)
+    const payload = {
+      email: userData.email,
+      createdAt: new Date(userData.createdAt).toISOString()
+    };
+
+    return sendEventToKafka('users.user.database.inserted', payload, 'users-service');
+  } catch (error) {
+    logger.error('Error preparando evento de usuario insertado en base de datos', {
+      action: 'kafka_database_inserted_preparation_error',
+      data: {
+        error: error instanceof Error ? error.message : 'Error desconocido',
+        userData
+      }
+    });
+    return false;
+  }
+}

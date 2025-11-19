@@ -43,7 +43,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { createUsuarioSchema, validateData } from '@/lib/validations';
-import { sendUserCreatedEvent } from '@/lib/kafka-api-sender';
+import { sendUserCreatedEvent, sendUserDatabaseInsertedEvent } from '@/lib/kafka-api-sender';
 import { logger } from '@/lib/logger';
 import { randomUUID } from 'crypto';
 import { verifyJWTMiddleware } from '@/lib/middleware';
@@ -157,7 +157,44 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      // PASO 2: Enviar evento a Kafka - El consumer intentará crear el usuario pero ya existirá
+      // PASO 2: Enviar evento de inserción en base de datos a Kafka
+      try {
+        const dbInsertedSuccess = await sendUserDatabaseInsertedEvent({
+          email: email,
+          createdAt: createdAt
+        });
+
+        if (dbInsertedSuccess) {
+          logger.info('Evento de usuario insertado en base de datos enviado a Kafka', {
+            action: 'user_database_inserted_kafka_success',
+            data: {
+              userId: userId,
+              email: email
+            }
+          });
+        } else {
+          // Log warning pero no fallar - el usuario ya fue creado en LDAP
+          logger.warn('Error enviando evento de inserción en BD a Kafka, pero usuario ya creado en LDAP', {
+            action: 'user_database_inserted_kafka_failed_non_critical',
+            data: {
+              userId: userId,
+              email: email
+            }
+          });
+        }
+      } catch (dbInsertedError) {
+        // Log warning pero no fallar - el usuario ya fue creado en LDAP
+        logger.warn('Excepción enviando evento de inserción en BD a Kafka, pero usuario ya creado en LDAP', {
+          action: 'user_database_inserted_kafka_error_non_critical',
+          data: {
+            userId: userId,
+            email: email,
+            message: dbInsertedError instanceof Error ? dbInsertedError.message : 'Error desconocido'
+          }
+        });
+      }
+
+      // PASO 3: Enviar evento a Kafka - El consumer intentará crear el usuario pero ya existirá
       try {
         // Preparar datos del evento
         const eventData: Parameters<typeof sendUserCreatedEvent>[0] = {

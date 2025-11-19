@@ -5,6 +5,7 @@ import { kafka, KAFKA_TOPICS, consumerConfig } from './kafka-config';
 import { logger } from './logger';
 import { prisma } from './db';
 import { userCreatedEventSchema } from './kafka-schemas';
+import { sendUserDatabaseInsertedEvent } from './kafka-api-sender';
 import { randomUUID } from 'crypto';
 
 // Tipo para el envelope del evento
@@ -234,6 +235,46 @@ class KafkaConsumerService {
           messageId: envelope.messageId
         }
       });
+
+      // Enviar evento de inserción en base de datos a Kafka
+      try {
+        const dbInsertedSuccess = await sendUserDatabaseInsertedEvent({
+          email: newUser.email,
+          createdAt: newUser.created_at
+        });
+
+        if (dbInsertedSuccess) {
+          logger.info('Evento de usuario insertado en base de datos enviado a Kafka desde consumer', {
+            action: 'kafka_user_database_inserted_from_consumer_success',
+            data: {
+              userId: newUser.id,
+              email: newUser.email,
+              messageId: envelope.messageId
+            }
+          });
+        } else {
+          // Log warning pero no fallar - el usuario ya fue creado en LDAP
+          logger.warn('Error enviando evento de inserción en BD a Kafka desde consumer, pero usuario ya creado en LDAP', {
+            action: 'kafka_user_database_inserted_from_consumer_failed_non_critical',
+            data: {
+              userId: newUser.id,
+              email: newUser.email,
+              messageId: envelope.messageId
+            }
+          });
+        }
+      } catch (dbInsertedError) {
+        // Log warning pero no fallar - el usuario ya fue creado en LDAP
+        logger.warn('Excepción enviando evento de inserción en BD a Kafka desde consumer, pero usuario ya creado en LDAP', {
+          action: 'kafka_user_database_inserted_from_consumer_error_non_critical',
+          data: {
+            userId: newUser.id,
+            email: newUser.email,
+            messageId: envelope.messageId,
+            error: dbInsertedError instanceof Error ? dbInsertedError.message : 'Error desconocido'
+          }
+        });
+      }
 
     } catch (error) {
       logger.error('Error procesando evento de usuario creado', {
