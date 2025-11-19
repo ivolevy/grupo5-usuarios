@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useUsers, type User } from "@/contexts/users-context"
+import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -25,6 +26,10 @@ export function UserActions({ user }: UserActionsProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const { deleteUser } = useUsers()
+  const { user: currentUser } = useAuth()
+  
+  // Verificar si el usuario actual está intentando eliminarse a sí mismo
+  const isCurrentUser = currentUser?.id === user.id
 
   const handleDelete = () => {
     deleteUser(user.id)
@@ -48,10 +53,13 @@ export function UserActions({ user }: UserActionsProps) {
               Editar Usuario
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-600 focus:text-red-600">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Eliminar
-          </DropdownMenuItem>
+          {/* No permitir que un usuario se elimine a sí mismo */}
+          {!isCurrentUser && (
+            <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-600 focus:text-red-600">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Eliminar
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 

@@ -73,6 +73,7 @@ import { updateUsuarioSchema, usuarioParamsSchema, validateData } from '@/lib/va
 import { hashPassword, validatePasswordStrength } from '@/lib/auth';
 import { sendUserDeletedEvent, sendUserUpdatedEvent } from '@/lib/kafka-api-sender';
 import { logger } from '@/lib/logger';
+import { verifyJWTMiddleware } from '@/lib/middleware';
 
 // GET /api/usuarios/[id] - Obtener usuario por ID
 export async function GET(
@@ -264,6 +265,23 @@ export async function DELETE(
         message: 'ID de usuario inválido',
         error: paramValidation.error
       }, { status: 400 });
+    }
+
+    // Verificar autenticación y obtener usuario actual
+    const authResult = verifyJWTMiddleware(request);
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json({
+        success: false,
+        message: authResult.error || 'No autorizado'
+      }, { status: authResult.status || 401 });
+    }
+
+    // Verificar que el usuario no esté intentando eliminarse a sí mismo
+    if (authResult.user.userId === id) {
+      return NextResponse.json({
+        success: false,
+        message: 'No puedes eliminar tu propia cuenta'
+      }, { status: 403 });
     }
 
     // Verificar si el usuario existe

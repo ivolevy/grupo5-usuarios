@@ -39,6 +39,17 @@ export default function ResetPasswordPage() {
     }
   }, [searchParams, router])
 
+  // Auto-dismiss para las alertas después de 3 segundos
+  useEffect(() => {
+    if (success || error) {
+      const timer = setTimeout(() => {
+        setSuccess('')
+        setError('')
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [success, error])
+
   const checkPasswordSimilarity = async (newPassword: string) => {
     if (!newPassword || newPassword.length < 8) return false
     

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Save, User, Mail, Shield, Calendar, Clock, Key, Eye, EyeOff, Lock, Globe } from "lucide-react"
+import { Save, User, Mail, Shield, Calendar, Clock, Key, Eye, EyeOff, Lock, Globe, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import { countries } from "@/lib/countries"
 
@@ -162,6 +162,14 @@ export default function ProfilePage() {
         telefono: profile.telefono || "",
       })
     }
+    // Limpiar el estado de cambio de contraseña
+    setIsChangingPassword(false)
+    setPasswordData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    })
+    setPasswordError("")
     setIsEditing(false)
   }
 
@@ -325,14 +333,26 @@ export default function ProfilePage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="w-5 h-5" />
-                    Información Personal
-                  </CardTitle>
-                  <CardDescription>
-                    {isEditing ? "Edita tu información personal" : "Tu información personal"}
-                  </CardDescription>
+                <div className="flex items-center gap-3">
+                  {isEditing && (
+                    <Button
+                      onClick={handleCancel}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                  )}
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="w-5 h-5" />
+                      Información Personal
+                    </CardTitle>
+                    <CardDescription>
+                      {isEditing ? "Edita tu información personal" : "Tu información personal"}
+                    </CardDescription>
+                  </div>
                 </div>
                 {!isEditing && (
                   <Button 
@@ -405,140 +425,6 @@ export default function ProfilePage() {
                     />
                   </div>
 
-                  {/* Sección de cambio de contraseña */}
-                  <div className="border-t pt-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-                          <Lock className="w-5 h-5" />
-                          Cambiar Contraseña
-                        </h3>
-                        <p className="text-sm text-gray-600">Actualiza tu contraseña para mantener tu cuenta segura</p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsChangingPassword(!isChangingPassword)}
-                      >
-                        <Key className="w-4 h-4 mr-2" />
-                        {isChangingPassword ? "Cancelar" : "Cambiar"}
-                      </Button>
-                    </div>
-
-                    {isChangingPassword && (
-                      <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
-                        <div>
-                          <Label htmlFor="currentPassword">Contraseña Actual</Label>
-                          <div className="relative">
-                            <Input
-                              id="currentPassword"
-                              name="currentPassword"
-                              type={showPasswords.current ? "text" : "password"}
-                              value={passwordData.currentPassword}
-                              onChange={handlePasswordInputChange}
-                              placeholder="••••••••"
-                              className="pr-10"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => togglePasswordVisibility('current')}
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            >
-                              {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="newPassword">Nueva Contraseña</Label>
-                          <div className="relative">
-                            <Input
-                              id="newPassword"
-                              name="newPassword"
-                              type={showPasswords.new ? "text" : "password"}
-                              value={passwordData.newPassword}
-                              onChange={handlePasswordInputChange}
-                              placeholder="••••••••"
-                              className="pr-10"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => togglePasswordVisibility('new')}
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            >
-                              {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="confirmPassword">Confirmar Nueva Contraseña</Label>
-                          <div className="relative">
-                            <Input
-                              id="confirmPassword"
-                              name="confirmPassword"
-                              type={showPasswords.confirm ? "text" : "password"}
-                              value={passwordData.confirmPassword}
-                              onChange={handlePasswordInputChange}
-                              placeholder="••••••••"
-                              className="pr-10"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => togglePasswordVisibility('confirm')}
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            >
-                              {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
-                        </div>
-
-                        {passwordError && (
-                          <Alert className="border-red-200 bg-red-50">
-                            <AlertDescription className="text-red-700 text-sm">{passwordError}</AlertDescription>
-                          </Alert>
-                        )}
-
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            onClick={handlePasswordChange}
-                            disabled={isSavingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
-                            className="flex-1"
-                          >
-                            {isSavingPassword ? (
-                              <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                Cambiando...
-                              </>
-                            ) : (
-                              <>
-                                <Key className="w-4 h-4 mr-2" />
-                                Cambiar Contraseña
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            type="button"
-                            onClick={handleCancelPasswordChange}
-                            variant="outline"
-                            disabled={isSavingPassword}
-                          >
-                            Cancelar
-                          </Button>
-                        </div>
-
-                        <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded">
-                          <p className="font-medium mb-1">Requisitos de contraseña:</p>
-                          <ul className="space-y-1">
-                            <li>• Mínimo 8 caracteres</li>
-                          </ul>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
                   <div className="flex gap-2">
                     <Button 
                       onClick={handleSave} 
@@ -604,6 +490,151 @@ export default function ProfilePage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Cambiar Contraseña - Solo visible cuando se está editando */}
+          {isEditing && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <CardTitle className="flex items-center gap-2">
+                      <Lock className="w-5 h-5" />
+                      Cambiar Contraseña
+                    </CardTitle>
+                    <CardDescription>
+                      Actualiza tu contraseña para mantener tu cuenta segura
+                    </CardDescription>
+                  </div>
+                  {!isChangingPassword && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsChangingPassword(true)}
+                      className="shrink-0"
+                    >
+                      <Key className="w-4 h-4 mr-2" />
+                      Cambiar
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isChangingPassword ? (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="currentPassword">Contraseña Actual</Label>
+                      <div className="relative">
+                        <Input
+                          id="currentPassword"
+                          name="currentPassword"
+                          type={showPasswords.current ? "text" : "password"}
+                          value={passwordData.currentPassword}
+                          onChange={handlePasswordInputChange}
+                          placeholder="••••••••"
+                          className="pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility('current')}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="newPassword">Nueva Contraseña</Label>
+                      <div className="relative">
+                        <Input
+                          id="newPassword"
+                          name="newPassword"
+                          type={showPasswords.new ? "text" : "password"}
+                          value={passwordData.newPassword}
+                          onChange={handlePasswordInputChange}
+                          placeholder="••••••••"
+                          className="pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility('new')}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="confirmPassword">Confirmar Nueva Contraseña</Label>
+                      <div className="relative">
+                        <Input
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          type={showPasswords.confirm ? "text" : "password"}
+                          value={passwordData.confirmPassword}
+                          onChange={handlePasswordInputChange}
+                          placeholder="••••••••"
+                          className="pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility('confirm')}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {passwordError && (
+                      <Alert className="border-red-200 bg-red-50">
+                        <AlertDescription className="text-red-700 text-sm">{passwordError}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded">
+                      <p className="font-medium mb-1">Requisitos de contraseña:</p>
+                      <ul className="space-y-1">
+                        <li>• Mínimo 8 caracteres</li>
+                        <li>• Debe ser diferente a tu contraseña actual</li>
+                      </ul>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        onClick={handlePasswordChange}
+                        disabled={isSavingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+                        className="flex-1"
+                      >
+                        {isSavingPassword ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Cambiando...
+                          </>
+                        ) : (
+                          <>
+                            <Key className="w-4 h-4 mr-2" />
+                            Cambiar Contraseña
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handleCancelPasswordChange}
+                        variant="outline"
+                        disabled={isSavingPassword}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Información de la cuenta */}
