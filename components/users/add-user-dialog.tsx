@@ -17,14 +17,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Loader2 } from "lucide-react"
+import { Plus, Loader2, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { countries } from "@/lib/countries"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export function AddUserDialog() {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [passwordError, setPasswordError] = useState("")
+  const [emailError, setEmailError] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
     nombre_completo: "",
     email: "",
@@ -41,11 +45,19 @@ export function AddUserDialog() {
   useEffect(() => {
     if (open) {
       setPasswordError("")
+      setEmailError("")
+      setShowPassword(false)
+      setShowConfirmPassword(false)
     }
   }, [open])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+    
+    // Limpiar error de email cuando se cambia el email
+    if (field === "email") {
+      setEmailError("")
+    }
     
     // Validar contraseñas en tiempo real
     if (field === "password" || field === "confirmPassword") {
@@ -83,6 +95,8 @@ export function AddUserDialog() {
     }
 
     setIsSubmitting(true)
+    setEmailError("")
+    setPasswordError("")
     try {
       await addUser({
         nombre_completo: formData.nombre_completo,
@@ -96,6 +110,7 @@ export function AddUserDialog() {
       
       setFormData({ nombre_completo: "", email: "", password: "", confirmPassword: "", rol: "usuario", nacionalidad: "", telefono: "" })
       setPasswordError("")
+      setEmailError("")
       setOpen(false)
       
       toast({
@@ -103,11 +118,19 @@ export function AddUserDialog() {
         description: "El usuario ha sido creado exitosamente.",
       })
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error al crear usuario",
-        description: error instanceof Error ? error.message : "Error desconocido",
-      })
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido"
+      
+      // Verificar si es un error de email duplicado
+      if (errorMessage.includes("email") || errorMessage.includes("Email") || errorMessage.includes("ya existe")) {
+        setEmailError(errorMessage)
+      } else {
+        // Para otros errores, mostrar en toast
+        toast({
+          variant: "destructive",
+          title: "Error al crear usuario",
+          description: errorMessage,
+        })
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -145,39 +168,79 @@ export function AddUserDialog() {
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) => handleInputChange("email", e.target.value)}
               placeholder="usuario@example.com"
               required
               disabled={isSubmitting}
+              className={emailError ? "border-red-500" : ""}
             />
+            {emailError && (
+              <Alert className="border-red-200 bg-red-50 py-2">
+                <AlertDescription className="text-red-700 text-sm">{emailError}</AlertDescription>
+              </Alert>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => handleInputChange("password", e.target.value)}
-              placeholder="Contraseña segura"
-              required
-              disabled={isSubmitting}
-              minLength={8}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={(e) => handleInputChange("password", e.target.value)}
+                placeholder="Contraseña segura"
+                required
+                disabled={isSubmitting}
+                minLength={8}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                disabled={isSubmitting}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-              placeholder="Repetir contraseña"
-              required
-              disabled={isSubmitting}
-              minLength={8}
-            />
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={formData.confirmPassword}
+                onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                placeholder="Repetir contraseña"
+                required
+                disabled={isSubmitting}
+                minLength={8}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                disabled={isSubmitting}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
             {passwordError && (
-              <p className="text-sm text-red-600 mt-1">{passwordError}</p>
+              <Alert className="border-red-200 bg-red-50 py-2">
+                <AlertDescription className="text-red-700 text-sm">{passwordError}</AlertDescription>
+              </Alert>
             )}
           </div>
           <div className="space-y-2">

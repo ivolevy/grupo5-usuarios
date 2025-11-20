@@ -197,7 +197,17 @@ export async function PUT(
     if (rol) updateData.rol = rol;
     if (email_verified !== undefined) updateData.email_verified = email_verified;
     if (nacionalidad !== undefined) updateData.nacionalidad = nacionalidad;
-    if (telefono !== undefined) updateData.telefono = telefono;
+    // Permitir actualizar teléfono incluso si es undefined (para borrarlo)
+    // Si telefono está presente en el body original, actualizar el campo
+    if ('telefono' in body) {
+      // Si el valor original era una cadena vacía o el transformado es undefined, establecerlo como null para borrarlo
+      const originalTelefono = body.telefono;
+      if (originalTelefono === '' || telefono === undefined) {
+        updateData.telefono = null;
+      } else {
+        updateData.telefono = telefono;
+      }
+    }
 
     // Actualizar el usuario
     const updatedUser = await prisma.usuarios.update(

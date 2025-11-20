@@ -508,7 +508,10 @@ class LDAPClient {
           // para que LDAP mantenga el valor actual
 
           // Agregar campos opcionales si existen
-          if (updatedData.telefono) {
+          // Si telefono está presente en data (incluso si es null), incluirlo para procesarlo
+          if ('telefono' in data) {
+            (ldapEntry as any).telephoneNumber = updatedData.telefono || '';
+          } else if (updatedData.telefono) {
             (ldapEntry as any).telephoneNumber = updatedData.telefono;
           }
           if (updatedData.nacionalidad) {

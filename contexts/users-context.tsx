@@ -95,7 +95,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     }
 
     setLoading(true)
-    setError(null)
+    // No limpiar el error global aquí, solo lanzar la excepción para que el modal la maneje
     try {
       const response = await fetch('/api/usuarios', {
         method: 'POST',
@@ -112,12 +112,11 @@ export function UsersProvider({ children }: { children: ReactNode }) {
         await refreshUsers() // Refresh the list
       } else {
         const errorMessage = data.message || 'Error al crear usuario'
-        setError(errorMessage)
+        // No establecer el error global, solo lanzar la excepción
         throw new Error(errorMessage)
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error de conexión al crear usuario'
-      setError(errorMessage)
+      // No establecer el error global, solo lanzar la excepción para que el modal la maneje
       throw err
     } finally {
       setLoading(false)
