@@ -228,7 +228,7 @@ export default function UsersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -245,12 +245,25 @@ export default function UsersPage() {
         <Card className="border-0 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-50 rounded-lg">
+                <Settings className="w-4 h-4 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm font-roboto-medium text-gray-600">Admins</p>
+                <p className="text-xl font-roboto-bold text-dark-gray">{totalStats.admins}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-50 rounded-lg">
                 <Shield className="w-4 h-4 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm font-roboto-medium text-gray-600">Admin/Interno</p>
-                <p className="text-xl font-roboto-bold text-dark-gray">{totalStats.adminModerator}</p>
+                <p className="text-sm font-roboto-medium text-gray-600">Internos</p>
+                <p className="text-xl font-roboto-bold text-dark-gray">{totalStats.internoes}</p>
               </div>
             </div>
           </CardContent>
@@ -264,45 +277,6 @@ export default function UsersPage() {
               <div>
                 <p className="text-sm font-roboto-medium text-gray-600">Usuarios</p>
                 <p className="text-xl font-roboto-bold text-dark-gray">{totalStats.normal}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-50 rounded-lg">
-                <UserCheck className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm font-roboto-medium text-gray-600">Verificados</p>
-                <p className="text-xl font-roboto-bold text-dark-gray">{totalStats.verified}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-50 rounded-lg">
-                <UserX className="w-4 h-4 text-gray-600" />
-              </div>
-              <div>
-                <p className="text-sm font-roboto-medium text-gray-600">Sin verificar</p>
-                <p className="text-xl font-roboto-bold text-dark-gray">{totalStats.unverified}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-50 rounded-lg">
-                <Settings className="w-4 h-4 text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm font-roboto-medium text-gray-600">Admins</p>
-                <p className="text-xl font-roboto-bold text-dark-gray">{totalStats.admins}</p>
               </div>
             </div>
           </CardContent>
