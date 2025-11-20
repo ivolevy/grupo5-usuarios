@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { useUsers } from "@/contexts/users-context"
+import { useUsers, type User as UsersContextUser } from "@/contexts/users-context"
 import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -15,6 +16,8 @@ import { AccessDenied } from "@/components/ui/access-denied"
 import { Search, Users, UserCheck, UserX, Shield, Settings, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { hasPermission, Permission } from "@/lib/permissions"
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { useToast } from "@/hooks/use-toast"
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -23,12 +26,17 @@ export default function UsersPage() {
   const [filters, setFilters] = useState<FilterOptions>({
     role: "all",
     activityStatus: "all",
+    verificationStatus: "all",
     nationality: "all",
     dateRange: { from: undefined, to: undefined },
     searchTerm: ""
   })
-  const { getAdminModeratorUsers, getNormalUsers, getUniqueNationalities, loading, error } = useUsers()
+  const [selectedUnverifiedUser, setSelectedUnverifiedUser] = useState<UsersContextUser | null>(null)
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const [isVerifyingUser, setIsVerifyingUser] = useState(false)
+  const { getAdminModeratorUsers, getNormalUsers, getUniqueNationalities, loading, error, toggleEmailVerification } = useUsers()
   const { user } = useAuth()
+  const { toast } = useToast()
 
   // Verificar si el usuario tiene permisos de administrador
   if (!user || !hasPermission(user.rol, Permission.ADMIN_DASHBOARD)) {
@@ -43,6 +51,7 @@ export default function UsersPage() {
   // Obtener usuarios por tipo
   const usuariosAdminModerador = getAdminModeratorUsers()
   const usuariosNormales = getNormalUsers()
+  const usuariosNoVerificados = usuariosNormales.filter((usuario) => !usuario.email_verified)
   
   // Filtrar usuarios según la pestaña activa
   const currentUsers = activeTab === "admin-moderator" ? usuariosAdminModerador : usuariosNormales
@@ -71,6 +80,11 @@ export default function UsersPage() {
           (new Date().getTime() - new Date(user.last_login_at).getTime()) >= (30 * 24 * 60 * 60 * 1000)) ||
         (filters.activityStatus === "never" && !user.last_login_at)
 
+      // Filtro por verificación - Solo para usuarios normales
+      const matchesVerification = activeTab === "admin-moderator" || filters.verificationStatus === "all" ||
+        (filters.verificationStatus === "verified" && user.email_verified) ||
+        (filters.verificationStatus === "unverified" && !user.email_verified)
+
       // Filtro por fecha de creación
       const userCreatedAt = new Date(user.created_at)
       const matchesDateRange = (!filters.dateRange.from || userCreatedAt >= filters.dateRange.from) &&
@@ -81,7 +95,7 @@ export default function UsersPage() {
         (filters.nationality === "Sin especificar" && (!user.nacionalidad || user.nacionalidad === "")) ||
         (user.nacionalidad && user.nacionalidad === filters.nationality)
 
-      return matchesSearch && matchesRole && matchesActivity && matchesDateRange && matchesNationality
+      return matchesSearch && matchesRole && matchesActivity && matchesDateRange && matchesNationality && matchesVerification
     })
 
     // Ordenar para que el usuario actual aparezca primero
@@ -133,11 +147,44 @@ export default function UsersPage() {
     setFilters({
       role: "all",
       activityStatus: "all",
+      verificationStatus: "all",
       nationality: "all",
       dateRange: { from: undefined, to: undefined },
       searchTerm: ""
     })
     setSearchTerm("")
+  }
+
+  const handleSelectUnverifiedUser = (usuario: UsersContextUser) => {
+    setSelectedUnverifiedUser(usuario)
+    setIsDetailsOpen(true)
+  }
+
+  const handleCloseDetails = () => {
+    setIsDetailsOpen(false)
+    setSelectedUnverifiedUser(null)
+    setIsVerifyingUser(false)
+  }
+
+  const handleVerifySelectedUser = async () => {
+    if (!selectedUnverifiedUser) return
+    setIsVerifyingUser(true)
+    try {
+      await toggleEmailVerification(selectedUnverifiedUser.id, selectedUnverifiedUser.email_verified)
+      toast({
+        title: "Usuario verificado",
+        description: `El usuario ${selectedUnverifiedUser.email} ha sido verificado.`
+      })
+      handleCloseDetails()
+    } catch (error) {
+      toast({
+        title: "Error al verificar",
+        description: error instanceof Error ? error.message : "No se pudo verificar el usuario",
+        variant: "destructive"
+      })
+    } finally {
+      setIsVerifyingUser(false)
+    }
   }
 
   const renderUserTable = (showActions: boolean = true) => (
@@ -146,6 +193,7 @@ export default function UsersPage() {
         <TableRow>
           <TableHead>Nombre Completo</TableHead>
           <TableHead>Email</TableHead>
+          <TableHead>Email Verificado</TableHead>
           <TableHead>Rol</TableHead>
           <TableHead>Nacionalidad</TableHead>
           <TableHead>Teléfono</TableHead>
@@ -157,19 +205,19 @@ export default function UsersPage() {
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 8 : 7} className="text-center py-8">
+            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8">
               Cargando usuarios...
             </TableCell>
           </TableRow>
         ) : error ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 8 : 7} className="text-center py-8 text-red-600">
+            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8 text-red-600">
               Error: {error}
             </TableCell>
           </TableRow>
         ) : filteredUsers.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 8 : 7} className="text-center py-8">
+            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8">
               No se encontraron usuarios
             </TableCell>
           </TableRow>
@@ -183,6 +231,19 @@ export default function UsersPage() {
                 )}
               </TableCell>
               <TableCell className="font-roboto-medium">{currentUser.email}</TableCell>
+              <TableCell className="text-center">
+                {currentUser.email_verified ? (
+                  <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
+                    <Check className="w-3 h-3 mr-1" />
+                    Verificado
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
+                    <X className="w-3 h-3 mr-1" />
+                    No verificado
+                  </Badge>
+                )}
+              </TableCell>
               <TableCell>
                 <Badge variant="outline" className={cn("capitalize", getRoleBadge(currentUser.rol))}>
                   {currentUser.rol}
@@ -283,6 +344,59 @@ export default function UsersPage() {
         </Card>
       </div>
 
+      {/* Unverified users summary */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="font-roboto-bold">Usuarios no verificados</CardTitle>
+              <CardDescription className="font-roboto-regular">
+                {usuariosNoVerificados.length > 0
+                  ? `Hay ${usuariosNoVerificados.length} usuarios normales pendientes de verificación`
+                  : "Todos los usuarios normales están verificados."}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {usuariosNoVerificados.length === 0 ? (
+            <p className="text-sm text-gray-600 font-roboto-regular">
+              No hay usuarios normales pendientes de verificación.
+            </p>
+          ) : (
+            <div className="space-y-3 max-h-72 overflow-auto pr-1">
+              {usuariosNoVerificados.map((usuario) => (
+                <button
+                  key={usuario.id}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-primary-blue hover:bg-blue-50"
+                  onClick={() => handleSelectUnverifiedUser(usuario)}
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-base font-roboto-medium text-dark-gray truncate">
+                        {usuario.nombre_completo || "Sin nombre"}
+                      </p>
+                      <p className="text-sm text-gray-600 font-roboto-regular truncate">{usuario.email}</p>
+                      <p className="text-xs text-gray-500 font-roboto-regular">
+                        Registrado el {new Date(usuario.created_at).toLocaleDateString("es-ES")}
+                      </p>
+                    </div>
+                    <div className="text-right space-y-1">
+                      <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
+                        No verificado
+                      </Badge>
+                      <p className="text-xs text-gray-500 font-roboto-regular">
+                        {usuario.nacionalidad || "Nacionalidad no indicada"}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex items-center justify-between mb-6">
@@ -375,6 +489,101 @@ export default function UsersPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Sheet
+        open={isDetailsOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseDetails()
+          } else {
+            setIsDetailsOpen(true)
+          }
+        }}
+      >
+        <SheetContent className="w-full sm:max-w-2xl flex h-full flex-col">
+          <SheetHeader>
+            <SheetTitle>Detalles del usuario</SheetTitle>
+            <SheetDescription>
+              Información completa del usuario pendiente de verificación.
+            </SheetDescription>
+          </SheetHeader>
+          {selectedUnverifiedUser ? (
+            <div className="mt-6 flex-1 overflow-y-auto pr-2 space-y-6">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <p className="text-sm text-gray-500 font-roboto-regular">Nombre completo</p>
+                <p className="text-2xl font-roboto-bold text-dark-gray">
+                  {selectedUnverifiedUser.nombre_completo || "Sin nombre"}
+                </p>
+                <p className="mt-3 text-sm text-gray-500 font-roboto-regular">Email</p>
+                <p className="text-base font-roboto-medium text-dark-gray break-all">
+                  {selectedUnverifiedUser.email}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-lg border border-gray-200 p-4">
+                  <p className="text-xs text-gray-500 font-roboto-regular uppercase tracking-wide">Rol</p>
+                  <Badge
+                    variant="outline"
+                    className={cn("capitalize mt-2 w-fit", getRoleBadge(selectedUnverifiedUser.rol))}
+                  >
+                    {selectedUnverifiedUser.rol}
+                  </Badge>
+                </div>
+                <div className="rounded-lg border border-gray-200 p-4">
+                  <p className="text-xs text-gray-500 font-roboto-regular uppercase tracking-wide">Fecha de registro</p>
+                  <p className="mt-2 font-roboto-medium text-dark-gray">
+                    {new Date(selectedUnverifiedUser.created_at).toLocaleDateString("es-ES")}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-200 p-4">
+                  <p className="text-xs text-gray-500 font-roboto-regular uppercase tracking-wide">Último acceso</p>
+                  <p className="mt-2 font-roboto-medium text-dark-gray">
+                    {selectedUnverifiedUser.last_login_at
+                      ? new Date(selectedUnverifiedUser.last_login_at).toLocaleDateString("es-ES")
+                      : "Nunca"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-200 p-4">
+                  <p className="text-xs text-gray-500 font-roboto-regular uppercase tracking-wide">Creado por admin</p>
+                  <p className="mt-2 font-roboto-medium text-dark-gray">
+                    {selectedUnverifiedUser.created_by_admin ? "Sí" : "No"}
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-lg border border-gray-200 p-4">
+                  <p className="text-xs text-gray-500 font-roboto-regular uppercase tracking-wide">Nacionalidad</p>
+                  <p className="mt-2 font-roboto-medium text-dark-gray">
+                    {selectedUnverifiedUser.nacionalidad || "No especificada"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-200 p-4">
+                  <p className="text-xs text-gray-500 font-roboto-regular uppercase tracking-wide">Teléfono</p>
+                  <p className="mt-2 font-roboto-medium text-dark-gray">
+                    {selectedUnverifiedUser.telefono || "No especificado"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-6 text-sm text-gray-600 font-roboto-regular flex-1">
+              Selecciona un usuario para ver los detalles.
+            </p>
+          )}
+          <SheetFooter className="mt-8 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={handleCloseDetails}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleVerifySelectedUser}
+              disabled={!selectedUnverifiedUser || isVerifyingUser}
+              className="bg-primary-blue hover:bg-blue-700 text-white"
+            >
+              {isVerifyingUser ? "Verificando..." : "Verificar usuario"}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }

@@ -301,7 +301,7 @@ class LDAPClient {
             supabase_id: data.id || `temp-${Date.now()}`,
             created_at: data.created_at || new Date().toISOString(),
             updated_at: data.updated_at || new Date().toISOString(),
-            email_verified: data.email_verified || true,
+            email_verified: data.email_verified ?? true,
             last_login_at: data.last_login_at,
             nombre_completo: data.nombre_completo,
             nacionalidad: data.nacionalidad,

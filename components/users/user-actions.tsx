@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { EditUserDialog } from "@/components/users/edit-user-dialog"
-import { MoreHorizontal, Trash2, Edit } from "lucide-react"
+import { MoreHorizontal, Trash2, Edit, ShieldCheck, ShieldX } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface UserActionsProps {
   user: User
@@ -25,8 +26,10 @@ interface UserActionsProps {
 export function UserActions({ user }: UserActionsProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
-  const { deleteUser } = useUsers()
+  const [isTogglingVerification, setIsTogglingVerification] = useState(false)
+  const { deleteUser, toggleEmailVerification } = useUsers()
   const { user: currentUser } = useAuth()
+  const { toast } = useToast()
   
   // Verificar si el usuario actual está intentando eliminarse a sí mismo
   const isCurrentUser = currentUser?.id === user.id
@@ -34,6 +37,25 @@ export function UserActions({ user }: UserActionsProps) {
   const handleDelete = () => {
     deleteUser(user.id)
     setShowDeleteDialog(false)
+  }
+
+  const handleToggleVerification = async () => {
+    setIsTogglingVerification(true)
+    try {
+      await toggleEmailVerification(user.id, user.email_verified)
+      toast({
+        title: "Estado actualizado",
+        description: `El email ha sido marcado como ${!user.email_verified ? 'verificado' : 'no verificado'}.`,
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo actualizar el estado de verificación",
+        variant: "destructive",
+      })
+    } finally {
+      setIsTogglingVerification(false)
+    }
   }
 
   return (
@@ -51,6 +73,26 @@ export function UserActions({ user }: UserActionsProps) {
             <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
               <Edit className="mr-2 h-4 w-4" />
               Editar Usuario
+            </DropdownMenuItem>
+          )}
+          {/* Solo mostrar cambiar verificación para usuarios normales */}
+          {user.rol === 'usuario' && (
+            <DropdownMenuItem 
+              onClick={handleToggleVerification} 
+              disabled={isTogglingVerification}
+              className={user.email_verified ? "text-orange-600 focus:text-orange-600" : "text-green-600 focus:text-green-600"}
+            >
+              {user.email_verified ? (
+                <>
+                  <ShieldX className="mr-2 h-4 w-4" />
+                  Marcar como no verificado
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Marcar como verificado
+                </>
+              )}
             </DropdownMenuItem>
           )}
           {/* No permitir que un usuario se elimine a sí mismo */}

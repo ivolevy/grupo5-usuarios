@@ -79,6 +79,14 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
+    // Verificar si el email está verificado
+    if (!user.email_verified) {
+      return NextResponse.json({
+        success: false,
+        message: 'Tu cuenta aún no ha sido verificada por los administradores. Esto puede demorar un poco. Por favor, inténtalo más tarde.'
+      }, { status: 403 });
+    }
+
     // Actualizar último login (comentado temporalmente por problemas con findUnique)
     // try {
     //   await prisma.usuarios.update(

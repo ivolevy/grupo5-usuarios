@@ -96,6 +96,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { nombre_completo, email, password, rol, nacionalidad, telefono, created_by_admin } = validation.data;
+    const normalizedRole = rol || 'usuario';
+    const shouldAutoVerifyEmail = normalizedRole !== 'usuario';
 
     // Validación simple de contraseña (solo longitud mínima)
     if (password.length < 8) {
@@ -139,10 +141,10 @@ export async function POST(request: NextRequest) {
         nombre_completo: nombre_completo || 'Usuario sin nombre',
         email: email,
         password: password, // Texto plano para LDAP - el cliente generará hash bcrypt en metadatos
-        rol: rol || 'usuario',
+        rol: normalizedRole,
         nacionalidad: nacionalidad || 'No especificada',
         telefono: telefono || undefined,
-        email_verified: true,
+        email_verified: shouldAutoVerifyEmail,
         created_at: createdAt,
         updated_at: createdAt,
         created_by_admin: created_by_admin ?? false,
@@ -203,7 +205,7 @@ export async function POST(request: NextRequest) {
           email: email,
           password: password, // Contraseña original
           nationalityOrOrigin: nacionalidad || 'No especificada',
-          roles: [rol || 'usuario'],
+          roles: [normalizedRole],
           createdAt: createdAt,
         };
 

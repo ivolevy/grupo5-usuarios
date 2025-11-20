@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import {
   Dialog,
   DialogContent,
@@ -32,7 +31,6 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
     rol: user.rol,
     nacionalidad: user.nacionalidad || "",
     telefono: user.telefono || "",
-    email_verified: user.email_verified,
   })
   const [isLoading, setIsLoading] = useState(false)
   const { updateUser } = useUsers()
@@ -46,7 +44,6 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
       rol: user.rol,
       nacionalidad: user.nacionalidad || "",
       telefono: user.telefono || "",
-      email_verified: user.email_verified,
     })
   }, [user])
 
@@ -171,20 +168,6 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
               value={formData.telefono}
               onChange={(e) => handleInputChange("telefono", e.target.value)}
               placeholder="+1 (555) 123-4567"
-            />
-          </div>
-
-          <div className="flex items-center justify-between space-x-2">
-            <div className="space-y-1">
-              <Label htmlFor="email_verified">Email Verificado</Label>
-              <p className="text-sm text-gray-500">
-                Marca si el usuario ha verificado su email
-              </p>
-            </div>
-            <Switch
-              id="email_verified"
-              checked={formData.email_verified}
-              onCheckedChange={(checked) => handleInputChange("email_verified", checked)}
             />
           </div>
 

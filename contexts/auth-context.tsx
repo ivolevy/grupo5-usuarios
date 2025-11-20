@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 
 interface User {
@@ -210,9 +210,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const clearError = () => {
+  const clearError = useCallback(() => {
     setError(null)
-  }
+  }, [])
 
   const logout = () => {
     setUser(null)

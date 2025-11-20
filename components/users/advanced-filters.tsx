@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 export interface FilterOptions {
   role: string
   activityStatus: string
+  verificationStatus: string
   nationality: string
   dateRange: {
     from: Date | undefined
@@ -80,6 +81,7 @@ export function AdvancedFilters({
     const resetFilters = {
       role: "all",
       activityStatus: "all",
+      verificationStatus: "all",
       nationality: "all",
       dateRange: { from: undefined, to: undefined },
       searchTerm: ""
@@ -91,6 +93,7 @@ export function AdvancedFilters({
     const resetFilters = {
       role: "all",
       activityStatus: "all",
+      verificationStatus: "all",
       nationality: "all",
       dateRange: { from: undefined, to: undefined },
       searchTerm: ""
@@ -105,6 +108,7 @@ export function AdvancedFilters({
     if (filters.role && filters.role !== "all") count++
     if (filters.activityStatus && filters.activityStatus !== "all") count++
     if (filters.nationality && filters.nationality !== "all") count++
+    if (filters.verificationStatus && filters.verificationStatus !== "all") count++
     if (filters.dateRange.from || filters.dateRange.to) count++
     return count
   }
@@ -212,6 +216,26 @@ export function AdvancedFilters({
                     <SelectItem value="active">Activos (último login &lt; 30 días)</SelectItem>
                     <SelectItem value="inactive">Inactivos (último login &gt; 30 días)</SelectItem>
                     <SelectItem value="never">Nunca han iniciado sesión</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Filtro por verificación - Solo para usuarios normales */}
+            {activeTab === "normal-users" && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Estado de verificación</Label>
+                <Select
+                  value={localFilters.verificationStatus}
+                  onValueChange={(value) => handleFilterChange('verificationStatus', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="verified">Solo verificados</SelectItem>
+                    <SelectItem value="unverified">Solo no verificados</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

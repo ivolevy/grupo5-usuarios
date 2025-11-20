@@ -51,10 +51,8 @@ export default function LoginPage() {
     if (success) {
       // Redirigir a la URL especificada o al inicio por defecto
       router.push(redirectTo)
-    } else {
-      // Mostrar error del contexto de autenticación o un mensaje genérico
-      setError(authError || "Credenciales inválidas. Verifica tu email y contraseña.")
     }
+    // El error se mostrará automáticamente desde authError
   }
 
   return (
@@ -111,10 +109,8 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {error && (
-              <Alert className="border-red-200 bg-red-50">
-                <AlertDescription className="text-red-700 text-sm">{error}</AlertDescription>
-              </Alert>
+            {(error || authError) && (
+              <p className="text-sm text-red-600">{error || authError}</p>
             )}
 
             <Button

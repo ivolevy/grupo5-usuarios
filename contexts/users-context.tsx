@@ -26,6 +26,7 @@ interface UsersContextType {
   addUser: (user: { nombre_completo?: string; email: string; password: string; rol?: string; nacionalidad?: string; telefono?: string; created_by_admin?: boolean }) => Promise<void>
   updateUser: (id: string, updates: Partial<User>) => Promise<void>
   deleteUser: (id: string) => Promise<void>
+  toggleEmailVerification: (id: string, currentStatus: boolean) => Promise<void>
   getUserById: (id: string) => User | undefined
   refreshUsers: () => Promise<void>
   getUsersByRole: (role: string) => User[]
@@ -207,6 +208,42 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const toggleEmailVerification = async (id: string, currentStatus: boolean) => {
+    if (!token) {
+      throw new Error('Autenticación requerida')
+    }
+
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await fetch(`/api/usuarios/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email_verified: !currentStatus
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        await refreshUsers() // Refresh the list
+      } else {
+        setError(data.message || 'Error al actualizar estado de verificación')
+        throw new Error(data.message)
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error de conexión al actualizar verificación'
+      setError(errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const getUserById = (id: string) => {
     return users.find((user) => user.id === id)
   }
@@ -244,6 +281,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
         addUser,
         updateUser,
         deleteUser,
+        toggleEmailVerification,
         getUserById,
         refreshUsers,
         getUsersByRole,
