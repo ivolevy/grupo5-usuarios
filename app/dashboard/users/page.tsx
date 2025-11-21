@@ -18,6 +18,17 @@ import { cn } from "@/lib/utils"
 import { hasPermission, Permission } from "@/lib/permissions"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useToast } from "@/hooks/use-toast"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Trash2 } from "lucide-react"
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -34,7 +45,9 @@ export default function UsersPage() {
   const [selectedUnverifiedUser, setSelectedUnverifiedUser] = useState<UsersContextUser | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [isVerifyingUser, setIsVerifyingUser] = useState(false)
-  const { getAdminModeratorUsers, getNormalUsers, getUniqueNationalities, loading, error, toggleEmailVerification } = useUsers()
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isDeletingUser, setIsDeletingUser] = useState(false)
+  const { getAdminModeratorUsers, getNormalUsers, getUniqueNationalities, loading, error, toggleEmailVerification, deleteUser } = useUsers()
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -176,6 +189,28 @@ export default function UsersPage() {
       })
     } finally {
       setIsVerifyingUser(false)
+    }
+  }
+
+  const handleDeleteUser = async () => {
+    if (!selectedUnverifiedUser) return
+    setIsDeletingUser(true)
+    try {
+      await deleteUser(selectedUnverifiedUser.id)
+      toast({
+        title: "Usuario eliminado",
+        description: `El usuario ${selectedUnverifiedUser.email} ha sido eliminado exitosamente.`
+      })
+      setShowDeleteDialog(false)
+      handleCloseDetails()
+    } catch (error) {
+      toast({
+        title: "Error al eliminar",
+        description: error instanceof Error ? error.message : "No se pudo eliminar el usuario",
+        variant: "destructive"
+      })
+    } finally {
+      setIsDeletingUser(false)
     }
   }
 
@@ -559,6 +594,15 @@ export default function UsersPage() {
               Cancelar
             </Button>
             <Button
+              onClick={() => setShowDeleteDialog(true)}
+              disabled={!selectedUnverifiedUser || isDeletingUser}
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Eliminar usuario
+            </Button>
+            <Button
               onClick={handleVerifySelectedUser}
               disabled={!selectedUnverifiedUser || isVerifyingUser}
               className="bg-primary-blue hover:bg-blue-700 text-white"
@@ -568,6 +612,28 @@ export default function UsersPage() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      {/* Dialog de confirmación para eliminar usuario */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente el usuario <strong>{selectedUnverifiedUser?.nombre_completo || selectedUnverifiedUser?.email}</strong> del sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingUser}>No, cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteUser} 
+              disabled={isDeletingUser}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeletingUser ? "Eliminando..." : "Sí, eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
