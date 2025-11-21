@@ -536,14 +536,6 @@ export default function UsersPage() {
                   </p>
                 </div>
                 <div className="rounded-lg border border-gray-200 p-4">
-                  <p className="text-xs text-gray-500 font-roboto-regular uppercase tracking-wide">Último acceso</p>
-                  <p className="mt-2 font-roboto-medium text-dark-gray">
-                    {selectedUnverifiedUser.last_login_at
-                      ? new Date(selectedUnverifiedUser.last_login_at).toLocaleDateString("es-ES")
-                      : "Nunca"}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-gray-200 p-4">
                   <p className="text-xs text-gray-500 font-roboto-regular uppercase tracking-wide">Creado por admin</p>
                   <p className="mt-2 font-roboto-medium text-dark-gray">
                     {selectedUnverifiedUser.created_by_admin ? "Sí" : "No"}
