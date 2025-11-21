@@ -500,15 +500,15 @@ export default function UsersPage() {
           }
         }}
       >
-        <SheetContent className="w-full sm:max-w-2xl flex h-full flex-col">
-          <SheetHeader>
+        <SheetContent className="w-full sm:max-w-2xl flex h-full flex-col p-8">
+          <SheetHeader className="px-0 pb-6">
             <SheetTitle>Detalles del usuario</SheetTitle>
             <SheetDescription>
               Información completa del usuario pendiente de verificación.
             </SheetDescription>
           </SheetHeader>
           {selectedUnverifiedUser ? (
-            <div className="mt-6 flex-1 overflow-y-auto pr-2 space-y-6">
+            <div className="flex-1 overflow-y-auto px-0 space-y-6">
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <p className="text-sm text-gray-500 font-roboto-regular">Nombre completo</p>
                 <p className="text-2xl font-roboto-bold text-dark-gray">
@@ -570,7 +570,7 @@ export default function UsersPage() {
               Selecciona un usuario para ver los detalles.
             </p>
           )}
-          <SheetFooter className="mt-8 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <SheetFooter className="mt-8 pt-6 px-0 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={handleCloseDetails}>
               Cancelar
             </Button>

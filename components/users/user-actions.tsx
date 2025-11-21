@@ -33,6 +33,9 @@ export function UserActions({ user }: UserActionsProps) {
   
   // Verificar si el usuario actual está intentando eliminarse a sí mismo
   const isCurrentUser = currentUser?.id === user.id
+  
+  // Verificar si el usuario es admin o interno (para mostrar opción de eliminar)
+  const isAdminOrInterno = user.rol === 'admin' || user.rol === 'interno'
 
   const handleDelete = () => {
     deleteUser(user.id)
@@ -68,13 +71,11 @@ export function UserActions({ user }: UserActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {/* Solo mostrar editar para usuarios admin/interno */}
-          {user.rol !== 'usuario' && (
-            <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Editar Usuario
-            </DropdownMenuItem>
-          )}
+          {/* Mostrar editar para todos los usuarios */}
+          <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Editar Usuario
+          </DropdownMenuItem>
           {/* Solo mostrar cambiar verificación para usuarios normales */}
           {user.rol === 'usuario' && (
             <DropdownMenuItem 
@@ -95,7 +96,10 @@ export function UserActions({ user }: UserActionsProps) {
               )}
             </DropdownMenuItem>
           )}
-          {/* No permitir que un usuario se elimine a sí mismo */}
+          {/* Eliminar: 
+              - Para admin e internos: SIEMPRE mostrar la opción de eliminar (excepto si es el usuario actual)
+              - Para usuarios normales: también mostrar (excepto si es el usuario actual)
+          */}
           {!isCurrentUser && (
             <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-600 focus:text-red-600">
               <Trash2 className="mr-2 h-4 w-4" />
