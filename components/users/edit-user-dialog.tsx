@@ -94,10 +94,13 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
       return
     }
     
-    // Validar email: máximo 30 caracteres
+    // Validar email: solo letras, números, puntos, @, - y _
     if (field === "email") {
       const stringValue = String(value)
-      const limited = stringValue.slice(0, 30)
+      // Solo permitir letras, números, puntos, @, - y _
+      const cleaned = stringValue.replace(/[^a-zA-Z0-9.@\-_]/g, "")
+      // Limitar a 30 caracteres
+      const limited = cleaned.slice(0, 30)
       setFormData(prev => ({
         ...prev,
         [field]: limited
@@ -126,7 +129,15 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
         const restOfNumber = afterPlus.slice(countryCode.length)
         
         // Limpiar el resto del número (solo dígitos, espacios, guiones, paréntesis)
-        const cleanedRest = restOfNumber.replace(/[^0-9\s\-()]/g, "")
+        let cleanedRest = restOfNumber.replace(/[^0-9\s\-()]/g, "")
+        
+        // Prevenir múltiples caracteres especiales consecutivos
+        cleanedRest = cleanedRest
+          .replace(/\s{2,}/g, ' ') // Múltiples espacios -> un solo espacio
+          .replace(/-{2,}/g, '-') // Múltiples guiones -> un solo guion
+          .replace(/\({2,}/g, '(') // Múltiples paréntesis abiertos -> uno solo
+          .replace(/\){2,}/g, ')') // Múltiples paréntesis cerrados -> uno solo
+          .replace(/\(\)/g, '') // Eliminar paréntesis vacíos
         
         // Contar dígitos totales (código país + resto)
         const allDigits = (countryCode + cleanedRest).replace(/[^0-9]/g, "")
@@ -135,11 +146,13 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
         if (allDigits.length > 15) {
           let result = '+'
           let digitCount = 0
+          let lastChar = '+'
           
           // Agregar código de país (máximo 3 dígitos)
           for (let i = 0; i < Math.min(countryCode.length, 3); i++) {
             result += countryCode[i]
             digitCount++
+            lastChar = countryCode[i]
           }
           
           // Agregar resto del número hasta llegar a 15 dígitos
@@ -148,11 +161,19 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
               if (digitCount < 15) {
                 result += char
                 digitCount++
+                lastChar = char
               }
             } else if (/[\s\-()]/.test(char)) {
-              result += char
+              // Prevenir caracteres especiales consecutivos
+              if (!/[\s\-()]/.test(lastChar)) {
+                result += char
+                lastChar = char
+              }
             }
           }
+          
+          // Limpiar espacios/guiones/paréntesis al final
+          result = result.replace(/[\s\-()]+$/, '')
           
           // Limitar longitud total a 25 caracteres
           const finalResult = result.slice(0, 25)
@@ -161,6 +182,8 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
             [field]: finalResult
           }))
         } else {
+          // Limpiar espacios/guiones/paréntesis al final
+          cleanedRest = cleanedRest.replace(/[\s\-()]+$/, '')
           // Limitar longitud total a 25 caracteres
           const finalResult = ('+' + countryCode + cleanedRest).slice(0, 25)
           setFormData(prev => ({
@@ -170,8 +193,17 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
         }
       } else {
         // Formato local: sin +, más flexible
-        // Eliminar cualquier + que no esté al inicio
+        // Eliminar cualquier +
         cleaned = cleaned.replace(/\+/g, '')
+        
+        // Prevenir múltiples caracteres especiales consecutivos
+        cleaned = cleaned
+          .replace(/\s{2,}/g, ' ') // Múltiples espacios -> un solo espacio
+          .replace(/-{2,}/g, '-') // Múltiples guiones -> un solo guion
+          .replace(/\({2,}/g, '(') // Múltiples paréntesis abiertos -> uno solo
+          .replace(/\){2,}/g, ')') // Múltiples paréntesis cerrados -> uno solo
+          .replace(/\(\)/g, '') // Eliminar paréntesis vacíos
+          .replace(/^[\s\-()]+|[\s\-()]+$/g, '') // Eliminar espacios/guiones/paréntesis al inicio/final
         
         // Contar solo los dígitos numéricos
         const digitsOnly = cleaned.replace(/[^0-9]/g, "")
@@ -180,16 +212,24 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
         if (digitsOnly.length > 15) {
           let result = ""
           let digitCount = 0
+          let lastChar = ""
           for (let char of cleaned) {
             if (/[0-9]/.test(char)) {
               if (digitCount < 15) {
                 result += char
                 digitCount++
+                lastChar = char
               }
             } else if (/[\s\-()]/.test(char)) {
-              result += char
+              // Prevenir caracteres especiales consecutivos
+              if (!/[\s\-()]/.test(lastChar)) {
+                result += char
+                lastChar = char
+              }
             }
           }
+          // Limpiar espacios/guiones/paréntesis al final
+          result = result.replace(/[\s\-()]+$/, '')
           // Limitar longitud total a 20 caracteres
           const finalResult = result.slice(0, 20)
           setFormData(prev => ({
