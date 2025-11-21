@@ -172,13 +172,18 @@ export default function ProfilePage() {
     console.log('Datos a enviar:', formData) // Debug
     setIsSaving(true)
     try {
+      // Preparar datos para enviar, asegurando que teléfono vacío se envíe como cadena vacía
+      const dataToSend = {
+        ...formData,
+        telefono: formData.telefono || ""
+      }
       const response = await fetch('/api/usuarios/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(dataToSend)
       })
 
       const data = await response.json()

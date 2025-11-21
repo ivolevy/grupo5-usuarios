@@ -193,7 +193,10 @@ export async function PUT(request: NextRequest) {
     // Actualizar campos básicos
     if (nombre_completo !== undefined) updateData.nombre_completo = nombre_completo;
     if (nacionalidad !== undefined) updateData.nacionalidad = nacionalidad;
-    if (telefono && telefono.trim() !== '') updateData.telefono = telefono;
+    // Permitir actualizar teléfono incluso si está vacío (para poder eliminarlo)
+    if (telefono !== undefined) {
+      updateData.telefono = telefono.trim() === '' ? null : telefono;
+    }
     
     // Debug: Log de los datos a actualizar
     console.log('🔄 [PROFILE UPDATE] Datos a actualizar:', {
