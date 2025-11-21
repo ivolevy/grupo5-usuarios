@@ -46,6 +46,7 @@ export function AdvancedFilters({
   availableNationalities = []
 }: AdvancedFiltersProps) {
   const [localFilters, setLocalFilters] = useState<FilterOptions>(filters)
+  const [dateError, setDateError] = useState<string>("")
 
   // Sincronizar filtros locales con los filtros aplicados cuando se abre el panel
   useEffect(() => {
@@ -61,6 +62,38 @@ export function AdvancedFilters({
   }
 
   const handleDateRangeChange = (type: 'from' | 'to', date: Date | undefined) => {
+    setDateError("") // Limpiar error al cambiar fecha
+    
+    if (!date) {
+      const newFilters = {
+        ...localFilters,
+        dateRange: {
+          ...localFilters.dateRange,
+          [type]: undefined
+        }
+      }
+      setLocalFilters(newFilters)
+      return
+    }
+
+    // Validar que "Desde" no sea posterior a "Hasta"
+    if (type === 'from' && localFilters.dateRange.to) {
+      // Si se selecciona una fecha "Desde" posterior a "Hasta", no permitir
+      if (date > localFilters.dateRange.to) {
+        setDateError("La fecha 'Desde' no puede ser posterior a la fecha 'Hasta'")
+        return
+      }
+    }
+
+    // Validar que "Hasta" no sea anterior a "Desde"
+    if (type === 'to' && localFilters.dateRange.from) {
+      // Si se selecciona una fecha "Hasta" anterior a "Desde", no permitir
+      if (date < localFilters.dateRange.from) {
+        setDateError("La fecha 'Hasta' no puede ser anterior a la fecha 'Desde'")
+        return
+      }
+    }
+
     const newFilters = {
       ...localFilters,
       dateRange: {
@@ -270,6 +303,13 @@ export function AdvancedFilters({
                         selected={localFilters.dateRange.from}
                         onSelect={(date) => handleDateRangeChange('from', date)}
                         initialFocus
+                        disabled={(date) => {
+                          // Deshabilitar fechas posteriores a "Hasta" si existe
+                          if (localFilters.dateRange.to) {
+                            return date > localFilters.dateRange.to
+                          }
+                          return false
+                        }}
                       />
                     </PopoverContent>
                   </Popover>
@@ -299,11 +339,21 @@ export function AdvancedFilters({
                         selected={localFilters.dateRange.to}
                         onSelect={(date) => handleDateRangeChange('to', date)}
                         initialFocus
+                        disabled={(date) => {
+                          // Deshabilitar fechas anteriores a "Desde" si existe
+                          if (localFilters.dateRange.from) {
+                            return date < localFilters.dateRange.from
+                          }
+                          return false
+                        }}
                       />
                     </PopoverContent>
                   </Popover>
                 </div>
               </div>
+              {dateError && (
+                <p className="text-xs text-red-600 mt-1">{dateError}</p>
+              )}
             </div>
 
             {/* Botones de acción */}
