@@ -395,7 +395,7 @@ export default function RegisterPage() {
                 type="tel"
                 value={formData.telefono}
                 onChange={(e) => handleInputChange("telefono", e.target.value)}
-                placeholder="+1 (555) 123-4567"
+                placeholder="+54 12 3456 7890"
                 maxLength={20}
                 className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
               />

@@ -446,7 +446,7 @@ export function AddUserDialog() {
               type="tel"
               value={formData.telefono}
               onChange={(e) => handleInputChange("telefono", e.target.value)}
-              placeholder="+1 (555) 123-4567"
+              placeholder="+54 12 3456 7890"
               maxLength={20}
               disabled={isSubmitting}
             />

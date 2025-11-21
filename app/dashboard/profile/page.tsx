@@ -596,7 +596,7 @@ export default function ProfilePage() {
                       type="tel"
                       value={formData.telefono}
                       onChange={handleInputChange}
-                      placeholder="+1 (555) 123-4567"
+                      placeholder="+54 12 3456 7890"
                       maxLength={20}
                     />
                   </div>
