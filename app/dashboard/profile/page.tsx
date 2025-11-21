@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Save, User, Mail, Shield, Calendar, Clock, Key, Eye, EyeOff, Lock, Globe, ArrowLeft } from "lucide-react"
+import { Save, User, Mail, Shield, Calendar, Key, Eye, EyeOff, Lock, Globe, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import { countries } from "@/lib/countries"
 
@@ -92,6 +92,64 @@ export default function ProfilePage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
+    
+    // Validar nombre: solo letras y espacios, máximo 20 caracteres
+    if (name === "nombre_completo") {
+      // Solo permitir letras, espacios y caracteres acentuados
+      const lettersOnly = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "")
+      // Limitar a 20 caracteres
+      const limited = lettersOnly.slice(0, 20)
+      setFormData(prev => ({
+        ...prev,
+        [name]: limited
+      }))
+      return
+    }
+    
+    // Validar email: máximo 30 caracteres
+    if (name === "email") {
+      const limited = value.slice(0, 30)
+      setFormData(prev => ({
+        ...prev,
+        [name]: limited
+      }))
+      return
+    }
+    
+    // Validar teléfono: solo números y caracteres comunes, máximo 15 dígitos numéricos
+    if (name === "telefono") {
+      // Permitir números, +, espacios, guiones, paréntesis
+      const cleaned = value.replace(/[^0-9+\s\-()]/g, "")
+      // Contar solo los dígitos numéricos
+      const digitsOnly = cleaned.replace(/[^0-9]/g, "")
+      // Si tiene más de 15 dígitos, truncar
+      if (digitsOnly.length > 15) {
+        // Mantener el formato pero limitar los dígitos
+        let result = ""
+        let digitCount = 0
+        for (let char of cleaned) {
+          if (/[0-9]/.test(char)) {
+            if (digitCount < 15) {
+              result += char
+              digitCount++
+            }
+          } else {
+            result += char
+          }
+        }
+        setFormData(prev => ({
+          ...prev,
+          [name]: result
+        }))
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [name]: cleaned
+        }))
+      }
+      return
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -377,6 +435,7 @@ export default function ProfilePage() {
                       value={formData.nombre_completo}
                       onChange={handleInputChange}
                       placeholder="Tu nombre completo"
+                      maxLength={20}
                     />
                   </div>
                   
@@ -389,6 +448,7 @@ export default function ProfilePage() {
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="tu@email.com"
+                      maxLength={30}
                       disabled
                       className="bg-gray-50 cursor-not-allowed"
                     />
@@ -422,6 +482,7 @@ export default function ProfilePage() {
                       value={formData.telefono}
                       onChange={handleInputChange}
                       placeholder="+1 (555) 123-4567"
+                      maxLength={20}
                     />
                   </div>
 
@@ -697,23 +758,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {profile.last_login_at && (
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-gray-500" />
-                  <div>
-                    <p className="text-sm font-medium">Último acceso</p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(profile.last_login_at).toLocaleDateString('es-ES', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>

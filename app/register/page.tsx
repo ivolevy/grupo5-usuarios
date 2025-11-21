@@ -32,6 +32,57 @@ export default function RegisterPage() {
   const router = useRouter()
 
   const handleInputChange = (field: string, value: string) => {
+    // Validar nombre: solo letras y espacios, máximo 20 caracteres
+    if (field === "nombre_completo") {
+      // Solo permitir letras, espacios y caracteres acentuados
+      const lettersOnly = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "")
+      // Limitar a 20 caracteres
+      const limited = lettersOnly.slice(0, 20)
+      setFormData(prev => ({ ...prev, [field]: limited }))
+      setError("")
+      setSuccess("")
+      return
+    }
+    
+    // Validar email: máximo 30 caracteres
+    if (field === "email") {
+      const limited = value.slice(0, 30)
+      setFormData(prev => ({ ...prev, [field]: limited }))
+      setError("")
+      setSuccess("")
+      return
+    }
+    
+    // Validar teléfono: solo números y caracteres comunes, máximo 15 dígitos numéricos
+    if (field === "telefono") {
+      // Permitir números, +, espacios, guiones, paréntesis
+      const cleaned = value.replace(/[^0-9+\s\-()]/g, "")
+      // Contar solo los dígitos numéricos
+      const digitsOnly = cleaned.replace(/[^0-9]/g, "")
+      // Si tiene más de 15 dígitos, truncar
+      if (digitsOnly.length > 15) {
+        // Mantener el formato pero limitar los dígitos
+        let result = ""
+        let digitCount = 0
+        for (let char of cleaned) {
+          if (/[0-9]/.test(char)) {
+            if (digitCount < 15) {
+              result += char
+              digitCount++
+            }
+          } else {
+            result += char
+          }
+        }
+        setFormData(prev => ({ ...prev, [field]: result }))
+      } else {
+        setFormData(prev => ({ ...prev, [field]: cleaned }))
+      }
+      setError("")
+      setSuccess("")
+      return
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }))
     setError("")
     setSuccess("")
@@ -71,8 +122,33 @@ export default function RegisterPage() {
     }
 
     // Validar teléfono si se proporciona
-    if (formData.telefono && !/^[\+]?[0-9\s\-\(\)]*$/.test(formData.telefono)) {
-      setError("El teléfono debe contener solo números, espacios, guiones y paréntesis")
+    if (formData.telefono) {
+      const digitsOnly = formData.telefono.replace(/[^0-9]/g, "")
+      if (digitsOnly.length > 15) {
+        setError("El teléfono no puede tener más de 15 números")
+        return false
+      }
+      if (!/^[\+]?[0-9\s\-\(\)]*$/.test(formData.telefono)) {
+        setError("El teléfono debe contener solo números, espacios, guiones y paréntesis")
+        return false
+      }
+    }
+    
+    // Validar nombre: solo letras y espacios
+    if (formData.nombre_completo && !/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.nombre_completo)) {
+      setError("El nombre solo puede contener letras")
+      return false
+    }
+    
+    // Validar longitud del nombre
+    if (formData.nombre_completo && formData.nombre_completo.length > 20) {
+      setError("El nombre no puede tener más de 20 caracteres")
+      return false
+    }
+    
+    // Validar longitud del email
+    if (formData.email && formData.email.length > 30) {
+      setError("El email no puede tener más de 30 caracteres")
       return false
     }
 
@@ -151,6 +227,7 @@ export default function RegisterPage() {
                 onChange={(e) => handleInputChange("nombre_completo", e.target.value)}
                 placeholder="Tu nombre completo"
                 required
+                maxLength={20}
                 className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
@@ -166,6 +243,7 @@ export default function RegisterPage() {
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 placeholder="usuario@example.com"
                 required
+                maxLength={30}
                 className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
@@ -201,6 +279,7 @@ export default function RegisterPage() {
                 value={formData.telefono}
                 onChange={(e) => handleInputChange("telefono", e.target.value)}
                 placeholder="+1 (555) 123-4567"
+                maxLength={20}
                 className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>

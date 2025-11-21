@@ -52,6 +52,52 @@ export function AddUserDialog() {
   }, [open])
 
   const handleInputChange = (field: string, value: string) => {
+    // Validar nombre: solo letras y espacios, máximo 20 caracteres
+    if (field === "nombre_completo") {
+      // Solo permitir letras, espacios y caracteres acentuados
+      const lettersOnly = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "")
+      // Limitar a 20 caracteres
+      const limited = lettersOnly.slice(0, 20)
+      setFormData(prev => ({ ...prev, [field]: limited }))
+      return
+    }
+    
+    // Validar email: máximo 30 caracteres
+    if (field === "email") {
+      const limited = value.slice(0, 30)
+      setFormData(prev => ({ ...prev, [field]: limited }))
+      setEmailError("")
+      return
+    }
+    
+    // Validar teléfono: solo números y caracteres comunes, máximo 15 dígitos numéricos
+    if (field === "telefono") {
+      // Permitir números, +, espacios, guiones, paréntesis
+      const cleaned = value.replace(/[^0-9+\s\-()]/g, "")
+      // Contar solo los dígitos numéricos
+      const digitsOnly = cleaned.replace(/[^0-9]/g, "")
+      // Si tiene más de 15 dígitos, truncar
+      if (digitsOnly.length > 15) {
+        // Mantener el formato pero limitar los dígitos
+        let result = ""
+        let digitCount = 0
+        for (let char of cleaned) {
+          if (/[0-9]/.test(char)) {
+            if (digitCount < 15) {
+              result += char
+              digitCount++
+            }
+          } else {
+            result += char
+          }
+        }
+        setFormData(prev => ({ ...prev, [field]: result }))
+      } else {
+        setFormData(prev => ({ ...prev, [field]: cleaned }))
+      }
+      return
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }))
     
     // Limpiar error de email cuando se cambia el email
@@ -156,9 +202,10 @@ export function AddUserDialog() {
               id="nombre_completo"
               type="text"
               value={formData.nombre_completo}
-              onChange={(e) => setFormData({ ...formData, nombre_completo: e.target.value })}
+              onChange={(e) => handleInputChange("nombre_completo", e.target.value)}
               placeholder="Nombre completo del usuario"
               required
+              maxLength={20}
               disabled={isSubmitting}
             />
           </div>
@@ -171,6 +218,7 @@ export function AddUserDialog() {
               onChange={(e) => handleInputChange("email", e.target.value)}
               placeholder="usuario@example.com"
               required
+              maxLength={30}
               disabled={isSubmitting}
               className={emailError ? "border-red-500" : ""}
             />
@@ -287,8 +335,9 @@ export function AddUserDialog() {
               id="telefono"
               type="tel"
               value={formData.telefono}
-              onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+              onChange={(e) => handleInputChange("telefono", e.target.value)}
               placeholder="+1 (555) 123-4567"
+              maxLength={20}
               disabled={isSubmitting}
             />
           </div>

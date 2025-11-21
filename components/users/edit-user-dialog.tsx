@@ -80,6 +80,66 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
   }
 
   const handleInputChange = (field: string, value: any) => {
+    // Validar nombre: solo letras y espacios, máximo 20 caracteres
+    if (field === "nombre_completo") {
+      const stringValue = String(value)
+      // Solo permitir letras, espacios y caracteres acentuados
+      const lettersOnly = stringValue.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "")
+      // Limitar a 20 caracteres
+      const limited = lettersOnly.slice(0, 20)
+      setFormData(prev => ({
+        ...prev,
+        [field]: limited
+      }))
+      return
+    }
+    
+    // Validar email: máximo 30 caracteres
+    if (field === "email") {
+      const stringValue = String(value)
+      const limited = stringValue.slice(0, 30)
+      setFormData(prev => ({
+        ...prev,
+        [field]: limited
+      }))
+      return
+    }
+    
+    // Validar teléfono: solo números y caracteres comunes, máximo 15 dígitos numéricos
+    if (field === "telefono") {
+      const stringValue = String(value)
+      // Permitir números, +, espacios, guiones, paréntesis
+      const cleaned = stringValue.replace(/[^0-9+\s\-()]/g, "")
+      // Contar solo los dígitos numéricos
+      const digitsOnly = cleaned.replace(/[^0-9]/g, "")
+      // Si tiene más de 15 dígitos, truncar
+      if (digitsOnly.length > 15) {
+        // Mantener el formato pero limitar los dígitos
+        let result = ""
+        let digitCount = 0
+        for (let char of cleaned) {
+          if (/[0-9]/.test(char)) {
+            if (digitCount < 15) {
+              result += char
+              digitCount++
+            }
+          } else {
+            result += char
+          }
+        }
+        setFormData(prev => ({
+          ...prev,
+          [field]: result
+        }))
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [field]: cleaned
+        }))
+      }
+      return
+    }
+    
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -107,6 +167,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
               value={formData.nombre_completo}
               onChange={(e) => handleInputChange("nombre_completo", e.target.value)}
               placeholder="Ingresa el nombre completo"
+              maxLength={20}
             />
           </div>
 
@@ -118,6 +179,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
               value={formData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
               placeholder="usuario@ejemplo.com"
+              maxLength={30}
               disabled
               className="bg-gray-50 cursor-not-allowed"
             />
@@ -168,6 +230,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
               value={formData.telefono}
               onChange={(e) => handleInputChange("telefono", e.target.value)}
               placeholder="+1 (555) 123-4567"
+              maxLength={20}
             />
           </div>
 
