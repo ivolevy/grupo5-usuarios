@@ -139,7 +139,6 @@ export function AdvancedFilters({
   const getActiveFiltersCount = () => {
     let count = 0
     if (filters.role && filters.role !== "all") count++
-    if (filters.activityStatus && filters.activityStatus !== "all") count++
     if (filters.nationality && filters.nationality !== "all") count++
     if (filters.verificationStatus && filters.verificationStatus !== "all") count++
     if (filters.dateRange.from || filters.dateRange.to) count++
@@ -228,25 +227,6 @@ export function AdvancedFilters({
                       {nationality}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Filtro por actividad - Siempre visible para todos los tipos de usuarios */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Actividad</Label>
-              <Select
-                value={localFilters.activityStatus}
-                onValueChange={(value) => handleFilterChange('activityStatus', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Toda la actividad" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toda la actividad</SelectItem>
-                  <SelectItem value="active">Activos (último login &lt; 30 días)</SelectItem>
-                  <SelectItem value="inactive">Inactivos (último login &gt; 30 días)</SelectItem>
-                  <SelectItem value="never">Nunca han iniciado sesión</SelectItem>
                 </SelectContent>
               </Select>
             </div>
