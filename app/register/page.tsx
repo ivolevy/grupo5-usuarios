@@ -73,31 +73,94 @@ export default function RegisterPage() {
       return
     }
     
-    // Validar teléfono: solo números y caracteres comunes, máximo 15 dígitos numéricos
+    // Validar teléfono: validación por patrón (internacional vs local)
     if (field === "telefono") {
-      // Permitir números, +, espacios, guiones, paréntesis
-      const cleaned = value.replace(/[^0-9+\s\-()]/g, "")
-      // Contar solo los dígitos numéricos
-      const digitsOnly = cleaned.replace(/[^0-9]/g, "")
-      // Si tiene más de 15 dígitos, truncar
-      if (digitsOnly.length > 15) {
-        // Mantener el formato pero limitar los dígitos
-        let result = ""
-        let digitCount = 0
-        for (let char of cleaned) {
-          if (/[0-9]/.test(char)) {
-            if (digitCount < 15) {
-              result += char
-              digitCount++
-            }
-          } else {
-            result += char
+      // Permitir solo números, +, espacios, guiones, paréntesis
+      let cleaned = value.replace(/[^0-9+\s\-()]/g, "")
+      
+      // Detectar si es formato internacional (empieza con +)
+      const isInternational = cleaned.startsWith('+')
+      
+      if (isInternational) {
+        // Formato internacional: +[1-3 dígitos código país] [resto]
+        // Asegurar que solo haya un + y esté al inicio
+        cleaned = '+' + cleaned.replace(/\+/g, '')
+        
+        // Extraer código de país (1-3 dígitos después del +)
+        const afterPlus = cleaned.slice(1)
+        const countryCodeMatch = afterPlus.match(/^(\d{1,3})/)
+        const countryCode = countryCodeMatch ? countryCodeMatch[1] : ''
+        const restOfNumber = afterPlus.slice(countryCode.length)
+        
+        // Limpiar el resto del número (solo dígitos, espacios, guiones, paréntesis)
+        const cleanedRest = restOfNumber.replace(/[^0-9\s\-()]/g, "")
+        
+        // Contar dígitos totales (código país + resto)
+        const allDigits = (countryCode + cleanedRest).replace(/[^0-9]/g, "")
+        
+        // Limitar a 15 dígitos totales
+        if (allDigits.length > 15) {
+          let result = '+'
+          let digitCount = 0
+          
+          // Agregar código de país (máximo 3 dígitos)
+          for (let i = 0; i < Math.min(countryCode.length, 3); i++) {
+            result += countryCode[i]
+            digitCount++
           }
+          
+          // Agregar resto del número hasta llegar a 15 dígitos
+          for (let char of cleanedRest) {
+            if (/[0-9]/.test(char)) {
+              if (digitCount < 15) {
+                result += char
+                digitCount++
+              }
+            } else if (/[\s\-()]/.test(char)) {
+              result += char
+            }
+          }
+          
+          // Limitar longitud total a 25 caracteres
+          const finalResult = result.slice(0, 25)
+          setFormData(prev => ({ ...prev, [field]: finalResult }))
+        } else {
+          // Limitar longitud total a 25 caracteres
+          const finalResult = ('+' + countryCode + cleanedRest).slice(0, 25)
+          setFormData(prev => ({ ...prev, [field]: finalResult }))
         }
-        setFormData(prev => ({ ...prev, [field]: result }))
       } else {
-        setFormData(prev => ({ ...prev, [field]: cleaned }))
+        // Formato local: sin +, más flexible
+        // Eliminar cualquier + que no esté al inicio
+        cleaned = cleaned.replace(/\+/g, '')
+        
+        // Contar solo los dígitos numéricos
+        const digitsOnly = cleaned.replace(/[^0-9]/g, "")
+        
+        // Si tiene más de 15 dígitos, truncar
+        if (digitsOnly.length > 15) {
+          let result = ""
+          let digitCount = 0
+          for (let char of cleaned) {
+            if (/[0-9]/.test(char)) {
+              if (digitCount < 15) {
+                result += char
+                digitCount++
+              }
+            } else if (/[\s\-()]/.test(char)) {
+              result += char
+            }
+          }
+          // Limitar longitud total a 20 caracteres
+          const finalResult = result.slice(0, 20)
+          setFormData(prev => ({ ...prev, [field]: finalResult }))
+        } else {
+          // Limitar longitud total a 20 caracteres
+          const finalResult = cleaned.slice(0, 20)
+          setFormData(prev => ({ ...prev, [field]: finalResult }))
+        }
       }
+      
       setError("")
       setSuccess("")
       return
