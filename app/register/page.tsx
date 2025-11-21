@@ -32,15 +32,35 @@ export default function RegisterPage() {
   const router = useRouter()
 
   const handleInputChange = (field: string, value: string) => {
-    // Validar nombre: solo letras y espacios, máximo 20 caracteres
+    // Validar nombre: solo letras y espacios, máximo 35 caracteres
     if (field === "nombre_completo") {
       // Solo permitir letras, espacios y caracteres acentuados
       const lettersOnly = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "")
-      // Limitar a 20 caracteres
-      const limited = lettersOnly.slice(0, 20)
+      // Limitar a 35 caracteres
+      const limited = lettersOnly.slice(0, 35)
       setFormData(prev => ({ ...prev, [field]: limited }))
       setError("")
       setSuccess("")
+      return
+    }
+    
+    // Validar contraseña: máximo 30 caracteres
+    if (field === "password" || field === "confirmPassword") {
+      const limited = value.slice(0, 30)
+      setFormData(prev => ({ ...prev, [field]: limited }))
+      setError("")
+      setSuccess("")
+      // Validar contraseñas en tiempo real
+      if (field === "password" || field === "confirmPassword") {
+        const password = field === "password" ? limited : formData.password
+        const confirmPassword = field === "confirmPassword" ? limited : formData.confirmPassword
+        
+        if (confirmPassword && password !== confirmPassword) {
+          setPasswordError("Las contraseñas no coinciden")
+        } else {
+          setPasswordError("")
+        }
+      }
       return
     }
     
@@ -86,18 +106,6 @@ export default function RegisterPage() {
     setFormData(prev => ({ ...prev, [field]: value }))
     setError("")
     setSuccess("")
-    
-    // Validar contraseñas en tiempo real
-    if (field === "password" || field === "confirmPassword") {
-      const password = field === "password" ? value : formData.password
-      const confirmPassword = field === "confirmPassword" ? value : formData.confirmPassword
-      
-      if (confirmPassword && password !== confirmPassword) {
-        setPasswordError("Las contraseñas no coinciden")
-      } else {
-        setPasswordError("")
-      }
-    }
   }
 
   const validateForm = () => {
@@ -141,8 +149,14 @@ export default function RegisterPage() {
     }
     
     // Validar longitud del nombre
-    if (formData.nombre_completo && formData.nombre_completo.length > 20) {
-      setError("El nombre no puede tener más de 20 caracteres")
+    if (formData.nombre_completo && formData.nombre_completo.length > 35) {
+      setError("El nombre no puede tener más de 35 caracteres")
+      return false
+    }
+    
+    // Validar longitud de la contraseña
+    if (formData.password && formData.password.length > 30) {
+      setError("La contraseña no puede tener más de 30 caracteres")
       return false
     }
     
@@ -227,7 +241,7 @@ export default function RegisterPage() {
                 onChange={(e) => handleInputChange("nombre_completo", e.target.value)}
                 placeholder="Tu nombre completo"
                 required
-                maxLength={20}
+                maxLength={35}
                 className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
@@ -296,6 +310,7 @@ export default function RegisterPage() {
                   onChange={(e) => handleInputChange("password", e.target.value)}
                   placeholder="••••••••"
                   required
+                  maxLength={30}
                   className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500 pr-10"
                 />
                 <button
@@ -325,6 +340,7 @@ export default function RegisterPage() {
                   onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
                   placeholder="••••••••"
                   required
+                  maxLength={30}
                   className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500 pr-10"
                 />
                 <button

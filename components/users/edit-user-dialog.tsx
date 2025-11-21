@@ -80,13 +80,13 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
   }
 
   const handleInputChange = (field: string, value: any) => {
-    // Validar nombre: solo letras y espacios, máximo 20 caracteres
+    // Validar nombre: solo letras y espacios, máximo 35 caracteres
     if (field === "nombre_completo") {
       const stringValue = String(value)
       // Solo permitir letras, espacios y caracteres acentuados
       const lettersOnly = stringValue.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "")
-      // Limitar a 20 caracteres
-      const limited = lettersOnly.slice(0, 20)
+      // Limitar a 35 caracteres
+      const limited = lettersOnly.slice(0, 35)
       setFormData(prev => ({
         ...prev,
         [field]: limited
@@ -167,7 +167,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
               value={formData.nombre_completo}
               onChange={(e) => handleInputChange("nombre_completo", e.target.value)}
               placeholder="Ingresa el nombre completo"
-              maxLength={20}
+              maxLength={35}
             />
           </div>
 

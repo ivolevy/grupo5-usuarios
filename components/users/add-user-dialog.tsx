@@ -52,13 +52,31 @@ export function AddUserDialog() {
   }, [open])
 
   const handleInputChange = (field: string, value: string) => {
-    // Validar nombre: solo letras y espacios, máximo 20 caracteres
+    // Validar nombre: solo letras y espacios, máximo 35 caracteres
     if (field === "nombre_completo") {
       // Solo permitir letras, espacios y caracteres acentuados
       const lettersOnly = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "")
-      // Limitar a 20 caracteres
-      const limited = lettersOnly.slice(0, 20)
+      // Limitar a 35 caracteres
+      const limited = lettersOnly.slice(0, 35)
       setFormData(prev => ({ ...prev, [field]: limited }))
+      return
+    }
+    
+    // Validar contraseña: máximo 30 caracteres
+    if (field === "password" || field === "confirmPassword") {
+      const limited = value.slice(0, 30)
+      setFormData(prev => ({ ...prev, [field]: limited }))
+      // Validar contraseñas en tiempo real
+      if (field === "password" || field === "confirmPassword") {
+        const password = field === "password" ? limited : formData.password
+        const confirmPassword = field === "confirmPassword" ? limited : formData.confirmPassword
+        
+        if (confirmPassword && password !== confirmPassword) {
+          setPasswordError("Las contraseñas no coinciden")
+        } else {
+          setPasswordError("")
+        }
+      }
       return
     }
     
@@ -103,18 +121,6 @@ export function AddUserDialog() {
     // Limpiar error de email cuando se cambia el email
     if (field === "email") {
       setEmailError("")
-    }
-    
-    // Validar contraseñas en tiempo real
-    if (field === "password" || field === "confirmPassword") {
-      const password = field === "password" ? value : formData.password
-      const confirmPassword = field === "confirmPassword" ? value : formData.confirmPassword
-      
-      if (confirmPassword && password !== confirmPassword) {
-        setPasswordError("Las contraseñas no coinciden")
-      } else {
-        setPasswordError("")
-      }
     }
   }
 
@@ -205,7 +211,7 @@ export function AddUserDialog() {
               onChange={(e) => handleInputChange("nombre_completo", e.target.value)}
               placeholder="Nombre completo del usuario"
               required
-              maxLength={20}
+              maxLength={35}
               disabled={isSubmitting}
             />
           </div>
@@ -240,6 +246,7 @@ export function AddUserDialog() {
                 required
                 disabled={isSubmitting}
                 minLength={8}
+                maxLength={30}
                 className="pr-10"
               />
               <button
@@ -269,6 +276,7 @@ export function AddUserDialog() {
                 required
                 disabled={isSubmitting}
                 minLength={8}
+                maxLength={30}
                 className="pr-10"
               />
               <button

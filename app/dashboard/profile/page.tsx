@@ -93,12 +93,12 @@ export default function ProfilePage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     
-    // Validar nombre: solo letras y espacios, máximo 20 caracteres
+    // Validar nombre: solo letras y espacios, máximo 35 caracteres
     if (name === "nombre_completo") {
       // Solo permitir letras, espacios y caracteres acentuados
       const lettersOnly = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "")
-      // Limitar a 20 caracteres
-      const limited = lettersOnly.slice(0, 20)
+      // Limitar a 35 caracteres
+      const limited = lettersOnly.slice(0, 35)
       setFormData(prev => ({
         ...prev,
         [name]: limited
@@ -233,9 +233,11 @@ export default function ProfilePage() {
 
   const handlePasswordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
+    // Limitar contraseña a 30 caracteres
+    const limited = value.slice(0, 30)
     setPasswordData(prev => ({
       ...prev,
-      [name]: value
+      [name]: limited
     }))
     // Limpiar error cuando el usuario empiece a escribir
     if (passwordError) {
@@ -435,7 +437,7 @@ export default function ProfilePage() {
                       value={formData.nombre_completo}
                       onChange={handleInputChange}
                       placeholder="Tu nombre completo"
-                      maxLength={20}
+                      maxLength={35}
                     />
                   </div>
                   
@@ -593,6 +595,7 @@ export default function ProfilePage() {
                           value={passwordData.currentPassword}
                           onChange={handlePasswordInputChange}
                           placeholder="••••••••"
+                          maxLength={30}
                           className="pr-10"
                         />
                         <button
@@ -615,6 +618,7 @@ export default function ProfilePage() {
                           value={passwordData.newPassword}
                           onChange={handlePasswordInputChange}
                           placeholder="••••••••"
+                          maxLength={30}
                           className="pr-10"
                         />
                         <button
@@ -637,6 +641,7 @@ export default function ProfilePage() {
                           value={passwordData.confirmPassword}
                           onChange={handlePasswordInputChange}
                           placeholder="••••••••"
+                          maxLength={30}
                           className="pr-10"
                         />
                         <button
