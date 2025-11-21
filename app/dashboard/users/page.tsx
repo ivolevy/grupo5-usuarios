@@ -69,19 +69,19 @@ export default function UsersPage() {
         (user.nombre_completo && user.nombre_completo.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (user.nacionalidad && user.nacionalidad.toLowerCase().includes(searchTerm.toLowerCase()))
 
-      // Filtro por rol - Solo aplicar si estamos en la pestaña de admin-moderator
-      const matchesRole = activeTab === "normal-users" || filters.role === "all" || user.rol === filters.role
+      // Filtro por rol - Aplicar para todos los tipos de usuarios
+      const matchesRole = filters.role === "all" || user.rol === filters.role
 
-      // Filtro por actividad - Solo para usuarios normales
-      const matchesActivity = activeTab === "admin-moderator" || filters.activityStatus === "all" || 
+      // Filtro por actividad - Aplicar para todos los tipos de usuarios
+      const matchesActivity = filters.activityStatus === "all" || 
         (filters.activityStatus === "active" && user.last_login_at && 
           (new Date().getTime() - new Date(user.last_login_at).getTime()) < (30 * 24 * 60 * 60 * 1000)) ||
         (filters.activityStatus === "inactive" && user.last_login_at && 
           (new Date().getTime() - new Date(user.last_login_at).getTime()) >= (30 * 24 * 60 * 60 * 1000)) ||
         (filters.activityStatus === "never" && !user.last_login_at)
 
-      // Filtro por verificación - Solo para usuarios normales
-      const matchesVerification = activeTab === "admin-moderator" || filters.verificationStatus === "all" ||
+      // Filtro por verificación - Aplicar para todos los tipos de usuarios
+      const matchesVerification = filters.verificationStatus === "all" ||
         (filters.verificationStatus === "verified" && user.email_verified) ||
         (filters.verificationStatus === "unverified" && !user.email_verified)
 

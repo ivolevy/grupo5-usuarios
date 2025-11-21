@@ -191,25 +191,24 @@ export function AdvancedFilters({
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Filtro por rol - Solo para administradores y internoes */}
-            {activeTab === "admin-moderator" && (
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Rol</Label>
-                <Select
-                  value={localFilters.role}
-                  onValueChange={(value) => handleFilterChange('role', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos los roles" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los roles</SelectItem>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="interno">Usuario Interno</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Filtro por rol - Siempre visible para todos los tipos de usuarios */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Rol</Label>
+              <Select
+                value={localFilters.role}
+                onValueChange={(value) => handleFilterChange('role', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los roles</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="interno">Usuario Interno</SelectItem>
+                  <SelectItem value="usuario">Usuario</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Filtro por nacionalidad */}
             <div className="space-y-2">
@@ -233,46 +232,42 @@ export function AdvancedFilters({
               </Select>
             </div>
 
-            {/* Filtro por actividad - Solo para usuarios normales */}
-            {activeTab === "normal-users" && (
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Actividad</Label>
-                <Select
-                  value={localFilters.activityStatus}
-                  onValueChange={(value) => handleFilterChange('activityStatus', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Toda la actividad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toda la actividad</SelectItem>
-                    <SelectItem value="active">Activos (último login &lt; 30 días)</SelectItem>
-                    <SelectItem value="inactive">Inactivos (último login &gt; 30 días)</SelectItem>
-                    <SelectItem value="never">Nunca han iniciado sesión</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Filtro por actividad - Siempre visible para todos los tipos de usuarios */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Actividad</Label>
+              <Select
+                value={localFilters.activityStatus}
+                onValueChange={(value) => handleFilterChange('activityStatus', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Toda la actividad" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toda la actividad</SelectItem>
+                  <SelectItem value="active">Activos (último login &lt; 30 días)</SelectItem>
+                  <SelectItem value="inactive">Inactivos (último login &gt; 30 días)</SelectItem>
+                  <SelectItem value="never">Nunca han iniciado sesión</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            {/* Filtro por verificación - Solo para usuarios normales */}
-            {activeTab === "normal-users" && (
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Estado de verificación</Label>
-                <Select
-                  value={localFilters.verificationStatus}
-                  onValueChange={(value) => handleFilterChange('verificationStatus', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="verified">Solo verificados</SelectItem>
-                    <SelectItem value="unverified">Solo no verificados</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Filtro por verificación - Siempre visible para todos los tipos de usuarios */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Estado de verificación</Label>
+              <Select
+                value={localFilters.verificationStatus}
+                onValueChange={(value) => handleFilterChange('verificationStatus', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="verified">Solo verificados</SelectItem>
+                  <SelectItem value="unverified">Solo no verificados</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Filtro por fecha de creación */}
             <div className="space-y-2">
