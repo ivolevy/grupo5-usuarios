@@ -191,78 +191,78 @@ export default function UsersPage() {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Nombre Completo</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Email Verificado</TableHead>
-          <TableHead>Rol</TableHead>
-          <TableHead>Nacionalidad</TableHead>
-          <TableHead>Teléfono</TableHead>
-          <TableHead>Fecha Creación</TableHead>
-          <TableHead>Creado por Admin</TableHead>
-          {showActions && <TableHead className="text-center">Acciones</TableHead>}
+          <TableHead className="text-xs">Nombre Completo</TableHead>
+          <TableHead className="text-xs">Email</TableHead>
+          <TableHead className="text-xs">Email Verificado</TableHead>
+          <TableHead className="text-xs">Rol</TableHead>
+          <TableHead className="text-xs">Nacionalidad</TableHead>
+          <TableHead className="text-xs">Teléfono</TableHead>
+          <TableHead className="text-xs">Fecha Creación</TableHead>
+          <TableHead className="text-xs">Creado por Admin</TableHead>
+          {showActions && <TableHead className="text-center text-xs">Acciones</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8">
+            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8 text-sm">
               Cargando usuarios...
             </TableCell>
           </TableRow>
         ) : error ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8 text-red-600">
+            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8 text-red-600 text-sm">
               Error: {error}
             </TableCell>
           </TableRow>
         ) : filteredUsers.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8">
+            <TableCell colSpan={showActions ? 9 : 8} className="text-center py-8 text-sm">
               No se encontraron usuarios
             </TableCell>
           </TableRow>
         ) : (
           filteredUsers.map((currentUser) => (
             <TableRow key={currentUser.email}>
-              <TableCell className="font-roboto-medium">
+              <TableCell className="font-roboto-medium text-xs">
                 {currentUser.nombre_completo || "Sin nombre"}
                 {user && currentUser.email === user.email && (
-                  <span className="ml-2 text-blue-600 font-roboto-regular text-sm">(Tú)</span>
+                  <span className="ml-2 text-blue-600 font-roboto-regular text-xs">(Tú)</span>
                 )}
               </TableCell>
-              <TableCell className="font-roboto-medium">{currentUser.email}</TableCell>
+              <TableCell className="font-roboto-medium text-xs">{currentUser.email}</TableCell>
               <TableCell className="text-center">
                 {currentUser.email_verified ? (
-                  <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
+                  <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200 text-xs">
                     <Check className="w-3 h-3 mr-1" />
                     Verificado
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
+                  <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200 text-xs">
                     <X className="w-3 h-3 mr-1" />
                     No verificado
                   </Badge>
                 )}
               </TableCell>
               <TableCell>
-                <Badge variant="outline" className={cn("capitalize", getRoleBadge(currentUser.rol))}>
+                <Badge variant="outline" className={cn("capitalize text-xs", getRoleBadge(currentUser.rol))}>
                   {currentUser.rol}
                 </Badge>
               </TableCell>
-              <TableCell className="text-gray-600 font-roboto-regular">
+              <TableCell className="text-gray-600 font-roboto-regular text-xs">
                 {currentUser.nacionalidad || "No especificada"}
               </TableCell>
-              <TableCell className="text-gray-600 font-roboto-regular">
+              <TableCell className="text-gray-600 font-roboto-regular text-xs">
                 {currentUser.telefono || "No especificado"}
               </TableCell>
-              <TableCell className="text-gray-600 font-roboto-regular">
+              <TableCell className="text-gray-600 font-roboto-regular text-xs">
                 {new Date(currentUser.created_at).toLocaleDateString('es-ES')}
               </TableCell>
               <TableCell className="text-center">
                 {currentUser.created_by_admin ? (
-                  <Check className="w-5 h-5 text-gray-700 mx-auto" />
+                  <Check className="w-4 h-4 text-gray-700 mx-auto" />
                 ) : (
-                  <X className="w-5 h-5 text-gray-400 mx-auto" />
+                  <X className="w-4 h-4 text-gray-400 mx-auto" />
                 )}
               </TableCell>
               {showActions && (
