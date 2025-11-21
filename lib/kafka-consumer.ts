@@ -219,7 +219,7 @@ class KafkaConsumerService {
         email: payload.email,
         password: payload.password, // Texto plano para LDAP - el cliente generará hash bcrypt en metadatos
         rol: payload.roles[0] || 'usuario',
-        email_verified: true,
+        email_verified: false, // Usuarios creados desde Kafka deben verificar su email
         nacionalidad: payload.nationalityOrOrigin || 'No especificada',
         telefono: payload.telefono || undefined, // Campo opcional
         created_by_admin: false,
