@@ -1,5 +1,6 @@
 import { logger } from './logger';
 import { userCreatedEventSchema } from './kafka-schemas';
+import { encryptPasswordAES128 } from './security';
 
 // Configuración de la API REST de Kafka
 const KAFKA_API_URL = process.env.KAFKA_API_URL || 'http://34.172.179.60/events';
@@ -110,8 +111,7 @@ export async function sendEventToKafka(
 
 /**
  * Envía evento de usuario creado a Kafka
- * ⚠️ ADVERTENCIA: Este evento incluye la contraseña en texto plano.
- * Asegúrate de que Kafka esté configurado con TLS/SSL y acceso restringido.
+ * La contraseña se envía encriptada con AES-128 para mayor seguridad.
  */
 export async function sendUserCreatedEvent(userData: {
   userId: string;
@@ -127,13 +127,16 @@ export async function sendUserCreatedEvent(userData: {
     // Validar el payload antes de enviarlo
     const validatedPayload = userCreatedEventSchema.parse(userData);
     
+    // Encriptar la contraseña con AES-128 antes de enviarla al broker
+    const encryptedPassword = encryptPasswordAES128(validatedPayload.password);
+    
     // Construir payload con SOLO los campos requeridos por el schema del servidor
     // El schema del servidor NO incluye telefono, así que lo omitimos
     const payload = {
       userId: validatedPayload.userId,
       nombre_completo: validatedPayload.nombre_completo,
       email: validatedPayload.email,
-      password: validatedPayload.password,
+      password: encryptedPassword, // Contraseña encriptada con AES-128
       nationalityOrOrigin: validatedPayload.nationalityOrOrigin,
       roles: validatedPayload.roles,
       createdAt: new Date(validatedPayload.createdAt).toISOString(),
