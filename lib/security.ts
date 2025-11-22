@@ -362,3 +362,56 @@ export function detectBruteForceAttempts(
   
   return failedAttempts.length >= maxAttempts;
 }
+
+/**
+ * Encripta una contraseña usando AES-128-CBC
+ * @param password - Contraseña en texto plano
+ * @returns string - Contraseña encriptada en formato base64
+ */
+export function encryptPasswordAES128(password: string): string {
+  const algorithm = 'aes-128-cbc';
+  const key = 'default-key-16b'; // 16 bytes para AES-128
+  
+  // Asegurar que la clave tenga exactamente 16 bytes
+  const keyBuffer = Buffer.from(key.padEnd(16, '0').substring(0, 16), 'utf8');
+  
+  // Generar IV aleatorio
+  const iv = crypto.randomBytes(16);
+  
+  const cipher = crypto.createCipheriv(algorithm, keyBuffer, iv);
+  
+  let encrypted = cipher.update(password, 'utf8', 'base64');
+  encrypted += cipher.final('base64');
+  
+  // Combinar IV y texto encriptado (IV:encrypted)
+  return `${iv.toString('base64')}:${encrypted}`;
+}
+
+/**
+ * Desencripta una contraseña usando AES-128-CBC
+ * @param encryptedPassword - Contraseña encriptada en formato base64 (IV:encrypted)
+ * @returns string - Contraseña en texto plano
+ */
+export function decryptPasswordAES128(encryptedPassword: string): string {
+  const algorithm = 'aes-128-cbc';
+  const key = 'default-key-16b'; // 16 bytes para AES-128
+  
+  // Asegurar que la clave tenga exactamente 16 bytes
+  const keyBuffer = Buffer.from(key.padEnd(16, '0').substring(0, 16), 'utf8');
+  
+  // Separar IV y texto encriptado
+  const parts = encryptedPassword.split(':');
+  if (parts.length !== 2) {
+    throw new Error('Formato de contraseña encriptada inválido');
+  }
+  
+  const iv = Buffer.from(parts[0], 'base64');
+  const encrypted = parts[1];
+  
+  const decipher = crypto.createDecipheriv(algorithm, keyBuffer, iv);
+  
+  let decrypted = decipher.update(encrypted, 'base64', 'utf8');
+  decrypted += decipher.final('utf8');
+  
+  return decrypted;
+}

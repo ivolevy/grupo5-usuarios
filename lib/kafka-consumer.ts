@@ -6,6 +6,7 @@ import { logger } from './logger';
 import { prisma } from './db';
 import { userCreatedEventSchema } from './kafka-schemas';
 import { sendUserDatabaseInsertedEvent } from './kafka-api-sender';
+import { decryptPasswordAES128 } from './security';
 import { randomUUID } from 'crypto';
 
 // Tipo para el envelope del evento
@@ -209,6 +210,24 @@ class KafkaConsumerService {
         return;
       }
 
+      // IMPORTANTE: La contraseña viene encriptada con AES-128 desde el broker
+      // Necesitamos desencriptarla antes de enviarla a LDAP
+      let decryptedPassword: string;
+      try {
+        decryptedPassword = decryptPasswordAES128(payload.password);
+      } catch (decryptError) {
+        logger.error('Error desencriptando contraseña desde Kafka', {
+          action: 'kafka_password_decrypt_error',
+          data: {
+            userId: finalUserId,
+            email: payload.email,
+            messageId: envelope.messageId,
+            error: decryptError instanceof Error ? decryptError.message : 'Error desconocido'
+          }
+        });
+        throw new Error('Error al desencriptar la contraseña del evento');
+      }
+
       // IMPORTANTE: LDAP necesita la contraseña en texto plano para userPassword
       // El cliente LDAP generará automáticamente el hash bcrypt y lo guardará en metadatos
       // Esto permite que LDAP autentique con texto plano y la app verifique con bcrypt
@@ -217,7 +236,7 @@ class KafkaConsumerService {
         id: finalUserId, // Usar el ID original o el nuevo generado
         nombre_completo: payload.nombre_completo,
         email: payload.email,
-        password: payload.password, // Texto plano para LDAP - el cliente generará hash bcrypt en metadatos
+        password: decryptedPassword, // Contraseña desencriptada - texto plano para LDAP
         rol: payload.roles[0] || 'usuario',
         email_verified: false, // Usuarios creados desde Kafka deben verificar su email
         nacionalidad: payload.nationalityOrOrigin || 'No especificada',
