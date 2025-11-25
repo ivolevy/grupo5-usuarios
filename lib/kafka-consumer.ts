@@ -244,13 +244,42 @@ class KafkaConsumerService {
         created_by_admin: false,
       });
 
-      logger.info('Usuario creado exitosamente desde evento Kafka', {
+      logger.info('Usuario creado exitosamente desde evento Kafka (no verificado)', {
         action: 'kafka_user_created_success',
         data: {
           userId: newUser.id,
           originalUserId: payload.userId,
           idWasRegenerated: payload.userId !== finalUserId,
           email: newUser.email,
+          emailVerified: false,
+          messageId: envelope.messageId
+        }
+      });
+
+      // Esperar 15 segundos antes de verificar el usuario y enviar el evento database.inserted
+      logger.info('Esperando 15 segundos antes de verificar usuario y enviar evento database.inserted', {
+        action: 'kafka_user_verification_delay_start',
+        data: {
+          userId: newUser.id,
+          email: newUser.email,
+          messageId: envelope.messageId
+        }
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 15000)); // 15 segundos
+
+      // Actualizar el usuario a verificado
+      const updatedUser = await prisma.usuarios.update(
+        { id: newUser.id },
+        { email_verified: true }
+      );
+
+      logger.info('Usuario actualizado a verificado después de 15 segundos', {
+        action: 'kafka_user_verified_after_delay',
+        data: {
+          userId: updatedUser.id,
+          email: updatedUser.email,
+          emailVerified: true,
           messageId: envelope.messageId
         }
       });
@@ -258,37 +287,38 @@ class KafkaConsumerService {
       // Enviar evento de inserción en base de datos a Kafka
       try {
         const dbInsertedSuccess = await sendUserDatabaseInsertedEvent({
-          email: newUser.email,
-          createdAt: newUser.created_at
+          email: updatedUser.email,
+          createdAt: updatedUser.created_at
         });
 
         if (dbInsertedSuccess) {
           logger.info('Evento de usuario insertado en base de datos enviado a Kafka desde consumer', {
             action: 'kafka_user_database_inserted_from_consumer_success',
             data: {
-              userId: newUser.id,
-              email: newUser.email,
+              userId: updatedUser.id,
+              email: updatedUser.email,
+              emailVerified: true,
               messageId: envelope.messageId
             }
           });
         } else {
-          // Log warning pero no fallar - el usuario ya fue creado en LDAP
-          logger.warn('Error enviando evento de inserción en BD a Kafka desde consumer, pero usuario ya creado en LDAP', {
+          // Log warning pero no fallar - el usuario ya fue creado y verificado
+          logger.warn('Error enviando evento de inserción en BD a Kafka desde consumer, pero usuario ya creado y verificado', {
             action: 'kafka_user_database_inserted_from_consumer_failed_non_critical',
             data: {
-              userId: newUser.id,
-              email: newUser.email,
+              userId: updatedUser.id,
+              email: updatedUser.email,
               messageId: envelope.messageId
             }
           });
         }
       } catch (dbInsertedError) {
-        // Log warning pero no fallar - el usuario ya fue creado en LDAP
-        logger.warn('Excepción enviando evento de inserción en BD a Kafka desde consumer, pero usuario ya creado en LDAP', {
+        // Log warning pero no fallar - el usuario ya fue creado y verificado
+        logger.warn('Excepción enviando evento de inserción en BD a Kafka desde consumer, pero usuario ya creado y verificado', {
           action: 'kafka_user_database_inserted_from_consumer_error_non_critical',
           data: {
-            userId: newUser.id,
-            email: newUser.email,
+            userId: updatedUser.id,
+            email: updatedUser.email,
             messageId: envelope.messageId,
             error: dbInsertedError instanceof Error ? dbInsertedError.message : 'Error desconocido'
           }
