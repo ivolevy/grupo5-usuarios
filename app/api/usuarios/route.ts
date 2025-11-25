@@ -151,49 +151,127 @@ export async function POST(request: NextRequest) {
         initial_password_changed: false
       });
 
-      logger.info('Usuario creado exitosamente en LDAP', {
+      logger.info('Usuario creado exitosamente en LDAP (no verificado)', {
         action: 'user_created_ldap_success',
         data: {
           userId: userId,
-          email: email
+          email: email,
+          emailVerified: newUser.email_verified
         }
       });
 
-      // PASO 2: Enviar evento de inserción en base de datos a Kafka
-      try {
-        const dbInsertedSuccess = await sendUserDatabaseInsertedEvent({
-          email: email,
-          createdAt: createdAt
-        });
+      // Para usuarios normales (no admin/interno), ejecutar verificación automática después de 15 segundos en background
+      if (!shouldAutoVerifyEmail) {
+        // Ejecutar en background sin bloquear la respuesta
+        (async () => {
+          try {
+            logger.info('Iniciando proceso de verificación automática después de 15 segundos', {
+              action: 'user_auto_verification_start',
+              data: {
+                userId: userId,
+                email: email
+              }
+            });
 
-        if (dbInsertedSuccess) {
-          logger.info('Evento de usuario insertado en base de datos enviado a Kafka', {
-            action: 'user_database_inserted_kafka_success',
-            data: {
-              userId: userId,
-              email: email
+            // Esperar 15 segundos
+            await new Promise(resolve => setTimeout(resolve, 15000));
+
+            // Actualizar el usuario a verificado
+            const updatedUser = await prisma.usuarios.update(
+              { id: userId },
+              { email_verified: true }
+            );
+
+            logger.info('Usuario actualizado a verificado después de 15 segundos', {
+              action: 'user_auto_verified_after_delay',
+              data: {
+                userId: updatedUser.id,
+                email: updatedUser.email,
+                emailVerified: true
+              }
+            });
+
+            // Enviar evento de inserción en base de datos a Kafka
+            try {
+              const dbInsertedSuccess = await sendUserDatabaseInsertedEvent({
+                email: updatedUser.email,
+                createdAt: updatedUser.created_at
+              });
+
+              if (dbInsertedSuccess) {
+                logger.info('Evento de usuario insertado en base de datos enviado a Kafka', {
+                  action: 'user_database_inserted_kafka_success',
+                  data: {
+                    userId: updatedUser.id,
+                    email: updatedUser.email,
+                    emailVerified: true
+                  }
+                });
+              } else {
+                logger.warn('Error enviando evento de inserción en BD a Kafka, pero usuario ya creado y verificado', {
+                  action: 'user_database_inserted_kafka_failed_non_critical',
+                  data: {
+                    userId: updatedUser.id,
+                    email: updatedUser.email
+                  }
+                });
+              }
+            } catch (dbInsertedError) {
+              logger.warn('Excepción enviando evento de inserción en BD a Kafka, pero usuario ya creado y verificado', {
+                action: 'user_database_inserted_kafka_error_non_critical',
+                data: {
+                  userId: updatedUser.id,
+                  email: updatedUser.email,
+                  message: dbInsertedError instanceof Error ? dbInsertedError.message : 'Error desconocido'
+                }
+              });
             }
+          } catch (error) {
+            logger.error('Error en proceso de verificación automática', {
+              action: 'user_auto_verification_error',
+              data: {
+                userId: userId,
+                email: email,
+                error: error instanceof Error ? error.message : 'Error desconocido'
+              }
+            });
+          }
+        })();
+      } else {
+        // Para usuarios admin/interno, enviar evento inmediatamente (ya están verificados)
+        try {
+          const dbInsertedSuccess = await sendUserDatabaseInsertedEvent({
+            email: email,
+            createdAt: createdAt
           });
-        } else {
-          // Log warning pero no fallar - el usuario ya fue creado en LDAP
-          logger.warn('Error enviando evento de inserción en BD a Kafka, pero usuario ya creado en LDAP', {
-            action: 'user_database_inserted_kafka_failed_non_critical',
+
+          if (dbInsertedSuccess) {
+            logger.info('Evento de usuario insertado en base de datos enviado a Kafka', {
+              action: 'user_database_inserted_kafka_success',
+              data: {
+                userId: userId,
+                email: email
+              }
+            });
+          } else {
+            logger.warn('Error enviando evento de inserción en BD a Kafka, pero usuario ya creado en LDAP', {
+              action: 'user_database_inserted_kafka_failed_non_critical',
+              data: {
+                userId: userId,
+                email: email
+              }
+            });
+          }
+        } catch (dbInsertedError) {
+          logger.warn('Excepción enviando evento de inserción en BD a Kafka, pero usuario ya creado en LDAP', {
+            action: 'user_database_inserted_kafka_error_non_critical',
             data: {
               userId: userId,
-              email: email
+              email: email,
+              message: dbInsertedError instanceof Error ? dbInsertedError.message : 'Error desconocido'
             }
           });
         }
-      } catch (dbInsertedError) {
-        // Log warning pero no fallar - el usuario ya fue creado en LDAP
-        logger.warn('Excepción enviando evento de inserción en BD a Kafka, pero usuario ya creado en LDAP', {
-          action: 'user_database_inserted_kafka_error_non_critical',
-          data: {
-            userId: userId,
-            email: email,
-            message: dbInsertedError instanceof Error ? dbInsertedError.message : 'Error desconocido'
-          }
-        });
       }
 
       // PASO 3: Enviar evento a Kafka - El consumer intentará crear el usuario pero ya existirá
