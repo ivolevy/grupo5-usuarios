@@ -130,271 +130,81 @@ export async function POST(request: NextRequest) {
     const userId = randomUUID();
     const createdAt = new Date().toISOString();
 
-    // PASO 1: Crear el usuario directamente en LDAP
+    // Enviar evento a Kafka - El consumer creará el usuario y lo verificará después de 15 segundos
     try {
-      // IMPORTANTE: LDAP necesita la contraseña en texto plano para userPassword
-      // El cliente LDAP generará automáticamente el hash bcrypt y lo guardará en metadatos
-      // Esto permite que LDAP autentique con texto plano y la app verifique con bcrypt
-      // NOTA: El cliente LDAP no usa la sintaxis { data: {...} } de Prisma, pasa los datos directamente
-      const newUser = await prisma.usuarios.create({
-        id: userId,
+      // Preparar datos del evento
+      const eventData: Parameters<typeof sendUserCreatedEvent>[0] = {
+        userId: userId,
         nombre_completo: nombre_completo || 'Usuario sin nombre',
         email: email,
-        password: password, // Texto plano para LDAP - el cliente generará hash bcrypt en metadatos
-        rol: normalizedRole,
-        nacionalidad: nacionalidad || 'No especificada',
-        telefono: telefono || undefined,
-        email_verified: shouldAutoVerifyEmail,
-        created_at: createdAt,
-        updated_at: createdAt,
-        created_by_admin: created_by_admin ?? false,
-        initial_password_changed: false
-      });
+        password: password, // Contraseña original
+        nationalityOrOrigin: nacionalidad || 'No especificada',
+        roles: [normalizedRole],
+        createdAt: createdAt,
+      };
 
-      logger.info('Usuario creado exitosamente en LDAP (no verificado)', {
-        action: 'user_created_ldap_success',
-        data: {
-          userId: userId,
-          email: email,
-          emailVerified: newUser.email_verified
-        }
-      });
+      // Agregar telefono solo si existe
+      if (telefono) {
+        eventData.telefono = telefono;
+      }
 
-      // Para usuarios normales (no admin/interno), iniciar verificación después de 15 segundos
-      // pero retornar la respuesta inmediatamente
-      if (!shouldAutoVerifyEmail) {
-        // Iniciar proceso de verificación sin bloquear (no usamos await)
-        // Esto se ejecutará después de que se retorne la respuesta
-        (async () => {
-          try {
-            logger.info('Iniciando proceso de verificación automática después de 15 segundos', {
-              action: 'user_verification_delay_start',
-              data: { userId, email }
-            });
+      const kafkaSuccess = await sendUserCreatedEvent(eventData);
 
-            // Esperar 15 segundos
-            await new Promise(resolve => setTimeout(resolve, 15000));
-
-            logger.info('Completada espera de 15 segundos, actualizando usuario a verificado...', {
-              action: 'user_verification_delay_complete',
-              data: { userId, email }
-            });
-
-            // Actualizar el usuario a verificado
-            const updatedUser = await prisma.usuarios.update(
-              { id: userId },
-              { email_verified: true }
-            );
-
-            logger.info('Usuario actualizado a verificado después de 15 segundos', {
-              action: 'user_verified_after_delay',
-              data: {
-                userId: updatedUser.id,
-                email: updatedUser.email,
-                emailVerified: true
-              }
-            });
-
-            // Enviar evento de inserción en base de datos a Kafka
-            try {
-              const dbInsertedSuccess = await sendUserDatabaseInsertedEvent({
-                email: updatedUser.email,
-                createdAt: updatedUser.created_at
-              });
-
-              if (dbInsertedSuccess) {
-                logger.info('Evento de usuario insertado en base de datos enviado a Kafka', {
-                  action: 'user_database_inserted_kafka_success',
-                  data: {
-                    userId: updatedUser.id,
-                    email: updatedUser.email,
-                    emailVerified: true
-                  }
-                });
-              } else {
-                logger.warn('Error enviando evento de inserción en BD a Kafka, pero usuario ya creado y verificado', {
-                  action: 'user_database_inserted_kafka_failed_non_critical',
-                  data: {
-                    userId: updatedUser.id,
-                    email: updatedUser.email
-                  }
-                });
-              }
-            } catch (dbInsertedError) {
-              logger.warn('Excepción enviando evento de inserción en BD a Kafka, pero usuario ya creado y verificado', {
-                action: 'user_database_inserted_kafka_error_non_critical',
-                data: {
-                  userId: updatedUser.id,
-                  email: updatedUser.email,
-                  message: dbInsertedError instanceof Error ? dbInsertedError.message : 'Error desconocido'
-                }
-              });
-            }
-          } catch (error) {
-            logger.error('Error en proceso de verificación automática', {
-              action: 'user_verification_error',
-              data: {
-                userId,
-                email,
-                error: error instanceof Error ? error.message : 'Error desconocido'
-              }
-            });
+      if (kafkaSuccess) {
+        logger.info('Evento de usuario creado enviado a Kafka - El consumer creará y verificará el usuario', {
+          action: 'user_created_kafka_success',
+          data: {
+            userId: userId,
+            email: email,
+            note: 'El consumer creará el usuario con email_verified: false y lo verificará después de 15 segundos'
           }
-        })();
+        });
 
-        // Retornar respuesta inmediatamente (sin esperar la verificación)
+        // Retornar respuesta exitosa - El usuario será creado por el consumer
         return NextResponse.json({
           success: true,
           data: {
-            id: newUser.id,
-            nombre_completo: newUser.nombre_completo,
-            email: newUser.email,
-            rol: newUser.rol,
-            nacionalidad: newUser.nacionalidad,
-            telefono: newUser.telefono || null,
-            email_verified: newUser.email_verified,
-            created_at: newUser.created_at,
-            updated_at: newUser.updated_at,
-            created_by_admin: newUser.created_by_admin
+            id: userId,
+            nombre_completo: nombre_completo || 'Usuario sin nombre',
+            email: email,
+            rol: normalizedRole,
+            nacionalidad: nacionalidad || 'No especificada',
+            telefono: telefono || null,
+            email_verified: false, // El consumer lo verificará después de 15 segundos
+            created_at: createdAt,
+            updated_at: createdAt,
+            created_by_admin: created_by_admin ?? false
           },
-          message: 'Usuario creado exitosamente. La verificación se completará automáticamente en breve.'
-        }, { status: 201 });
+          message: 'Registro exitoso. El usuario será creado y verificado automáticamente por el sistema en breve.'
+        }, { status: 201 }); // 201 Created
       } else {
-        // Para usuarios admin/interno, enviar evento inmediatamente (ya están verificados)
-      try {
-        const dbInsertedSuccess = await sendUserDatabaseInsertedEvent({
-          email: email,
-          createdAt: createdAt
-        });
-
-        if (dbInsertedSuccess) {
-          logger.info('Evento de usuario insertado en base de datos enviado a Kafka', {
-            action: 'user_database_inserted_kafka_success',
-            data: {
-              userId: userId,
-              email: email
-            }
-          });
-        } else {
-          logger.warn('Error enviando evento de inserción en BD a Kafka, pero usuario ya creado en LDAP', {
-            action: 'user_database_inserted_kafka_failed_non_critical',
-            data: {
-              userId: userId,
-              email: email
-            }
-          });
-        }
-      } catch (dbInsertedError) {
-        logger.warn('Excepción enviando evento de inserción en BD a Kafka, pero usuario ya creado en LDAP', {
-          action: 'user_database_inserted_kafka_error_non_critical',
+        logger.error('Error enviando evento a Kafka - No se puede crear el usuario', {
+          action: 'user_created_kafka_failed',
           data: {
             userId: userId,
-            email: email,
-            message: dbInsertedError instanceof Error ? dbInsertedError.message : 'Error desconocido'
+            email: email
           }
         });
-        }
+
+        return NextResponse.json({
+          success: false,
+          message: 'Error al enviar solicitud de registro. Por favor, intenta nuevamente.'
+        }, { status: 500 });
       }
-
-      // PASO 3: Enviar evento a Kafka - El consumer intentará crear el usuario pero ya existirá
-      try {
-        // Preparar datos del evento
-        const eventData: Parameters<typeof sendUserCreatedEvent>[0] = {
-          userId: userId,
-          nombre_completo: nombre_completo || 'Usuario sin nombre',
-          email: email,
-          password: password, // Contraseña original
-          nationalityOrOrigin: nacionalidad || 'No especificada',
-          roles: [normalizedRole],
-          createdAt: createdAt,
-        };
-
-        // Agregar telefono solo si existe
-        if (telefono) {
-          eventData.telefono = telefono;
-        }
-
-        const kafkaSuccess = await sendUserCreatedEvent(eventData);
-
-        if (kafkaSuccess) {
-          logger.info('Evento de usuario creado enviado a Kafka', {
-            action: 'user_created_kafka_success',
-            data: {
-              userId: userId,
-              email: email
-            }
-          });
-        } else {
-          // Log warning pero no fallar - el usuario ya fue creado en LDAP
-          logger.warn('Error enviando evento a Kafka, pero usuario ya creado en LDAP', {
-            action: 'user_created_kafka_failed_non_critical',
-            data: {
-              userId: userId,
-              email: email
-            }
-          });
-        }
-      } catch (kafkaError) {
-        // Log warning pero no fallar - el usuario ya fue creado en LDAP
-        logger.warn('Excepción enviando evento a Kafka, pero usuario ya creado en LDAP', {
-          action: 'user_created_kafka_error_non_critical',
-          data: {
-            userId: userId,
-            email: email,
-            message: kafkaError instanceof Error ? kafkaError.message : 'Error desconocido'
-          }
-        });
-      }
-
-      // Retornar respuesta exitosa con el usuario creado
-      return NextResponse.json({
-        success: true,
-        data: {
-          id: newUser.id,
-          nombre_completo: newUser.nombre_completo,
-          email: newUser.email,
-          rol: newUser.rol,
-          nacionalidad: newUser.nacionalidad,
-          telefono: newUser.telefono || null,
-          email_verified: newUser.email_verified,
-          created_at: newUser.created_at,
-          updated_at: newUser.updated_at,
-          created_by_admin: newUser.created_by_admin
-        },
-        message: 'Usuario creado exitosamente'
-      }, { status: 201 }); // 201 Created
-
-    } catch (ldapError: any) {
-      // Si falla la creación en LDAP, verificar si es por email duplicado
-      const errorMessage = ldapError instanceof Error ? ldapError.message : 'Error desconocido';
-      
-      // Prisma lanza error con código P2002 cuando hay violación de constraint único
-      const isDuplicateError = ldapError?.code === 'P2002' || 
-                               errorMessage.includes('unique constraint') ||
-                               errorMessage.includes('Unique constraint');
-      
-      logger.error('Error creando usuario en LDAP', {
-        action: 'user_created_ldap_failed',
+    } catch (kafkaError) {
+      logger.error('Excepción enviando evento a Kafka', {
+        action: 'user_created_kafka_error',
         data: {
           userId: userId,
           email: email,
-          message: errorMessage,
-          code: ldapError?.code,
-          isDuplicate: isDuplicateError
+          message: kafkaError instanceof Error ? kafkaError.message : 'Error desconocido'
         }
       });
 
-      if (isDuplicateError) {
-        return NextResponse.json({
-          success: false,
-          message: 'Ya existe un usuario con este email'
-        }, { status: 409 });
-      }
-
       return NextResponse.json({
         success: false,
-        message: 'Error al crear usuario en LDAP',
-        error: errorMessage
+        message: 'Error al procesar el registro. Por favor, intenta nuevamente.',
+        error: kafkaError instanceof Error ? kafkaError.message : 'Error desconocido'
       }, { status: 500 });
     }
 
