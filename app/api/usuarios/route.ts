@@ -48,6 +48,77 @@ import { logger } from '@/lib/logger';
 import { randomUUID } from 'crypto';
 import { verifyJWTMiddleware } from '@/lib/middleware';
 
+/**
+ * Función helper para actualizar usuario con reintentos y manejo robusto de errores
+ */
+async function updateUserWithRetry(
+  userId: string,
+  updateData: { email_verified: boolean },
+  maxRetries: number = 5,
+  initialDelay: number = 1000
+): Promise<any> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // Verificar que el usuario existe antes de actualizar
+      const existingUser = await prisma.usuarios.findUnique({ id: userId });
+      
+      if (!existingUser) {
+        throw new Error(`Usuario con ID ${userId} no encontrado`);
+      }
+
+      // Intentar actualizar
+      const updatedUser = await prisma.usuarios.update(
+        { id: userId },
+        updateData
+      );
+
+      logger.info('Usuario actualizado exitosamente con reintentos', {
+        action: 'user_update_with_retry_success',
+        data: {
+          userId: userId,
+          attempt: attempt,
+          email: updatedUser.email,
+          emailVerified: updatedUser.email_verified
+        }
+      });
+
+      return updatedUser;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const errorMessage = lastError.message;
+      
+      // Log del intento fallido
+      logger.warn('Intento de actualización fallido, reintentando...', {
+        action: 'user_update_retry_attempt',
+        data: {
+          userId: userId,
+          attempt: attempt,
+          maxRetries: maxRetries,
+          error: errorMessage,
+          willRetry: attempt < maxRetries
+        }
+      });
+
+      // Si no es el último intento, esperar antes de reintentar (backoff exponencial)
+      if (attempt < maxRetries) {
+        const delay = initialDelay * Math.pow(2, attempt - 1); // Backoff exponencial: 1s, 2s, 4s, 8s, 16s
+        logger.info(`Esperando ${delay}ms antes del siguiente intento...`, {
+          action: 'user_update_retry_delay',
+          data: { userId, attempt, delay }
+        });
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  // Si llegamos aquí, todos los intentos fallaron
+  throw new Error(
+    `No se pudo actualizar el usuario después de ${maxRetries} intentos. Último error: ${lastError?.message}`
+  );
+}
+
 // GET /api/usuarios - Obtener todos los usuarios (requiere autenticación)
 export async function GET(request: NextRequest) {
   try {
@@ -163,114 +234,195 @@ export async function POST(request: NextRequest) {
       // Para usuarios normales (no admin/interno), ejecutar verificación automática después de 15 segundos en background
       if (!shouldAutoVerifyEmail) {
         // Ejecutar en background sin bloquear la respuesta
-        (async () => {
+        // Usar setImmediate para asegurar que se ejecute después de que la respuesta se envíe
+        setImmediate(async () => {
           try {
             logger.info('Iniciando proceso de verificación automática después de 15 segundos', {
               action: 'user_auto_verification_start',
               data: {
                 userId: userId,
-                email: email
+                email: email,
+                timestamp: new Date().toISOString()
               }
             });
 
             // Esperar 15 segundos
             await new Promise(resolve => setTimeout(resolve, 15000));
 
-            // Actualizar el usuario a verificado
-            const updatedUser = await prisma.usuarios.update(
-              { id: userId },
-              { email_verified: true }
-            );
-
-            logger.info('Usuario actualizado a verificado después de 15 segundos', {
-              action: 'user_auto_verified_after_delay',
+            logger.info('Completada espera de 15 segundos, iniciando actualización con reintentos', {
+              action: 'user_auto_verification_delay_complete',
               data: {
-                userId: updatedUser.id,
-                email: updatedUser.email,
-                emailVerified: true
+                userId: userId,
+                email: email,
+                timestamp: new Date().toISOString()
               }
             });
 
-            // Enviar evento de inserción en base de datos a Kafka
+            // Actualizar el usuario a verificado con reintentos
+            let updatedUser;
             try {
-              const dbInsertedSuccess = await sendUserDatabaseInsertedEvent({
-                email: updatedUser.email,
-                createdAt: updatedUser.created_at
-              });
+              updatedUser = await updateUserWithRetry(
+                userId,
+                { email_verified: true },
+                5, // 5 intentos máximo
+                2000 // Delay inicial de 2 segundos
+              );
 
-              if (dbInsertedSuccess) {
-                logger.info('Evento de usuario insertado en base de datos enviado a Kafka', {
-                  action: 'user_database_inserted_kafka_success',
-                  data: {
-                    userId: updatedUser.id,
-                    email: updatedUser.email,
-                    emailVerified: true
-                  }
-                });
-              } else {
-                logger.warn('Error enviando evento de inserción en BD a Kafka, pero usuario ya creado y verificado', {
-                  action: 'user_database_inserted_kafka_failed_non_critical',
-                  data: {
-                    userId: updatedUser.id,
-                    email: updatedUser.email
-                  }
-                });
-              }
-            } catch (dbInsertedError) {
-              logger.warn('Excepción enviando evento de inserción en BD a Kafka, pero usuario ya creado y verificado', {
-                action: 'user_database_inserted_kafka_error_non_critical',
+              logger.info('Usuario actualizado a verificado después de 15 segundos (con reintentos)', {
+                action: 'user_auto_verified_after_delay',
                 data: {
                   userId: updatedUser.id,
                   email: updatedUser.email,
-                  message: dbInsertedError instanceof Error ? dbInsertedError.message : 'Error desconocido'
+                  emailVerified: true,
+                  timestamp: new Date().toISOString()
+                }
+              });
+            } catch (updateError) {
+              logger.error('Error crítico: No se pudo actualizar el usuario después de múltiples intentos', {
+                action: 'user_auto_verification_update_failed',
+                data: {
+                  userId: userId,
+                  email: email,
+                  error: updateError instanceof Error ? updateError.message : 'Error desconocido',
+                  timestamp: new Date().toISOString()
+                }
+              });
+              // Intentar una vez más después de un delay más largo
+              await new Promise(resolve => setTimeout(resolve, 5000));
+              try {
+                updatedUser = await prisma.usuarios.update(
+                  { id: userId },
+                  { email_verified: true }
+                );
+                logger.info('Usuario actualizado exitosamente en intento final', {
+                  action: 'user_auto_verification_final_attempt_success',
+                  data: { userId, email: updatedUser.email }
+                });
+              } catch (finalError) {
+                logger.error('Error en intento final de actualización', {
+                  action: 'user_auto_verification_final_attempt_failed',
+                  data: {
+                    userId,
+                    email,
+                    error: finalError instanceof Error ? finalError.message : 'Error desconocido'
+                  }
+                });
+                return; // Salir si falla el intento final
+              }
+            }
+
+            // Enviar evento de inserción en base de datos a Kafka con reintentos
+            let kafkaSuccess = false;
+            const kafkaMaxRetries = 3;
+            
+            for (let kafkaAttempt = 1; kafkaAttempt <= kafkaMaxRetries; kafkaAttempt++) {
+              try {
+                const dbInsertedSuccess = await sendUserDatabaseInsertedEvent({
+                  email: updatedUser.email,
+                  createdAt: updatedUser.created_at
+                });
+
+                if (dbInsertedSuccess) {
+                  kafkaSuccess = true;
+                  logger.info('Evento de usuario insertado en base de datos enviado a Kafka', {
+                    action: 'user_database_inserted_kafka_success',
+                    data: {
+                      userId: updatedUser.id,
+                      email: updatedUser.email,
+                      emailVerified: true,
+                      kafkaAttempt: kafkaAttempt
+                    }
+                  });
+                  break; // Salir del loop si fue exitoso
+                } else {
+                  logger.warn(`Intento ${kafkaAttempt} de enviar evento a Kafka falló, reintentando...`, {
+                    action: 'user_database_inserted_kafka_retry',
+                    data: {
+                      userId: updatedUser.id,
+                      email: updatedUser.email,
+                      kafkaAttempt: kafkaAttempt,
+                      maxRetries: kafkaMaxRetries
+                    }
+                  });
+                  
+                  if (kafkaAttempt < kafkaMaxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 2000 * kafkaAttempt));
+                  }
+                }
+              } catch (dbInsertedError) {
+                logger.warn(`Excepción en intento ${kafkaAttempt} de enviar evento a Kafka`, {
+                  action: 'user_database_inserted_kafka_error_retry',
+                  data: {
+                    userId: updatedUser.id,
+                    email: updatedUser.email,
+                    kafkaAttempt: kafkaAttempt,
+                    error: dbInsertedError instanceof Error ? dbInsertedError.message : 'Error desconocido'
+                  }
+                });
+                
+                if (kafkaAttempt < kafkaMaxRetries) {
+                  await new Promise(resolve => setTimeout(resolve, 2000 * kafkaAttempt));
+                }
+              }
+            }
+
+            if (!kafkaSuccess) {
+              logger.warn('No se pudo enviar evento a Kafka después de múltiples intentos, pero usuario ya creado y verificado', {
+                action: 'user_database_inserted_kafka_failed_after_retries',
+                data: {
+                  userId: updatedUser.id,
+                  email: updatedUser.email,
+                  maxRetries: kafkaMaxRetries
                 }
               });
             }
           } catch (error) {
-            logger.error('Error en proceso de verificación automática', {
-              action: 'user_auto_verification_error',
+            logger.error('Error crítico en proceso de verificación automática', {
+              action: 'user_auto_verification_critical_error',
               data: {
                 userId: userId,
                 email: email,
-                error: error instanceof Error ? error.message : 'Error desconocido'
+                error: error instanceof Error ? error.message : 'Error desconocido',
+                stack: error instanceof Error ? error.stack : undefined,
+                timestamp: new Date().toISOString()
               }
             });
           }
-        })();
+        });
       } else {
         // Para usuarios admin/interno, enviar evento inmediatamente (ya están verificados)
-        try {
-          const dbInsertedSuccess = await sendUserDatabaseInsertedEvent({
-            email: email,
-            createdAt: createdAt
-          });
+      try {
+        const dbInsertedSuccess = await sendUserDatabaseInsertedEvent({
+          email: email,
+          createdAt: createdAt
+        });
 
-          if (dbInsertedSuccess) {
-            logger.info('Evento de usuario insertado en base de datos enviado a Kafka', {
-              action: 'user_database_inserted_kafka_success',
-              data: {
-                userId: userId,
-                email: email
-              }
-            });
-          } else {
-            logger.warn('Error enviando evento de inserción en BD a Kafka, pero usuario ya creado en LDAP', {
-              action: 'user_database_inserted_kafka_failed_non_critical',
-              data: {
-                userId: userId,
-                email: email
-              }
-            });
-          }
-        } catch (dbInsertedError) {
-          logger.warn('Excepción enviando evento de inserción en BD a Kafka, pero usuario ya creado en LDAP', {
-            action: 'user_database_inserted_kafka_error_non_critical',
+        if (dbInsertedSuccess) {
+          logger.info('Evento de usuario insertado en base de datos enviado a Kafka', {
+            action: 'user_database_inserted_kafka_success',
             data: {
               userId: userId,
-              email: email,
-              message: dbInsertedError instanceof Error ? dbInsertedError.message : 'Error desconocido'
+              email: email
             }
           });
+        } else {
+          logger.warn('Error enviando evento de inserción en BD a Kafka, pero usuario ya creado en LDAP', {
+            action: 'user_database_inserted_kafka_failed_non_critical',
+            data: {
+              userId: userId,
+              email: email
+            }
+          });
+        }
+      } catch (dbInsertedError) {
+        logger.warn('Excepción enviando evento de inserción en BD a Kafka, pero usuario ya creado en LDAP', {
+          action: 'user_database_inserted_kafka_error_non_critical',
+          data: {
+            userId: userId,
+            email: email,
+            message: dbInsertedError instanceof Error ? dbInsertedError.message : 'Error desconocido'
+          }
+        });
         }
       }
 
